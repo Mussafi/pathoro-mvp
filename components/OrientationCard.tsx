@@ -30,7 +30,7 @@ export function OrientationCard() {
         direction.
       </h2>
       <p className="mt-1.5 text-[12.5px] text-ink-faint">
-        Five small questions to map your path.
+        Choose a suggestion or write your own.
       </p>
       <p className="mt-1 text-[12px] italic leading-relaxed text-ink-soft">
         You don&rsquo;t need perfect answers. Choose what feels closest —
@@ -74,29 +74,35 @@ export function OrientationCard() {
                   updateField(q.key, e.target.value);
                   autoResize(e.target);
                 }}
+                placeholder="Write your own answer…"
                 rows={1}
-                className="mt-1 w-full resize-none overflow-hidden bg-transparent text-[13px] font-medium leading-snug text-ink outline-none"
+                className="mt-1 w-full resize-none overflow-hidden bg-transparent text-[13px] font-medium leading-snug text-ink outline-none placeholder:font-normal placeholder:text-ink-faint"
               />
 
               {isOpen && (
-                <div className="mt-2 flex flex-wrap gap-1.5 border-t border-line/60 pt-2.5">
-                  {q.options.map((opt) => {
-                    const isSelected = answers[q.key] === opt;
-                    return (
-                      <button
-                        key={opt}
-                        type="button"
-                        onClick={() => updateField(q.key, opt)}
-                        className={`rounded-full border px-2.5 py-1 text-left text-[11.5px] leading-snug transition ${
-                          isSelected
-                            ? "border-green bg-green text-cream"
-                            : "border-line/70 bg-cream-card text-ink-soft hover:border-ink-faint/30"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    );
-                  })}
+                <div className="mt-2 border-t border-line/60 pt-2.5">
+                  <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wide text-ink-faint/80">
+                    Or choose a suggestion
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {q.options.map((opt) => {
+                      const isSelected = answers[q.key] === opt;
+                      return (
+                        <button
+                          key={opt}
+                          type="button"
+                          onClick={() => updateField(q.key, opt)}
+                          className={`rounded-full border px-2.5 py-1 text-left text-[11.5px] leading-snug transition ${
+                            isSelected
+                              ? "border-green bg-green text-cream"
+                              : "border-line/70 bg-cream-card text-ink-soft hover:border-ink-faint/30"
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
