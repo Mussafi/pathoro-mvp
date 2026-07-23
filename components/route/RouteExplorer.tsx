@@ -16,7 +16,8 @@ import {
   Star,
   X,
 } from "lucide-react";
-import { defaultRouteId, routes } from "@/lib/routes";
+import { routes } from "@/lib/routes";
+import { mapReachableToRouteId } from "@/lib/direction";
 import { useDirectionAnswers } from "@/lib/useDirectionAnswers";
 
 function Connector({ active }: { active: boolean }) {
@@ -37,10 +38,11 @@ function Connector({ active }: { active: boolean }) {
 }
 
 export function RouteExplorer() {
-  const [selectedId, setSelectedId] = useState(defaultRouteId);
-  const [panelOpen, setPanelOpen] = useState(true);
-  const selected = routes.find((r) => r.id === selectedId) ?? routes[0];
   const { answers } = useDirectionAnswers();
+  const [overrideId, setOverrideId] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(true);
+  const selectedId = overrideId ?? mapReachableToRouteId(answers.reachable);
+  const selected = routes.find((r) => r.id === selectedId) ?? routes[0];
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
@@ -74,7 +76,7 @@ export function RouteExplorer() {
                 key={route.id}
                 type="button"
                 onClick={() => {
-                  setSelectedId(route.id);
+                  setOverrideId(route.id);
                   setPanelOpen(true);
                 }}
                 className={`flex flex-col gap-4 rounded-2xl border px-4 py-4 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-card sm:flex-row sm:items-center ${

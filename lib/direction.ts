@@ -1,4 +1,5 @@
 import { Compass, Footprints, Heart, MapPin, Route, type LucideIcon } from "lucide-react";
+import { defaultRouteId } from "@/lib/routes";
 
 export type DirectionAnswers = {
   moveToward: string;
@@ -104,6 +105,19 @@ export const directionQuestions: DirectionQuestion[] = [
     ],
   },
 ];
+
+const reachableToRouteId: Record<string, string> = {
+  "Someone who has done it before": "people",
+  "A class, event, or opening": "real-openings",
+  "A group or community": "community",
+  "A breakdown of requirements": "requirements",
+  "A small low-pressure trial": "try-it",
+  "I’m not sure — suggest one": "real-openings",
+};
+
+export function mapReachableToRouteId(reachable: string): string {
+  return reachableToRouteId[reachable] ?? defaultRouteId;
+}
 
 const STORAGE_KEY = "pathoro:direction-answers";
 
