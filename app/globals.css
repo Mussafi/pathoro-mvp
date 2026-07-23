@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+@theme inline {
+  --color-cream: #fbf6ef;
+  --color-cream-card: #fdfaf5;
+  --color-cream-field: #f7f1e8;
+  --color-ink: #21241f;
+  --color-ink-soft: #55594f;
+  --color-ink-faint: #8a8d81;
+  --color-green: #547820;
+  --color-green-dark: #3f5c17;
+  --color-green-soft: #eef1e3;
+  --color-green-badge: #354f14;
+  --color-line: #ece5d6;
+  --color-line-soft: #f0eadd;
+
+  --font-sans: var(--font-body), sans-serif;
+  --font-serif: var(--font-display), serif;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+@layer utilities {
+  .shadow-card {
+    box-shadow:
+      0 1px 1px rgba(40, 35, 20, 0.03),
+      0 10px 30px -18px rgba(40, 35, 20, 0.16);
+  }
+  .shadow-float {
+    box-shadow:
+      0 1px 2px rgba(30, 26, 14, 0.05),
+      0 14px 28px -14px rgba(30, 26, 14, 0.22);
+  }
+}
