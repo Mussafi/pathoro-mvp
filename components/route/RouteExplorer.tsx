@@ -5,15 +5,19 @@ import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
+  Footprints,
   Heart,
   ListFilter,
   Lock,
+  MapPin,
+  Route as RouteIcon,
   ShieldCheck,
   SlidersHorizontal,
   Star,
   X,
 } from "lucide-react";
-import { defaultRouteId, opportunityContext, routes } from "@/lib/routes";
+import { defaultRouteId, routes } from "@/lib/routes";
+import { useDirectionAnswers } from "@/lib/useDirectionAnswers";
 
 function Connector({ active }: { active: boolean }) {
   return (
@@ -36,6 +40,7 @@ export function RouteExplorer() {
   const [selectedId, setSelectedId] = useState(defaultRouteId);
   const [panelOpen, setPanelOpen] = useState(true);
   const selected = routes.find((r) => r.id === selectedId) ?? routes[0];
+  const { answers } = useDirectionAnswers();
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
@@ -194,10 +199,31 @@ export function RouteExplorer() {
                 What it makes room for
               </span>
               <span className="mt-0.5 block text-[12.5px] font-semibold text-ink">
-                {opportunityContext.makesRoomFor}
+                {answers.makeRoomFor}
+              </span>
+            </span>
+          </div>
+
+          <div className="mt-4 flex items-start gap-2.5 border-t border-line/70 pt-4">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-green" strokeWidth={1.75} />
+            <span>
+              <span className="block text-[13px] font-semibold text-ink">
+                Starting from
               </span>
               <span className="block text-[12px] leading-relaxed text-ink-soft">
-                {opportunityContext.makesRoomForDetail}
+                {answers.startingFrom}
+              </span>
+            </span>
+          </div>
+
+          <div className="mt-4 flex items-start gap-2.5 border-t border-line/70 pt-4">
+            <RouteIcon className="mt-0.5 h-4 w-4 shrink-0 text-green" strokeWidth={1.75} />
+            <span>
+              <span className="block text-[13px] font-semibold text-ink">
+                What would help
+              </span>
+              <span className="block text-[12px] leading-relaxed text-ink-soft">
+                {answers.reachable}
               </span>
             </span>
           </div>
@@ -213,6 +239,18 @@ export function RouteExplorer() {
               </span>
               <span className="block text-[12px] leading-relaxed text-ink-soft">
                 {selected.nextStepBody}
+              </span>
+            </span>
+          </div>
+
+          <div className="mt-4 flex items-start gap-2.5 border-t border-line/70 pt-4">
+            <Footprints className="mt-0.5 h-4 w-4 shrink-0 text-green" strokeWidth={1.75} />
+            <span>
+              <span className="block text-[13px] font-semibold text-ink">
+                What you said you&rsquo;d try first
+              </span>
+              <span className="block text-[12px] leading-relaxed text-ink-soft">
+                {answers.tryFirst}
               </span>
             </span>
           </div>

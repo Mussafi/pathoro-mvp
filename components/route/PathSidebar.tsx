@@ -1,8 +1,13 @@
+"use client";
+
 import Image from "next/image";
-import { Leaf } from "lucide-react";
+import { Leaf, MapPin } from "lucide-react";
 import { opportunityContext } from "@/lib/routes";
+import { useDirectionAnswers } from "@/lib/useDirectionAnswers";
 
 export function PathSidebar() {
+  const { answers } = useDirectionAnswers();
+
   return (
     <aside className="shadow-card flex flex-col overflow-hidden rounded-[26px] border border-line/70 bg-cream-card">
       <div className="px-5 pt-5">
@@ -22,14 +27,14 @@ export function PathSidebar() {
         </span>
 
         <h1 className="mt-3 font-serif text-[26px] leading-[1.18] text-ink">
-          {opportunityContext.title}
+          {answers.moveToward}
         </h1>
 
         <p className="mt-3 text-[13px] font-medium text-ink-faint">
           {opportunityContext.goalLabel}
         </p>
         <p className="font-serif text-[17px] leading-tight text-green">
-          {opportunityContext.goal}
+          {answers.makeRoomFor}
         </p>
 
         <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-soft">
@@ -37,6 +42,18 @@ export function PathSidebar() {
         </p>
 
         <div className="mt-4 rounded-2xl border border-line/70 bg-cream-field px-4 py-3.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-green/40">
+            <MapPin className="h-4 w-4 text-green" strokeWidth={1.75} />
+          </span>
+          <p className="mt-2 text-[13px] font-semibold leading-tight text-ink">
+            Starting from
+          </p>
+          <p className="mt-1 text-[12px] leading-snug text-ink-faint">
+            {answers.startingFrom}
+          </p>
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-line/70 bg-cream-field px-4 py-3.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-full border border-green/40">
             <Leaf className="h-4 w-4 text-green" strokeWidth={1.75} />
           </span>
