@@ -217,20 +217,13 @@ export function RouteExplorer() {
             </span>
           </div>
 
-          {selected.id === "real-openings" ? (
-            <Link
-              href="/opportunity/plant-based-cooking-class"
-              className="mt-5 flex items-center justify-center gap-2 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
-            >
-              Take this step
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          ) : (
-            <button className="mt-5 flex items-center justify-center gap-2 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2">
-              Take this step
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          )}
+          <Link
+            href="/opportunity/plant-based-cooking-class"
+            className="mt-5 flex items-center justify-center gap-2 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
+          >
+            Take this step
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
           <button className="mt-2 flex items-center justify-center gap-2 rounded-full border border-line/70 py-2.75 text-[13.5px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2">
             Explore other routes
             <ArrowRight className="h-3.5 w-3.5" />
