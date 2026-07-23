@@ -21,6 +21,7 @@ export type DirectionQuestion = {
   question: string;
   mapsTo: string;
   icon: LucideIcon;
+  options: string[];
 };
 
 export const directionQuestions: DirectionQuestion[] = [
@@ -29,30 +30,78 @@ export const directionQuestions: DirectionQuestion[] = [
     question: "What are you trying to move toward?",
     mapsTo: "Direction",
     icon: Compass,
+    options: [
+      "A healthier lifestyle",
+      "A new career direction",
+      "More community",
+      "A creative project",
+      "More confidence",
+      "Better routines",
+      "A skill I want to build",
+      "Something I can’t name yet",
+    ],
   },
   {
     key: "makeRoomFor",
     question: "What should this make room for?",
     mapsTo: "Meaning / fuel",
     icon: Heart,
+    options: [
+      "More energy",
+      "Belonging",
+      "Freedom",
+      "Stability",
+      "Money",
+      "Confidence",
+      "Meaning",
+      "Creativity",
+      "Better health",
+      "A different kind of life",
+    ],
   },
   {
     key: "startingFrom",
     question: "Where are you starting from?",
     mapsTo: "Current location",
     icon: MapPin,
+    options: [
+      "I’m curious but unsure",
+      "I’ve tried before and stopped",
+      "I don’t know where to begin",
+      "I need people around me",
+      "I need structure",
+      "I need a real opportunity",
+      "I’m already moving but want a clearer path",
+    ],
   },
   {
     key: "reachable",
     question: "What would make this feel more reachable?",
     mapsTo: "Route type / support need",
     icon: Route,
+    options: [
+      "Someone who has done it before",
+      "A class, event, or opening",
+      "A group or community",
+      "A breakdown of requirements",
+      "A small low-pressure trial",
+      "I’m not sure — suggest one",
+    ],
   },
   {
     key: "tryFirst",
     question: "What could you try first?",
     mapsTo: "First movement",
     icon: Footprints,
+    options: [
+      "Talk to one person",
+      "Find one class or event",
+      "Join one group",
+      "Try one small version",
+      "Map what I need",
+      "Save an opportunity for later",
+      "Let Pathoro suggest a first step",
+    ],
   },
 ];
 
