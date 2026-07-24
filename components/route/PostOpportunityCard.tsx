@@ -42,7 +42,7 @@ export function PostOpportunityCard() {
           onClick={() => setOpen(true)}
           className="shrink-0 rounded-full border border-green/40 bg-green-soft px-4 py-2 text-[12.5px] font-medium text-green outline-none transition hover:bg-green-soft/70 focus-visible:ring-2 focus-visible:ring-green/50"
         >
-          Preview opportunity
+          Post an opportunity
         </button>
       </div>
 
