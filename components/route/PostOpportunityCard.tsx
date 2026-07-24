@@ -15,17 +15,25 @@ export function PostOpportunityCard() {
 
   return (
     <>
-      <div className="shadow-card mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[26px] border border-line/70 bg-cream-card px-6 py-5">
+      <div className="shadow-card mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[26px] border border-green/30 bg-green-soft/20 px-6 py-5">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-soft">
-            <Megaphone className="h-4 w-4 text-green" strokeWidth={1.75} />
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-soft">
+            <Megaphone className="h-4.5 w-4.5 text-green" strokeWidth={1.75} />
           </span>
           <div>
-            <p className="text-[14px] font-semibold text-ink">
-              Have an opportunity to offer?
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-[14.5px] font-semibold text-ink">
+                Have an opportunity to offer?
+              </p>
+              <span className="rounded-full bg-green-soft px-2 py-0.5 text-[10px] font-semibold text-green">
+                Coming soon
+              </span>
+            </div>
             <p className="mt-0.5 text-[12.5px] text-ink-faint">
               Help someone find their next step.
+            </p>
+            <p className="mt-1 text-[11.5px] text-ink-faint">
+              For teachers, mentors, groups, businesses, and local organizers.
             </p>
           </div>
         </div>

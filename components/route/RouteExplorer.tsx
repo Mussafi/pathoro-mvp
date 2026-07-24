@@ -10,6 +10,7 @@ import {
   ListFilter,
   Lock,
   MapPin,
+  MapPinned,
   Route as RouteIcon,
   ShieldCheck,
   SlidersHorizontal,
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import { routes } from "@/lib/routes";
 import { getRouteSuggestionReason, mapReachableToRouteId } from "@/lib/direction";
+import { getOpportunitiesForRoute } from "@/lib/opportunities";
 import { useDirectionAnswers } from "@/lib/useDirectionAnswers";
 
 function Connector({ active }: { active: boolean }) {
@@ -50,6 +52,8 @@ export function RouteExplorer({ selectedId, onSelect }: RouteExplorerProps) {
   const mappedRouteId = mapReachableToRouteId(answers.reachable);
   const isSuggested = selectedId === mappedRouteId;
   const suggestionReason = getRouteSuggestionReason(answers.reachable);
+  const routeOpportunities = getOpportunitiesForRoute(selectedId);
+  const firstOpportunity = routeOpportunities[0];
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
@@ -192,19 +196,47 @@ export function RouteExplorer({ selectedId, onSelect }: RouteExplorerProps) {
           </span>
 
           {isSuggested && (
-            <div className="relative mt-2.5 flex items-start gap-2 rounded-2xl border border-green/30 bg-green-soft/40 px-3 py-2.5">
-              <span className="relative flex h-6 w-6 shrink-0 items-center justify-center">
-                <span className="absolute inset-0 rounded-full bg-green/20 blur-[6px]" />
-                <Sparkles className="relative h-3.5 w-3.5 text-green" strokeWidth={1.75} />
-              </span>
-              <span>
-                <span className="block text-[11px] font-semibold text-green">
-                  Suggested from your answers
+            <div className="relative mt-3 overflow-hidden rounded-2xl border border-green/45 bg-green-soft/60 px-3.5 py-3 shadow-[0_0_0_3px_rgba(84,120,32,0.06)]">
+              <div className="flex items-start gap-2.5">
+                <span className="relative flex h-7 w-7 shrink-0 items-center justify-center">
+                  <span className="absolute inset-0 rounded-full bg-green/25 blur-[7px]" />
+                  <Sparkles className="relative h-4 w-4 text-green" strokeWidth={1.75} />
                 </span>
-                <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-soft">
-                  {suggestionReason}
+                <span>
+                  <span className="block text-[12px] font-semibold text-green">
+                    Suggested from your answers
+                  </span>
+                  <span className="mt-0.5 block text-[12px] font-medium leading-relaxed text-ink">
+                    Pathoro used your answer to choose this route first.
+                  </span>
+                  <span className="mt-1 block text-[11.5px] leading-snug text-ink-soft">
+                    {suggestionReason}
+                  </span>
                 </span>
-              </span>
+              </div>
+            </div>
+          )}
+
+          {firstOpportunity && (
+            <div className="mt-3 rounded-2xl border border-line/70 bg-cream-field px-3.5 py-3">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green-soft">
+                  <MapPinned className="h-3.5 w-3.5 text-green" strokeWidth={1.75} />
+                </span>
+                <span className="text-[12px] font-semibold text-ink">
+                  Local opportunities surfaced
+                </span>
+              </div>
+              <p className="mt-1.5 text-[12.5px] font-medium leading-snug text-ink">
+                {firstOpportunity.title}
+              </p>
+              <a
+                href="#route-opportunities"
+                className="mt-1.5 inline-flex items-center gap-1 text-[12px] font-semibold text-green outline-none transition hover:text-green-dark focus-visible:underline"
+              >
+                View route opportunities
+                <ArrowRight className="h-3 w-3" />
+              </a>
             </div>
           )}
 

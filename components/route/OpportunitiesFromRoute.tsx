@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock } from "lucide-react";
+import { Clock, Route as RouteIcon } from "lucide-react";
 import { getOpportunitiesForRoute, type RouteOpportunity } from "@/lib/opportunities";
 import { useDirectionAnswers } from "@/lib/useDirectionAnswers";
 
@@ -14,8 +14,8 @@ function OpportunityTile({
 }) {
   const isClickable = Boolean(opportunity.href);
   const className =
-    "flex flex-col rounded-2xl border border-line/70 bg-cream-field px-3.5 py-3.5 text-left transition" +
-    (isClickable ? " hover:border-green/40 hover:bg-cream-card" : "");
+    "flex flex-col rounded-2xl border border-l-[3px] border-line/70 border-l-green/50 bg-cream-field px-3.5 py-3.5 text-left transition" +
+    (isClickable ? " hover:border-green/40 hover:border-l-green hover:bg-cream-card" : "");
 
   const content = (
     <>
@@ -33,6 +33,10 @@ function OpportunityTile({
           </span>
         )}
       </div>
+      <span className="mt-1 flex items-center gap-1 text-[10.5px] font-semibold text-green">
+        <RouteIcon className="h-2.5 w-2.5" strokeWidth={2} />
+        From your selected route
+      </span>
       <span className="mt-1 block text-[11px] font-medium text-ink-faint">
         {opportunity.type}
       </span>
@@ -90,12 +94,16 @@ export function OpportunitiesFromRoute({ routeId }: { routeId: string }) {
   const opportunities = getOpportunitiesForRoute(routeId);
 
   return (
-    <div className="shadow-card mt-6 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
+    <div
+      id="route-opportunities"
+      className="shadow-card scroll-mt-6 mt-6 flex flex-col rounded-[26px] border border-green/25 bg-cream-card px-5 py-5"
+    >
       <h3 className="text-[15px] font-semibold text-ink">
         Opportunities from this route
       </h3>
       <p className="mt-0.5 text-[12px] text-ink-faint">
-        Local openings that match this route, near {answers.location}.
+        Pathoro surfaced these local openings from your selected route, near{" "}
+        {answers.location}.
       </p>
 
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
