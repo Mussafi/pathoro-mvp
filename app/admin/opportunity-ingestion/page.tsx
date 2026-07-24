@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { routes } from "@/lib/routes";
 import {
   OPPORTUNITY_SOURCE_LABELS,
@@ -13,6 +14,8 @@ import {
   type OpportunitySourceType,
   type OpportunityStatus,
 } from "@/lib/opportunitySchema";
+import { buildOpportunityFromDraft } from "@/lib/reviewedOpportunities";
+import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
 
 export default function OpportunityIngestionPage() {
   const [sourceUrl, setSourceUrl] = useState("");
@@ -24,13 +27,14 @@ export default function OpportunityIngestionPage() {
   const [extracted, setExtracted] = useState<IngestionDraft | null>(null);
   const [routeId, setRouteId] = useState<string>("real-openings");
   const [status, setStatus] = useState<OpportunityStatus>("needs_review");
-  const [approved, setApproved] = useState(false);
+  const [approvedId, setApprovedId] = useState<string | null>(null);
+  const { reviewed, approve, clear } = useReviewedOpportunities();
 
   async function handleExtract() {
     setLoading(true);
     setError(null);
     setWarnings([]);
-    setApproved(false);
+    setApprovedId(null);
 
     try {
       const res = await fetch("/api/ingest-opportunity", {
@@ -403,21 +407,96 @@ export default function OpportunityIngestionPage() {
 
               <button
                 type="button"
-                onClick={() => setApproved(true)}
+                onClick={() => {
+                  if (!extracted) return;
+                  const opportunity = buildOpportunityFromDraft(
+                    extracted,
+                    routeId,
+                    "live",
+                    approvedId ?? undefined
+                  );
+                  approve(opportunity);
+                  setApprovedId(opportunity.id);
+                }}
                 className="flex items-center justify-center gap-2 rounded-full border border-green/40 bg-green-soft px-4 py-2.5 text-[13.5px] font-medium text-green outline-none transition hover:bg-green-soft/70 focus-visible:ring-2 focus-visible:ring-green/50"
               >
-                Approve for map (mock only)
+                Approve for map
               </button>
-              {approved && (
-                <p className="text-[11.5px] text-ink-faint">
-                  Mock approval recorded on this page only — nothing was
-                  saved, and this does not change what appears on{" "}
-                  <code>/route-planning</code>.
-                </p>
+              {approvedId && (
+                <div className="rounded-2xl border border-green/30 bg-green-soft/20 px-4 py-3">
+                  <p className="text-[12px] font-medium text-ink-soft">
+                    Saved locally. This opportunity will now appear in your
+                    route map on this browser.
+                  </p>
+                  <Link
+                    href="/route-planning"
+                    className="mt-1.5 inline-block text-[12px] font-semibold text-green underline"
+                  >
+                    View in route planning
+                  </Link>
+                  <p className="mt-1.5 text-[11px] text-ink-faint">
+                    Local prototype only — not saved to a database.
+                  </p>
+                </div>
               )}
             </div>
           </>
         )}
+
+        <div className="shadow-card mt-6 flex flex-col gap-3 rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-[15px] font-semibold text-ink">
+              Locally approved opportunities
+            </h2>
+            <Link
+              href="/route-planning"
+              className="text-[12px] font-semibold text-green underline"
+            >
+              Route planning
+            </Link>
+          </div>
+          <p className="text-[11px] text-ink-faint">
+            Local prototype only — stored in this browser&rsquo;s
+            localStorage, not a database.
+          </p>
+
+          {reviewed.length === 0 ? (
+            <p className="text-[12.5px] text-ink-faint">
+              No locally approved opportunities yet.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {reviewed.map((opportunity) => {
+                const route = routes.find((r) => r.id === opportunity.routeId);
+                return (
+                  <li
+                    key={opportunity.id}
+                    className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.5"
+                  >
+                    <span className="block text-[13px] font-semibold text-ink">
+                      {opportunity.title}
+                    </span>
+                    <span className="mt-0.5 block text-[11.5px] text-ink-faint">
+                      {route?.title ?? opportunity.routeId} ·{" "}
+                      {opportunity.city || "City not set"} ·{" "}
+                      {OPPORTUNITY_STATUS_LABELS[opportunity.status]}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {reviewed.length > 0 && (
+            <button
+              type="button"
+              onClick={clear}
+              className="flex items-center justify-center gap-2 rounded-full border border-line/70 px-4 py-2.5 text-[13px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50"
+            >
+              Clear local reviewed opportunities
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

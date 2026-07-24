@@ -135,3 +135,13 @@ export type IngestionDraft = {
 export type IngestionResponse =
   | { ok: true; draft: IngestionDraft; warnings: string[] }
   | { ok: false; error: string };
+
+/**
+ * Returns the internal detail page URL for an opportunity, or undefined if
+ * it isn't live yet (in which case it should open a preview instead of
+ * navigating anywhere).
+ */
+export function getOpportunityDetailHref(opportunity: Opportunity): string | undefined {
+  if (opportunity.status !== "live") return undefined;
+  return opportunity.href ?? `/opportunity/${opportunity.id}`;
+}

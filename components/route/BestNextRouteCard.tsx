@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { ArrowRight, Clock, Heart, Lock, Sparkles, Star } from "lucide-react";
 import { routes } from "@/lib/routes";
-import { getOpportunitiesForRoute } from "@/lib/opportunities";
+import { getOpportunityDetailHref } from "@/lib/opportunitySchema";
+import { mergeWithSeed, filterForRoute } from "@/lib/reviewedOpportunities";
+import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
 import type { DirectionAnswers } from "@/lib/direction";
 import { OpportunityTile } from "@/components/route/OpportunityTile";
 
@@ -22,7 +24,11 @@ export function BestNextRouteCard({
 }: BestNextRouteCardProps) {
   const selected = routes.find((r) => r.id === selectedRouteId) ?? routes[0];
   const isSuggested = selectedRouteId === suggestedRouteId;
-  const opportunity = getOpportunitiesForRoute(selectedRouteId)[0];
+  const { reviewed } = useReviewedOpportunities();
+  const opportunitiesForRoute = filterForRoute(mergeWithSeed(reviewed), selectedRouteId, answers.location);
+  const opportunity = opportunitiesForRoute[0];
+  const moreCount = Math.max(opportunitiesForRoute.length - 1, 0);
+  const detailHref = opportunity ? getOpportunityDetailHref(opportunity) : undefined;
 
   const personalSentence = `You said “${answers.reachable}” would make this more reachable, so Pathoro opened ${selected.title} first.`;
 
@@ -95,12 +101,17 @@ export function BestNextRouteCard({
             Local opportunity
           </span>
           <OpportunityTile opportunity={opportunity} location={answers.location} />
+          {moreCount > 0 && (
+            <p className="mt-2 text-[11px] text-ink-faint">
+              +{moreCount} more local {moreCount === 1 ? "opportunity" : "opportunities"} for this route
+            </p>
+          )}
         </div>
       )}
 
-      {opportunity?.href ? (
+      {detailHref ? (
         <Link
-          href={opportunity.href}
+          href={detailHref}
           className="mt-5 flex items-center justify-center gap-2 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
         >
           Take this step

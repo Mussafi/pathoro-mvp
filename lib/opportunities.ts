@@ -22,7 +22,7 @@ export const routeOpportunities: Opportunity[] = [
     effortLevel: "Low",
     frictionLevel: "Low",
     trustLevel: "Medium",
-    status: "preview",
+    status: "live",
     href: "/opportunity/plant-based-cooking-class",
   },
   {
