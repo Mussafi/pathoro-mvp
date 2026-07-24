@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, ChevronDown, Pencil } from "lucide-react";
 import { directionQuestions, type DirectionAnswers } from "@/lib/direction";
 import { useDirectionAnswers } from "@/lib/useDirectionAnswers";
 
@@ -14,9 +14,20 @@ function autoResize(el: HTMLTextAreaElement) {
 export function OrientationCard() {
   const { answers, setAnswers } = useDirectionAnswers();
   const [openKey, setOpenKey] = useState<keyof DirectionAnswers | null>(null);
+  const textareaRefs = useRef<Partial<Record<keyof DirectionAnswers, HTMLTextAreaElement>>>({});
 
   function updateField(key: keyof DirectionAnswers, value: string) {
     setAnswers({ ...answers, [key]: value });
+  }
+
+  function focusAnswer(key: keyof DirectionAnswers) {
+    setOpenKey(key);
+    const el = textareaRefs.current[key];
+    if (el) {
+      el.focus();
+      const len = el.value.length;
+      el.setSelectionRange(len, len);
+    }
   }
 
   return (
@@ -46,28 +57,44 @@ export function OrientationCard() {
               key={q.key}
               className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.5"
             >
-              <button
-                type="button"
-                onClick={() => setOpenKey(isOpen ? null : q.key)}
-                aria-expanded={isOpen}
-                className="flex w-full items-center justify-between gap-2 text-left"
-              >
-                <span className="flex items-center gap-1.5">
+              <div className="flex w-full items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1.5">
                   <Icon className="h-3 w-3 shrink-0 text-green" strokeWidth={1.75} />
                   <span className="block text-[10.5px] text-ink-faint">
                     {q.question}
                   </span>
                 </span>
-                <ChevronDown
-                  className={`h-3.5 w-3.5 shrink-0 text-ink-faint transition-transform ${
-                    isOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
+                <span className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => focusAnswer(q.key)}
+                    aria-label="Write your own answer"
+                    className="rounded-full p-1 text-ink-faint outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-green/50"
+                  >
+                    <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOpenKey(isOpen ? null : q.key)}
+                    aria-expanded={isOpen}
+                    aria-label="Show suggestions"
+                    className="rounded-full p-1 text-ink-faint outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-green/50"
+                  >
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform ${
+                        isOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                </span>
+              </div>
 
               <textarea
                 ref={(el) => {
-                  if (el) autoResize(el);
+                  if (el) {
+                    autoResize(el);
+                    textareaRefs.current[q.key] = el;
+                  }
                 }}
                 value={answers[q.key]}
                 onChange={(e) => {
