@@ -234,7 +234,7 @@ export function RouteRevealMap({
       <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">{personalSentence}</p>
 
       <a
-        href="#route-rows"
+        href="#best-next-route"
         className="mt-3 inline-flex w-fit items-center gap-1 text-[12.5px] font-semibold text-green outline-none transition hover:text-green-dark focus-visible:underline"
       >
         Explore this route
