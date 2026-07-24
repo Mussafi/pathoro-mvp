@@ -1,15 +1,30 @@
 import Link from "next/link";
 import { Route as RouteIcon } from "lucide-react";
-import type { RouteOpportunity } from "@/lib/opportunities";
+import type { Opportunity } from "@/lib/opportunitySchema";
+
+function getDisplayTags(opportunity: Opportunity): string[] {
+  const tags: string[] = [];
+  if (opportunity.frictionLevel === "Low") {
+    tags.push("Beginner-friendly");
+  }
+  if (opportunity.effortLevel === "Low") {
+    tags.push("Low effort");
+  }
+  if (opportunity.effortLevel === "Low" && opportunity.frictionLevel === "Low") {
+    tags.push("Good first step");
+  }
+  return tags;
+}
 
 export function OpportunityTile({
   opportunity,
   location,
 }: {
-  opportunity: RouteOpportunity;
+  opportunity: Opportunity;
   location: string;
 }) {
   const isClickable = Boolean(opportunity.href);
+  const tags = getDisplayTags(opportunity);
   const className =
     "flex flex-col rounded-2xl border border-l-[3px] border-line/70 border-l-green/50 bg-cream-field px-3.5 py-3.5 text-left transition" +
     (isClickable ? " hover:border-green/40 hover:border-l-green hover:bg-cream-card" : "");
@@ -35,16 +50,16 @@ export function OpportunityTile({
         From your selected route
       </span>
       <span className="mt-1 block text-[11px] font-medium text-ink-faint">
-        {opportunity.type}
+        {opportunity.opportunityType}
       </span>
       <p className="mt-1.5 text-[12px] leading-snug text-ink-soft">
-        {opportunity.purpose}
+        {opportunity.description}
       </p>
       <div className="mt-2.5 flex flex-wrap gap-1.5">
         <span className="rounded-full border border-line/70 bg-cream-card px-2 py-0.5 text-[10.5px] text-ink-faint">
           Near {location}
         </span>
-        {opportunity.effortTags.map((tag) => (
+        {tags.map((tag) => (
           <span
             key={tag}
             className="rounded-full border border-line/70 bg-cream-card px-2 py-0.5 text-[10.5px] text-ink-faint"
@@ -53,6 +68,9 @@ export function OpportunityTile({
           </span>
         ))}
       </div>
+      <p className="mt-2 text-[10px] text-ink-faint/80">
+        Preview data · Mock seed · Real ingestion coming soon
+      </p>
     </>
   );
 
