@@ -107,6 +107,12 @@ export default function OpportunityIngestionPage() {
               className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint/70"
             />
           </label>
+          <p className="text-[11px] text-ink-faint">
+            Paste an Instagram/Eventbrite/website link. Pathoro will try to
+            find the canonical source page before creating a draft —
+            Instagram and Facebook are only ever used as a discovery signal,
+            never as the page Pathoro extracts details from.
+          </p>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.25">
