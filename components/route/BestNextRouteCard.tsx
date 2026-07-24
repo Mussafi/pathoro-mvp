@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Heart, Lock, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Clock, Heart, Lock, Sparkles, Star } from "lucide-react";
 import { routes } from "@/lib/routes";
 import { getOpportunitiesForRoute } from "@/lib/opportunities";
 import type { DirectionAnswers } from "@/lib/direction";
@@ -98,13 +98,24 @@ export function BestNextRouteCard({
         </div>
       )}
 
-      <Link
-        href="/opportunity/plant-based-cooking-class"
-        className="mt-5 flex items-center justify-center gap-2 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
-      >
-        Take this step
-        <ArrowRight className="h-3.5 w-3.5" />
-      </Link>
+      {opportunity?.href ? (
+        <Link
+          href={opportunity.href}
+          className="mt-5 flex items-center justify-center gap-2 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
+        >
+          Take this step
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+      ) : (
+        <button
+          type="button"
+          disabled
+          className="mt-5 flex cursor-not-allowed items-center justify-center gap-2 rounded-full border border-line/70 bg-cream-field py-2.75 text-[13.5px] font-medium text-ink-faint"
+        >
+          <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
+          Opportunity preview coming soon
+        </button>
+      )}
       <button
         type="button"
         onClick={onExploreOthers}
