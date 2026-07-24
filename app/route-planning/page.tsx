@@ -1,7 +1,6 @@
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
 import { PathSidebar } from "@/components/route/PathSidebar";
-import { RouteExplorer } from "@/components/route/RouteExplorer";
-import { RouteFooterBar } from "@/components/route/RouteFooterBar";
+import { RoutePlanningBody } from "@/components/route/RoutePlanningBody";
 import { TopoLines } from "@/components/TopoLines";
 
 export default function RoutePlanningPage() {
@@ -18,10 +17,7 @@ export default function RoutePlanningPage() {
 
       <main className="relative mx-auto grid w-full max-w-[1500px] grid-cols-1 items-start gap-6 px-6 py-6 sm:px-10 lg:grid-cols-[280px_minmax(0,1fr)]">
         <PathSidebar />
-        <div className="flex min-w-0 flex-col">
-          <RouteExplorer />
-          <RouteFooterBar />
-        </div>
+        <RoutePlanningBody />
       </main>
     </div>
   );

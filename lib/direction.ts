@@ -7,6 +7,7 @@ export type DirectionAnswers = {
   startingFrom: string;
   reachable: string;
   tryFirst: string;
+  location: string;
 };
 
 export const defaultDirectionAnswers: DirectionAnswers = {
@@ -15,6 +16,7 @@ export const defaultDirectionAnswers: DirectionAnswers = {
   startingFrom: "I eat meat most days and don't know what to cook",
   reachable: "A class, group, or real local opening",
   tryFirst: "Attend one beginner-friendly plant-based cooking class",
+  location: "Austin, TX",
 };
 
 export type DirectionQuestion = {
@@ -117,6 +119,28 @@ const reachableToRouteId: Record<string, string> = {
 
 export function mapReachableToRouteId(reachable: string): string {
   return reachableToRouteId[reachable] ?? defaultRouteId;
+}
+
+const reachableExplanations: Record<string, string> = {
+  "Someone who has done it before":
+    "You chose “Someone who has done it before,” so Pathoro surfaced the People Route first.",
+  "A class, event, or opening":
+    "You chose “A class, event, or opening,” so Pathoro surfaced the Real Openings Route first.",
+  "A group or community":
+    "You chose “A group or community,” so Pathoro surfaced the Community Route first.",
+  "A breakdown of requirements":
+    "You chose “A breakdown of requirements,” so Pathoro surfaced the Requirements Route first.",
+  "A small low-pressure trial":
+    "You chose “A small low-pressure trial,” so Pathoro surfaced the Try It Route first.",
+  "I’m not sure — suggest one":
+    "You weren’t sure, so Pathoro suggested the Real Openings Route to help you start.",
+};
+
+export function getRouteSuggestionReason(reachable: string): string {
+  return (
+    reachableExplanations[reachable] ??
+    "Pathoro suggested this route to help you start, based on your answers."
+  );
 }
 
 const STORAGE_KEY = "pathoro:direction-answers";

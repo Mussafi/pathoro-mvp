@@ -25,6 +25,10 @@ export function PathSidebar() {
         <span className="mt-1.5 block text-[12.5px] font-medium text-green">
           {opportunityContext.stepLabel}
         </span>
+        <span className="mt-1 flex items-center gap-1 text-[11px] text-ink-faint">
+          <MapPin className="h-3 w-3 shrink-0 text-green" strokeWidth={1.75} />
+          Looking near {answers.location}
+        </span>
 
         <h1 className="mt-3 font-serif text-[26px] leading-[1.18] text-ink">
           {answers.moveToward}

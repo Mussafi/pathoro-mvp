@@ -13,11 +13,12 @@ import {
   Route as RouteIcon,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Star,
   X,
 } from "lucide-react";
 import { routes } from "@/lib/routes";
-import { mapReachableToRouteId } from "@/lib/direction";
+import { getRouteSuggestionReason, mapReachableToRouteId } from "@/lib/direction";
 import { useDirectionAnswers } from "@/lib/useDirectionAnswers";
 
 function Connector({ active }: { active: boolean }) {
@@ -37,21 +38,33 @@ function Connector({ active }: { active: boolean }) {
   );
 }
 
-export function RouteExplorer() {
+type RouteExplorerProps = {
+  selectedId: string;
+  onSelect: (routeId: string) => void;
+};
+
+export function RouteExplorer({ selectedId, onSelect }: RouteExplorerProps) {
   const { answers } = useDirectionAnswers();
-  const [overrideId, setOverrideId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
-  const selectedId = overrideId ?? mapReachableToRouteId(answers.reachable);
   const selected = routes.find((r) => r.id === selectedId) ?? routes[0];
+  const mappedRouteId = mapReachableToRouteId(answers.reachable);
+  const isSuggested = selectedId === mappedRouteId;
+  const suggestionReason = getRouteSuggestionReason(answers.reachable);
 
   return (
     <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
       {/* route list */}
       <div className="shadow-card flex min-w-0 flex-col rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[13.5px] text-ink-soft">
-            Five routes to make this opportunity physically reachable.
-          </p>
+          <div>
+            <p className="text-[13.5px] text-ink-soft">
+              Five routes to make this opportunity physically reachable.
+            </p>
+            <p className="mt-1 flex items-center gap-1 text-[11.5px] text-ink-faint">
+              <MapPin className="h-3 w-3 shrink-0 text-green" strokeWidth={1.75} />
+              People, groups, and places near {answers.location} can help make it real.
+            </p>
+          </div>
           <div className="flex gap-2">
             <button className="shadow-card flex items-center gap-1.5 rounded-xl border border-line/70 bg-cream-card px-3 py-2 text-[12.5px] font-medium text-ink-soft">
               <ListFilter className="h-3.5 w-3.5" strokeWidth={1.75} />
@@ -76,7 +89,7 @@ export function RouteExplorer() {
                 key={route.id}
                 type="button"
                 onClick={() => {
-                  setOverrideId(route.id);
+                  onSelect(route.id);
                   setPanelOpen(true);
                 }}
                 className={`flex flex-col gap-4 rounded-2xl border px-4 py-4 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2 focus-visible:ring-offset-cream-card sm:flex-row sm:items-center ${
@@ -130,12 +143,15 @@ export function RouteExplorer() {
                     </div>
                   ))}
                   <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
+                    className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
                       isSelected
                         ? "border-green bg-green"
                         : "border-line/70 bg-cream-card"
                     }`}
                   >
+                    {isSelected && isSuggested && (
+                      <span className="absolute -inset-1.5 -z-10 rounded-full bg-green/25 blur-[8px]" />
+                    )}
                     {isSelected ? (
                       <Star className="h-3.5 w-3.5 fill-cream text-cream" />
                     ) : (
@@ -174,6 +190,23 @@ export function RouteExplorer() {
           <span className="mt-4 inline-flex w-fit items-center rounded-full bg-green-soft px-3 py-1 text-[11px] font-semibold text-green">
             Recommended
           </span>
+
+          {isSuggested && (
+            <div className="relative mt-2.5 flex items-start gap-2 rounded-2xl border border-green/30 bg-green-soft/40 px-3 py-2.5">
+              <span className="relative flex h-6 w-6 shrink-0 items-center justify-center">
+                <span className="absolute inset-0 rounded-full bg-green/20 blur-[6px]" />
+                <Sparkles className="relative h-3.5 w-3.5 text-green" strokeWidth={1.75} />
+              </span>
+              <span>
+                <span className="block text-[11px] font-semibold text-green">
+                  Suggested from your answers
+                </span>
+                <span className="mt-0.5 block text-[11.5px] leading-snug text-ink-soft">
+                  {suggestionReason}
+                </span>
+              </span>
+            </div>
+          )}
 
           <h3 className="mt-3 text-[15.5px] font-semibold text-ink">
             {selected.title}

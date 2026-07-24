@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Pencil } from "lucide-react";
+import { ArrowRight, ChevronDown, MapPin, Pencil } from "lucide-react";
 import { directionQuestions, type DirectionAnswers } from "@/lib/direction";
 import { useDirectionAnswers } from "@/lib/useDirectionAnswers";
 
@@ -15,6 +15,7 @@ export function OrientationCard() {
   const { answers, setAnswers } = useDirectionAnswers();
   const [openKey, setOpenKey] = useState<keyof DirectionAnswers | null>(null);
   const textareaRefs = useRef<Partial<Record<keyof DirectionAnswers, HTMLTextAreaElement>>>({});
+  const locationRef = useRef<HTMLInputElement | null>(null);
 
   function updateField(key: keyof DirectionAnswers, value: string) {
     setAnswers({ ...answers, [key]: value });
@@ -48,8 +49,27 @@ export function OrientationCard() {
         Pathoro will help shape the path.
       </p>
 
+      <div className="mt-3.5 flex items-center gap-2 rounded-full border border-line/70 bg-cream-field px-4 py-2">
+        <MapPin className="h-3.5 w-3.5 shrink-0 text-green" strokeWidth={1.75} />
+        <span className="shrink-0 text-[10.5px] text-ink-faint">Looking near</span>
+        <input
+          ref={locationRef}
+          value={answers.location}
+          onChange={(e) => updateField("location", e.target.value)}
+          className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-ink outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => locationRef.current?.focus()}
+          aria-label="Edit location"
+          className="shrink-0 rounded-full p-1 text-ink-faint outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-green/50"
+        >
+          <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+        </button>
+      </div>
+
       <div className="mt-3.5 flex flex-col gap-2.5">
-        {directionQuestions.map((q) => {
+        {directionQuestions.map((q, index) => {
           const Icon = q.icon;
           const isOpen = openKey === q.key;
           return (
@@ -57,6 +77,11 @@ export function OrientationCard() {
               key={q.key}
               className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.5"
             >
+              {isOpen && (
+                <p className="mb-1 text-[9.5px] font-semibold uppercase tracking-wide text-green/80">
+                  Question {index + 1} of {directionQuestions.length}
+                </p>
+              )}
               <div className="flex w-full items-center justify-between gap-2">
                 <span className="flex min-w-0 items-center gap-1.5">
                   <Icon className="h-3 w-3 shrink-0 text-green" strokeWidth={1.75} />
@@ -136,6 +161,10 @@ export function OrientationCard() {
           );
         })}
       </div>
+
+      <p className="mt-3 text-[12px] leading-relaxed text-ink-soft">
+        Pathoro will use this to suggest a route and nearby opportunities.
+      </p>
 
       <Link
         href="/route-planning"
