@@ -22,6 +22,8 @@ Every opportunity Pathoro shows — on the admin review screen, on a route-plann
 
 A lot of classes are consumer experiences — they may be useful, but they often serve someone else's business (the organizer's) more than the user's own path forward. Pathoro should not over-index on classes or events just because they are the easiest thing to find and extract. The deeper product finds opportunities that create agency, access, income, skill, ownership, leverage, proximity, or compounding next steps — not just something pleasant to attend.
 
+**"The modern opportunity problem is not just finding events. It is finding hidden, underpriced, or overlooked access points that can help someone change their position."** This is why Pathoro's scout has a dedicated hidden-opportunity search mode (v0.12) alongside its route-relevant and gateway-community modes — the same principle expressed as three different search strategies, not three different products.
+
 Examples of higher-agency opportunities, beyond the class/workshop default:
 
 - Sourcing clothes/items from flea markets to resell on eBay
@@ -36,17 +38,19 @@ Examples of higher-agency opportunities, beyond the class/workshop default:
 - Local unmet needs someone could solve
 - Workshops — but only when they lead to access, skill, a credential, or a next door, not just an afternoon well spent
 
-Every opportunity — during admin review, in the scout's classification, or on a route-planning card — should be weighed against these questions:
+Every opportunity — during admin review, in the scout's classification, or on a route-planning card — should be weighed against these dimensions (refined in v0.12 from the original seven questions to name relationship-building and cost/friction explicitly):
 
-- Does this build skill?
-- Does this create income potential?
-- Does this create access or proximity?
-- Does this open a next door?
-- Does this create ownership or agency?
-- Does this compound — does it lead somewhere further, or end when it ends?
-- Or is it mostly just a paid activity?
+- Agency potential — does this put the person in the driver's seat, or just in the audience?
+- Income potential — could this create real income, not just an expense?
+- Ownership potential — does this create ownership or agency, versus renting someone else's experience?
+- Access/proximity created — does this create access or proximity to people, places, or resources?
+- Skill built — does this build a skill that outlasts the opportunity itself?
+- Relationship/network potential — does this build a specific relationship or connection that could compound?
+- Compounding potential — does this lead somewhere further, or end when it ends?
+- Cost/friction — what does it actually cost in money, time, or effort to take this step?
+- Is this mostly a consumer activity? — the honest fallback question when none of the above clearly apply.
 
-A "yes" to any of the first six is a real opportunity. A "no" to all of them, with a "yes" only to the last, is consumption — still possibly worth surfacing, but not what Pathoro should reach for first.
+A "yes" to any of the first six is a real opportunity. A "yes" only to the last, with cost/friction as the main consideration, is consumption — still possibly worth surfacing, but not what Pathoro should reach for first.
 
 ## Gateway Communities
 

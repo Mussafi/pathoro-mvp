@@ -72,7 +72,10 @@ export const OPPORTUNITY_SOURCE_LABELS: Record<OpportunitySourceType, string> = 
  * docs/V0.11-AI-OPPORTUNITY-SCOUT.md); not a field on the persisted
  * Opportunity type and not sent to Supabase. The gateway-community values
  * are structure-based (institution types), never identity-based — see
- * docs/MVP-LOCKED-PRINCIPLES.md#gateway-communities.
+ * docs/MVP-LOCKED-PRINCIPLES.md#gateway-communities. resale_arbitrage and
+ * small_business_opening (v0.12) are split out of the broader
+ * income_generating/ownership_path values so a flea-market resale lead and
+ * a small-business-grant lead don't get flattened into the same label.
  */
 export type OpportunityCategory =
   | "consumer_activity"
@@ -89,7 +92,9 @@ export type OpportunityCategory =
   | "place_based_network"
   | "diaspora_route"
   | "trade_access_point"
-  | "relationship_path";
+  | "relationship_path"
+  | "resale_arbitrage"
+  | "small_business_opening";
 
 export const OPPORTUNITY_CATEGORY_LABELS: Record<OpportunityCategory, string> = {
   consumer_activity: "Consumer activity",
@@ -105,6 +110,8 @@ export const OPPORTUNITY_CATEGORY_LABELS: Record<OpportunityCategory, string> = 
   bridge_person: "Bridge person",
   place_based_network: "Place-based network",
   diaspora_route: "Diaspora route",
+  resale_arbitrage: "Resale / arbitrage",
+  small_business_opening: "Small business opening",
   trade_access_point: "Trade access point",
   relationship_path: "Relationship path",
 };

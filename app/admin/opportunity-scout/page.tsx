@@ -13,7 +13,7 @@ import {
   unmapOpportunitySourceType,
 } from "@/lib/discoveryQueue";
 import { useDiscoveryQueue } from "@/lib/useDiscoveryQueue";
-import type { ScoutCandidate } from "@/lib/tavily";
+import type { ScoutCandidate, ScoutMode } from "@/lib/tavily";
 import type { ScoutResponse } from "@/app/api/scout-opportunities/route";
 
 const CONFIDENCE_LABELS: Record<ScoutCandidate["confidence"], string> = {
@@ -21,6 +21,24 @@ const CONFIDENCE_LABELS: Record<ScoutCandidate["confidence"], string> = {
   medium: "Medium confidence",
   low: "Low confidence",
 };
+
+const SCOUT_MODE_OPTIONS: { value: ScoutMode; label: string; description: string }[] = [
+  {
+    value: "route",
+    label: "Route-relevant opportunities",
+    description: "Route-type-biased search, with a light dose of higher-agency queries.",
+  },
+  {
+    value: "hidden",
+    label: "Hidden opportunity / leverage scout",
+    description: "Resale, flea markets, grants, apprenticeships, supplier gaps — not classes.",
+  },
+  {
+    value: "gateway",
+    label: "Gateway community scout",
+    description: "Chambers of commerce, cultural associations, trade meetups, bridges in.",
+  },
+];
 
 // "Opportunity, not consumption" — consumer_activity gets a muted badge,
 // every higher-agency category gets the same accent as confidence, a small
@@ -50,6 +68,7 @@ export default function OpportunityScoutPage() {
   const [state, setState] = useState("TX");
   const [pathGoal, setPathGoal] = useState("become vegetarian");
   const [routeId, setRouteId] = useState("real-openings");
+  const [scoutMode, setScoutMode] = useState<ScoutMode>("route");
   const [keywords, setKeywords] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +90,7 @@ export default function OpportunityScoutPage() {
           "Content-Type": "application/json",
           "x-admin-token": adminToken,
         },
-        body: JSON.stringify({ city, state, pathGoal, routeId, keywords }),
+        body: JSON.stringify({ city, state, pathGoal, routeId, keywords, scoutMode }),
       });
       const data = (await res.json()) as ScoutResponse;
 
@@ -125,7 +144,11 @@ export default function OpportunityScoutPage() {
           you pay to attend is not automatically better than a flea market
           vendor slot, a grant, or an apprenticeship — search results
           include both, labeled, so you can judge which one actually opens
-          something for this person.
+          something for this person. The modern opportunity problem is not
+          just finding events — it&rsquo;s finding hidden, underpriced, or
+          overlooked access points that can help someone change their
+          position. Pick the hidden opportunity mode below to search
+          directly for those.
         </div>
 
         <div className="mt-3 rounded-2xl border border-green/40 bg-green-soft/15 px-4 py-3 text-[11.5px] leading-relaxed text-ink-soft">
@@ -180,6 +203,33 @@ export default function OpportunityScoutPage() {
               className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint/70"
             />
           </label>
+
+          <div>
+            <span className="block text-[10.5px] text-ink-faint">
+              Scout mode
+            </span>
+            <div className="mt-1.5 flex flex-col gap-2">
+              {SCOUT_MODE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setScoutMode(option.value)}
+                  className={`rounded-2xl border px-3.5 py-2.5 text-left transition ${
+                    scoutMode === option.value
+                      ? "border-green/50 bg-green-soft/60"
+                      : "border-line/70 bg-cream-field hover:border-green/30"
+                  }`}
+                >
+                  <span className="block text-[12.5px] font-semibold text-ink">
+                    {option.label}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] text-ink-faint">
+                    {option.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           <label className="block rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.25">
             <span className="block text-[10.5px] text-ink-faint">
@@ -279,9 +329,30 @@ export default function OpportunityScoutPage() {
                       {candidate.snippet}
                     </p>
                   )}
+                  <p
+                    className={`text-[11px] font-semibold ${
+                      candidate.opportunityCategory === "consumer_activity"
+                        ? "text-ink-faint"
+                        : "text-green"
+                    }`}
+                  >
+                    {candidate.opportunityCategory === "consumer_activity"
+                      ? "Looks like a consumer activity"
+                      : "Looks like a real opportunity"}
+                  </p>
                   <p className="text-[11.5px] leading-snug text-ink-faint">
-                    <span className="font-semibold text-ink-soft">Why this may fit — </span>
+                    <span className="font-semibold text-ink-soft">
+                      Why this may be a real opportunity —{" "}
+                    </span>
                     {candidate.whyThisMayFit}
+                  </p>
+                  <p className="text-[11.5px] leading-snug text-ink-faint">
+                    <span className="font-semibold text-ink-soft">What leverage it may create — </span>
+                    {candidate.leverageHint}
+                  </p>
+                  <p className="text-[11.5px] leading-snug text-ink-faint">
+                    <span className="font-semibold text-ink-soft">What next step it suggests — </span>
+                    {candidate.suggestedNextStep}
                   </p>
                   <p className="text-[11.5px] text-ink-faint">
                     <span className="font-semibold text-ink-soft">Likely route — </span>

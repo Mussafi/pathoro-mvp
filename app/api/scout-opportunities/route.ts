@@ -1,5 +1,10 @@
 import { isAuthorizedAdminRequest } from "@/lib/adminAuth";
-import { isTavilyConfigured, scoutOpportunities, type ScoutCandidate } from "@/lib/tavily";
+import {
+  isTavilyConfigured,
+  scoutOpportunities,
+  type ScoutCandidate,
+  type ScoutMode,
+} from "@/lib/tavily";
 
 export type ScoutResponse =
   | { ok: true; candidates: ScoutCandidate[]; queriesUsed: string[] }
@@ -34,12 +39,13 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  const { city, state, pathGoal, routeId, keywords } = (body ?? {}) as {
+  const { city, state, pathGoal, routeId, keywords, scoutMode } = (body ?? {}) as {
     city?: string;
     state?: string;
     pathGoal?: string;
     routeId?: string;
     keywords?: string;
+    scoutMode?: ScoutMode;
   };
 
   if (!city?.trim() || !pathGoal?.trim() || !routeId?.trim()) {
@@ -56,6 +62,7 @@ export async function POST(request: Request): Promise<Response> {
       pathGoal: pathGoal.trim(),
       routeId: routeId.trim(),
       keywords: keywords?.trim(),
+      scoutMode,
     });
     return Response.json({ ok: true, candidates, queriesUsed } satisfies ScoutResponse);
   } catch (err) {

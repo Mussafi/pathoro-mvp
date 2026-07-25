@@ -38,8 +38,8 @@ const ROUTE_QUERY_HINTS: Record<string, string[]> = {
  * apprenticeships — not classes/events. See "Opportunity, not consumption"
  * in docs/MVP-LOCKED-PRINCIPLES.md: a goal like "build wealth" or "find
  * opportunities" should not just return a list of paid classes. Two of
- * these are mixed into every search, rotated by route so different routes
- * don't always get the same pair.
+ * these are mixed into every "route" mode search, rotated by route so
+ * different routes don't always get the same pair.
  */
 const OPPORTUNITY_ACCESS_HINTS = [
   "flea market vendor opportunity",
@@ -49,6 +49,29 @@ const OPPORTUNITY_ACCESS_HINTS = [
   "makerspace open shop night",
   "apprenticeship OR shadowing opportunity",
   "local resale OR side hustle opportunity",
+];
+
+/**
+ * The full "hidden opportunity / leverage scout" mode (v0.12) query pool —
+ * every query in this mode is drawn from here, no class/workshop or
+ * route-type phrasing at all. See "the modern opportunity problem is not
+ * just finding events" in docs/MVP-LOCKED-PRINCIPLES.md.
+ */
+const HIDDEN_OPPORTUNITY_HINTS = [
+  "resale OR arbitrage opportunity",
+  "flea market vendor opportunity",
+  "estate sale OR liquidation auction",
+  "thrift store sourcing",
+  "vendor market application",
+  "makerspace open shop night",
+  "repair OR refurbishing drop-off",
+  "apprenticeship OR shadowing opportunity",
+  "small business grant OR entrepreneur program",
+  "local business gap OR unmet need",
+  "import export sourcing community",
+  "wholesale supplier directory",
+  "coworking OR founder meetup",
+  "side hustle entry point",
 ];
 
 /**
@@ -88,6 +111,9 @@ const CANONICAL_HOST_SOURCE_TYPES: { match: (host: string) => boolean; type: Opp
   { match: (h) => h.includes("community") || h.includes("centre") || h.includes("center"), type: "community_center" },
 ];
 
+/** The three scout modes — see docs/V0.11-AI-OPPORTUNITY-SCOUT.md. */
+export type ScoutMode = "route" | "hidden" | "gateway";
+
 export type ScoutConfidence = "low" | "medium" | "high";
 
 export type ScoutCandidate = {
@@ -97,6 +123,8 @@ export type ScoutCandidate = {
   snippet: string;
   likelyRouteId: string;
   whyThisMayFit: string;
+  leverageHint: string;
+  suggestedNextStep: string;
   opportunityType: string;
   confidence: ScoutConfidence;
   sourceType: OpportunitySourceType;
@@ -115,15 +143,24 @@ export function isTavilyConfigured(): boolean {
   return Boolean(process.env.TAVILY_API_KEY);
 }
 
+function pickRotatedHints(pool: string[], startIndex: number, count: number): string[] {
+  return Array.from({ length: count }, (_, i) => pool[(startIndex + i) % pool.length]);
+}
+
 /**
- * Builds a blend of search queries: route-type-biased, canonical-source-
- * biased, and higher-agency-opportunity-biased (flea markets, grants,
- * apprenticeships, resale, etc.) — so results aren't dominated by classes
- * and events. See "Opportunity, not consumption" in
- * docs/MVP-LOCKED-PRINCIPLES.md. If the path/goal signals interest in a
- * wider network (trade, sourcing, diaspora, entering a new community), also
- * adds gateway community queries — see "Gateway Communities" in the same
- * doc.
+ * Builds the search query set for whichever scout mode was selected — see
+ * the three scout modes in docs/V0.11-AI-OPPORTUNITY-SCOUT.md:
+ * - "route": route-type-biased + canonical-source-biased, with a light,
+ *   rotated dose of higher-agency queries and an auto-detected gateway
+ *   bonus. The original v0.11 behavior.
+ * - "hidden": every query drawn from the hidden-opportunity hint pool
+ *   (flea markets, resale, grants, apprenticeships, supplier directories,
+ *   etc.) — no class/workshop phrasing. See "the modern opportunity
+ *   problem is not just finding events" in docs/MVP-LOCKED-PRINCIPLES.md.
+ * - "gateway": every query drawn from the gateway community hint pool
+ *   (chambers of commerce, cultural associations, trade meetups, etc.),
+ *   always on rather than keyword-triggered. See "Gateway Communities" in
+ *   the same doc.
  */
 export function generateSearchQueries(params: {
   city: string;
@@ -131,33 +168,47 @@ export function generateSearchQueries(params: {
   pathGoal: string;
   routeId: string;
   keywords?: string;
+  scoutMode?: ScoutMode;
 }): string[] {
   const location = params.state ? `${params.city}, ${params.state}` : params.city;
-  const hints = ROUTE_QUERY_HINTS[params.routeId] ?? ROUTE_QUERY_HINTS["real-openings"];
-
   const routeKeys = Object.keys(ROUTE_QUERY_HINTS);
   const routeIndex = Math.max(routeKeys.indexOf(params.routeId), 0);
-  const accessHintA = OPPORTUNITY_ACCESS_HINTS[routeIndex % OPPORTUNITY_ACCESS_HINTS.length];
-  const accessHintB =
-    OPPORTUNITY_ACCESS_HINTS[(routeIndex + 3) % OPPORTUNITY_ACCESS_HINTS.length];
+  const mode = params.scoutMode ?? "route";
 
-  const queries = [
-    `${params.pathGoal} ${hints[0]} ${location}`,
-    `${params.pathGoal} ${hints[1]} ${location}`,
-    `${params.pathGoal} eventbrite ${location}`,
-    `${params.pathGoal} library OR community center ${location}`,
-    `${params.pathGoal} volunteer opportunities ${location}`,
-    `${params.pathGoal} ${accessHintA} ${location}`,
-    `${params.pathGoal} ${accessHintB} ${location}`,
-  ];
+  let queries: string[];
 
-  if (GATEWAY_TRIGGER_PATTERN.test(params.pathGoal)) {
-    const gatewayHintA = GATEWAY_QUERY_HINTS[routeIndex % GATEWAY_QUERY_HINTS.length];
-    const gatewayHintB = GATEWAY_QUERY_HINTS[(routeIndex + 5) % GATEWAY_QUERY_HINTS.length];
-    queries.push(
-      `${params.pathGoal} ${gatewayHintA} ${location}`,
-      `${params.pathGoal} ${gatewayHintB} ${location}`
+  if (mode === "hidden") {
+    queries = pickRotatedHints(HIDDEN_OPPORTUNITY_HINTS, routeIndex, 7).map(
+      (hint) => `${params.pathGoal} ${hint} ${location}`
     );
+  } else if (mode === "gateway") {
+    queries = pickRotatedHints(GATEWAY_QUERY_HINTS, routeIndex, 7).map(
+      (hint) => `${params.pathGoal} ${hint} ${location}`
+    );
+  } else {
+    const hints = ROUTE_QUERY_HINTS[params.routeId] ?? ROUTE_QUERY_HINTS["real-openings"];
+    const accessHintA = OPPORTUNITY_ACCESS_HINTS[routeIndex % OPPORTUNITY_ACCESS_HINTS.length];
+    const accessHintB =
+      OPPORTUNITY_ACCESS_HINTS[(routeIndex + 3) % OPPORTUNITY_ACCESS_HINTS.length];
+
+    queries = [
+      `${params.pathGoal} ${hints[0]} ${location}`,
+      `${params.pathGoal} ${hints[1]} ${location}`,
+      `${params.pathGoal} eventbrite ${location}`,
+      `${params.pathGoal} library OR community center ${location}`,
+      `${params.pathGoal} volunteer opportunities ${location}`,
+      `${params.pathGoal} ${accessHintA} ${location}`,
+      `${params.pathGoal} ${accessHintB} ${location}`,
+    ];
+
+    if (GATEWAY_TRIGGER_PATTERN.test(params.pathGoal)) {
+      const gatewayHintA = GATEWAY_QUERY_HINTS[routeIndex % GATEWAY_QUERY_HINTS.length];
+      const gatewayHintB = GATEWAY_QUERY_HINTS[(routeIndex + 5) % GATEWAY_QUERY_HINTS.length];
+      queries.push(
+        `${params.pathGoal} ${gatewayHintA} ${location}`,
+        `${params.pathGoal} ${gatewayHintB} ${location}`
+      );
+    }
   }
 
   if (params.keywords?.trim()) {
@@ -233,13 +284,25 @@ function classifySourceType(hostname: string): OpportunitySourceType {
 // also an apprenticeship or a grant-funded program gets credited for that
 // instead of being flattened into "just a class."
 const CATEGORY_KEYWORD_RULES: { category: OpportunityCategory; pattern: RegExp }[] = [
+  // v0.12: resale_arbitrage and small_business_opening are split out from
+  // the broader income_generating/ownership_path patterns so a flea-market
+  // resale lead and a small-business-grant lead don't both get flattened
+  // into the same generic label.
+  {
+    category: "resale_arbitrage",
+    pattern: /\b(resell(?:ing|er)?|flea market|estate sale|liquidation|thrift (?:store |shop )?arbitrage|arbitrage|consignment|repair (?:OR|or) refurbish(?:ing)?|refurbish(?:ed|ing)?)\b/,
+  },
+  {
+    category: "small_business_opening",
+    pattern: /\b(small business grant|business plan competition|storefront|launch your business|local business gap|unmet need|vendor market)\b/,
+  },
   {
     category: "income_generating",
-    pattern: /\b(resell(?:ing|er)?|flea market|estate sale|liquidation|thrift (?:store |shop )?arbitrage|consignment|vendor market|side hustle|sell your)\b/,
+    pattern: /\b(side hustle|sell your|freelance|gig work|passive income)\b/,
   },
   {
     category: "ownership_path",
-    pattern: /\b(small business grant|start(?:ing)? your (?:own )?business|entrepreneur(?:ship)?|business plan competition|storefront|launch your business)\b/,
+    pattern: /\b(start(?:ing)? your (?:own )?business|entrepreneur(?:ship)?|own your|franchise)\b/,
   },
   // Gateway community values ("Gateway Communities" in
   // docs/MVP-LOCKED-PRINCIPLES.md) — institution-type patterns only, never
@@ -301,6 +364,51 @@ function classifyOpportunityCategory(title: string, snippet: string): Opportunit
   return matched?.category ?? "consumer_activity";
 }
 
+// "What leverage it may create" — one deterministic sentence per category,
+// not per-candidate NLP. Distinct from whyThisMayFit (which explains why
+// the search matched); this explains what taking the opportunity could
+// concretely open up.
+const LEVERAGE_HINTS: Record<OpportunityCategory, string> = {
+  consumer_activity: "Mostly a paid experience — limited leverage beyond the activity itself.",
+  skill_building: "Builds a skill that compounds if practiced beyond this one session.",
+  income_generating: "Could create direct income potential.",
+  access_point: "Creates access to a space, tool, or community you couldn't easily reach otherwise.",
+  ownership_path: "Could lead toward owning or running something of your own.",
+  proximity_builder: "Puts you near people who could open further doors.",
+  credential_step: "Adds a credential or certification that unlocks further steps.",
+  community_entry: "A first, low-stakes way into an ongoing group or organization.",
+  compounding_opportunity: "Structured to lead somewhere further, not a one-off.",
+  gateway_community: "Opens a wider network — trade, cultural, or business connections beyond this one opportunity.",
+  bridge_person: "A specific person who could vouch for or introduce you further in.",
+  place_based_network: "Anchored to a real place you can keep returning to and building relationships in.",
+  diaspora_route: "Runs through a diaspora community's own institutions and trade relationships.",
+  trade_access_point: "A concrete entry point into a trade, sourcing, or import/export network.",
+  relationship_path: "Builds a specific relationship that could compound over time.",
+  resale_arbitrage: "Direct resale or arbitrage margin potential.",
+  small_business_opening: "A concrete opening for starting or growing a small business.",
+};
+
+/** "What next step it suggests" — one deterministic, category-driven suggestion, no AI call. */
+const NEXT_STEP_HINTS: Record<OpportunityCategory, string> = {
+  consumer_activity: "Attend if it genuinely interests you, but don't expect it to open doors on its own.",
+  skill_building: "Sign up, then look for a way to keep practicing after it ends.",
+  income_generating: "Do the math on real margins before committing time or money.",
+  access_point: "Show up during open hours and ask how to get more involved.",
+  ownership_path: "Reach out and ask what it actually takes to get started.",
+  proximity_builder: "Volunteer or attend once, then follow up with one person you meet.",
+  credential_step: "Confirm exactly what the credential unlocks before enrolling.",
+  community_entry: "Attend one meeting or event before deciding if it's a fit.",
+  compounding_opportunity: "Commit to the first cycle and evaluate before the next one.",
+  gateway_community: "Visit in person and ask who else you should talk to.",
+  bridge_person: "Reach out directly and be specific about what you're hoping to learn.",
+  place_based_network: "Go back more than once — relationships here build over repeat visits.",
+  diaspora_route: "Approach with genuine interest in learning, not just extracting a deal.",
+  trade_access_point: "Ask how sourcing/import relationships actually get built here.",
+  relationship_path: "Invest time before expecting anything back.",
+  resale_arbitrage: "Test with a small batch before scaling up.",
+  small_business_opening: "Ask about eligibility and next application steps.",
+};
+
 function looksCanonical(hostname: string, sourceType: OpportunitySourceType, url: string): boolean {
   if (sourceType !== "direct_submission") return true;
   try {
@@ -332,6 +440,8 @@ function classifyResult(
   else if (canonicalSourceLikely || routeMatches) confidence = "medium";
   if ((result.score ?? 0) > 0.7 && confidence === "low") confidence = "medium";
 
+  const opportunityCategory = classifyOpportunityCategory(title, snippet);
+
   return {
     title,
     url: result.url,
@@ -341,11 +451,13 @@ function classifyResult(
     whyThisMayFit: `Matched "${query}" and reads as ${
       canonicalSourceLikely ? "a real, specific page" : "a possible lead"
     } rather than a generic listing.`,
+    leverageHint: LEVERAGE_HINTS[opportunityCategory],
+    suggestedNextStep: NEXT_STEP_HINTS[opportunityCategory],
     opportunityType: ROUTE_OPPORTUNITY_TYPE_LABELS[likelyRouteId] ?? "Class / Opening",
     confidence,
     sourceType,
     canonicalSourceLikely,
-    opportunityCategory: classifyOpportunityCategory(title, snippet),
+    opportunityCategory,
   };
 }
 
@@ -355,6 +467,7 @@ export async function scoutOpportunities(params: {
   pathGoal: string;
   routeId: string;
   keywords?: string;
+  scoutMode?: ScoutMode;
 }): Promise<{ candidates: ScoutCandidate[]; queriesUsed: string[] }> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) {
