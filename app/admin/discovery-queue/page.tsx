@@ -69,12 +69,20 @@ export default function DiscoveryQueuePage() {
             Internal prototype — not linked publicly. Discovery leads are
             stored in this browser only, not Supabase.
           </span>
-          <Link
-            href="/admin/opportunity-ingestion"
-            className="shrink-0 text-[12px] font-semibold text-green underline"
-          >
-            Opportunity ingestion
-          </Link>
+          <span className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/admin/opportunity-scout"
+              className="text-[12px] font-semibold text-green underline"
+            >
+              Opportunity scout
+            </Link>
+            <Link
+              href="/admin/opportunity-ingestion"
+              className="text-[12px] font-semibold text-green underline"
+            >
+              Opportunity ingestion
+            </Link>
+          </span>
         </div>
 
         <div className="mt-3 rounded-2xl border border-green/40 bg-green-soft/15 px-4 py-3 text-[11.5px] leading-relaxed text-ink-soft">

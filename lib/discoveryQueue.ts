@@ -123,3 +123,28 @@ export function mapDiscoverySourceType(source: DiscoverySourceType): Opportunity
       return "direct_submission";
   }
 }
+
+/** Reverse of mapDiscoverySourceType, used when saving a scout candidate into the queue. */
+export function unmapOpportunitySourceType(source: OpportunitySourceType): DiscoverySourceType {
+  switch (source) {
+    case "eventbrite":
+      return "eventbrite";
+    case "luma":
+      return "luma";
+    case "library":
+      return "library_calendar";
+    case "volunteer_board":
+      return "volunteer_board";
+    case "newsletter":
+      return "newsletter_rss";
+    case "reddit_signal":
+      return "reddit_subreddit";
+    case "community_center":
+    case "parks_rec":
+    case "coworking":
+    case "university":
+    case "direct_submission":
+    case "mock_seed":
+      return "organizer_website";
+  }
+}

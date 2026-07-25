@@ -153,12 +153,20 @@ export default function OpportunityIngestionPage() {
             save to a real database. Admin protection is a temporary shared
             token for v0.8, not real auth.
           </span>
-          <Link
-            href="/admin/discovery-queue"
-            className="shrink-0 text-[12px] font-semibold text-green underline"
-          >
-            Discovery queue
-          </Link>
+          <span className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/admin/opportunity-scout"
+              className="text-[12px] font-semibold text-green underline"
+            >
+              Opportunity scout
+            </Link>
+            <Link
+              href="/admin/discovery-queue"
+              className="text-[12px] font-semibold text-green underline"
+            >
+              Discovery queue
+            </Link>
+          </span>
         </div>
 
         {prefilledFromDiscovery && (
