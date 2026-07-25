@@ -65,6 +65,35 @@ export const OPPORTUNITY_SOURCE_LABELS: Record<OpportunitySourceType, string> = 
   mock_seed: "Mock seed data",
 };
 
+/**
+ * "Opportunity, not consumption" — what kind of opportunity a scout
+ * candidate looks like, independent of route/source fit. Scout-response-
+ * only classification (see docs/V0.11-AI-OPPORTUNITY-SCOUT.md); not a field
+ * on the persisted Opportunity type and not sent to Supabase.
+ */
+export type OpportunityCategory =
+  | "consumer_activity"
+  | "skill_building"
+  | "income_generating"
+  | "access_point"
+  | "ownership_path"
+  | "proximity_builder"
+  | "credential_step"
+  | "community_entry"
+  | "compounding_opportunity";
+
+export const OPPORTUNITY_CATEGORY_LABELS: Record<OpportunityCategory, string> = {
+  consumer_activity: "Consumer activity",
+  skill_building: "Skill-building",
+  income_generating: "Income-generating",
+  access_point: "Access point",
+  ownership_path: "Ownership path",
+  proximity_builder: "Proximity builder",
+  credential_step: "Credential step",
+  community_entry: "Community entry",
+  compounding_opportunity: "Compounding opportunity",
+};
+
 export const OPPORTUNITY_STATUS_LABELS: Record<OpportunityStatus, string> = {
   draft: "Draft",
   needs_review: "Needs review",

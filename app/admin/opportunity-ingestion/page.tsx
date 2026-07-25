@@ -311,6 +311,21 @@ export default function OpportunityIngestionPage() {
                   access points that help someone move along a path.
                 </p>
 
+                <div className="rounded-2xl border border-green/30 bg-cream-card px-3.5 py-3">
+                  <span className="block text-[10.5px] font-semibold text-ink-soft">
+                    Opportunity, not consumption — before approving, ask:
+                  </span>
+                  <ul className="mt-1.5 list-disc pl-4 text-[11px] leading-relaxed text-ink-faint">
+                    <li>Does this build skill?</li>
+                    <li>Does this create income potential?</li>
+                    <li>Does this create access or proximity?</li>
+                    <li>Does this open a next door?</li>
+                    <li>Does this create ownership or agency?</li>
+                    <li>Does this compound?</li>
+                    <li>Or is it mostly just a paid activity?</li>
+                  </ul>
+                </div>
+
                 <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
                   <span className="block text-[10.5px] text-ink-faint">
                     Who is this for?

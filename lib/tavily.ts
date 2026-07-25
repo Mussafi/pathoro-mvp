@@ -2,6 +2,7 @@ import "server-only";
 import {
   ROUTE_OPPORTUNITY_TYPE_LABELS,
   suggestRouteIdFromText,
+  type OpportunityCategory,
   type OpportunitySourceType,
 } from "@/lib/opportunitySchema";
 
@@ -32,6 +33,24 @@ const ROUTE_QUERY_HINTS: Record<string, string[]> = {
   "try-it": ["trial session", "one-time intro workshop"],
 };
 
+/**
+ * Higher-agency opportunity types — flea markets, resale, grants,
+ * apprenticeships — not classes/events. See "Opportunity, not consumption"
+ * in docs/MVP-LOCKED-PRINCIPLES.md: a goal like "build wealth" or "find
+ * opportunities" should not just return a list of paid classes. Two of
+ * these are mixed into every search, rotated by route so different routes
+ * don't always get the same pair.
+ */
+const OPPORTUNITY_ACCESS_HINTS = [
+  "flea market vendor opportunity",
+  "estate sale OR liquidation auction",
+  "vendor market application",
+  "small business grant OR entrepreneur program",
+  "makerspace open shop night",
+  "apprenticeship OR shadowing opportunity",
+  "local resale OR side hustle opportunity",
+];
+
 const CANONICAL_HOST_SOURCE_TYPES: { match: (host: string) => boolean; type: OpportunitySourceType }[] = [
   { match: (h) => h.includes("eventbrite."), type: "eventbrite" },
   { match: (h) => h.includes("lu.ma") || h.includes("luma."), type: "luma" },
@@ -57,6 +76,7 @@ export type ScoutCandidate = {
   confidence: ScoutConfidence;
   sourceType: OpportunitySourceType;
   canonicalSourceLikely: boolean;
+  opportunityCategory: OpportunityCategory;
 };
 
 type TavilyResult = {
@@ -70,7 +90,13 @@ export function isTavilyConfigured(): boolean {
   return Boolean(process.env.TAVILY_API_KEY);
 }
 
-/** Builds 4-6 route-aware, canonical-source-biased search queries. */
+/**
+ * Builds a blend of search queries: route-type-biased, canonical-source-
+ * biased, and higher-agency-opportunity-biased (flea markets, grants,
+ * apprenticeships, resale, etc.) — so results aren't dominated by classes
+ * and events. See "Opportunity, not consumption" in
+ * docs/MVP-LOCKED-PRINCIPLES.md.
+ */
 export function generateSearchQueries(params: {
   city: string;
   state?: string;
@@ -81,12 +107,20 @@ export function generateSearchQueries(params: {
   const location = params.state ? `${params.city}, ${params.state}` : params.city;
   const hints = ROUTE_QUERY_HINTS[params.routeId] ?? ROUTE_QUERY_HINTS["real-openings"];
 
+  const routeKeys = Object.keys(ROUTE_QUERY_HINTS);
+  const routeIndex = Math.max(routeKeys.indexOf(params.routeId), 0);
+  const accessHintA = OPPORTUNITY_ACCESS_HINTS[routeIndex % OPPORTUNITY_ACCESS_HINTS.length];
+  const accessHintB =
+    OPPORTUNITY_ACCESS_HINTS[(routeIndex + 3) % OPPORTUNITY_ACCESS_HINTS.length];
+
   const queries = [
     `${params.pathGoal} ${hints[0]} ${location}`,
     `${params.pathGoal} ${hints[1]} ${location}`,
     `${params.pathGoal} eventbrite ${location}`,
     `${params.pathGoal} library OR community center ${location}`,
     `${params.pathGoal} volunteer opportunities ${location}`,
+    `${params.pathGoal} ${accessHintA} ${location}`,
+    `${params.pathGoal} ${accessHintB} ${location}`,
   ];
 
   if (params.keywords?.trim()) {
@@ -156,6 +190,53 @@ function classifySourceType(hostname: string): OpportunitySourceType {
   return matched?.type ?? "direct_submission";
 }
 
+// Priority order matters: checked top to bottom, first match wins. Highest-
+// agency, most-specific categories first; "skill_building" and the
+// "consumer_activity" fallback are deliberately last, so a class that's
+// also an apprenticeship or a grant-funded program gets credited for that
+// instead of being flattened into "just a class."
+const CATEGORY_KEYWORD_RULES: { category: OpportunityCategory; pattern: RegExp }[] = [
+  {
+    category: "income_generating",
+    pattern: /\b(resell(?:ing|er)?|flea market|estate sale|liquidation|thrift (?:store |shop )?arbitrage|consignment|vendor market|side hustle|sell your)\b/,
+  },
+  {
+    category: "ownership_path",
+    pattern: /\b(small business grant|start(?:ing)? your (?:own )?business|entrepreneur(?:ship)?|business plan competition|storefront|launch your business)\b/,
+  },
+  {
+    category: "access_point",
+    pattern: /\b(open shop night|makerspace|open studio night|member night|shadowing|apprenticeship)\b/,
+  },
+  {
+    category: "proximity_builder",
+    pattern: /\b(volunteer|board member|committee member|networking event)\b/,
+  },
+  {
+    category: "credential_step",
+    pattern: /\b(certification|certificate program|license|credential|bootcamp|training program)\b/,
+  },
+  {
+    category: "community_entry",
+    pattern: /\b(join(?:ing)? (?:a|the) (?:group|club)|community organization|membership|chapter meeting)\b/,
+  },
+  {
+    category: "compounding_opportunity",
+    pattern: /\b(recurring|ongoing series|multi-week|cohort|accelerator|incubator)\b/,
+  },
+  {
+    category: "skill_building",
+    pattern: /\b(class|workshop|course|training|lesson)\b/,
+  },
+];
+
+/** Rule-based "Opportunity, not consumption" classification — no AI call. */
+function classifyOpportunityCategory(title: string, snippet: string): OpportunityCategory {
+  const text = `${title} ${snippet}`.toLowerCase();
+  const matched = CATEGORY_KEYWORD_RULES.find(({ pattern }) => pattern.test(text));
+  return matched?.category ?? "consumer_activity";
+}
+
 function looksCanonical(hostname: string, sourceType: OpportunitySourceType, url: string): boolean {
   if (sourceType !== "direct_submission") return true;
   try {
@@ -200,6 +281,7 @@ function classifyResult(
     confidence,
     sourceType,
     canonicalSourceLikely,
+    opportunityCategory: classifyOpportunityCategory(title, snippet),
   };
 }
 

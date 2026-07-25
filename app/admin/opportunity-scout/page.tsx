@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import {
+  OPPORTUNITY_CATEGORY_LABELS,
   OPPORTUNITY_SOURCE_LABELS,
   ROUTE_OPPORTUNITY_TYPE_LABELS,
 } from "@/lib/opportunitySchema";
@@ -20,6 +21,19 @@ const CONFIDENCE_LABELS: Record<ScoutCandidate["confidence"], string> = {
   medium: "Medium confidence",
   low: "Low confidence",
 };
+
+// "Opportunity, not consumption" — consumer_activity gets a muted badge,
+// every higher-agency category gets the same accent as confidence, a small
+// visual nudge without hiding anything.
+const CATEGORY_BADGE_CLASS: Record<ScoutCandidate["opportunityCategory"], string> =
+  Object.fromEntries(
+    Object.keys(OPPORTUNITY_CATEGORY_LABELS).map((category) => [
+      category,
+      category === "consumer_activity"
+        ? "border border-line/70 text-ink-faint"
+        : "border border-green/40 bg-green-soft/60 text-green",
+    ])
+  ) as Record<ScoutCandidate["opportunityCategory"], string>;
 
 function buildIngestionHref(candidate: ScoutCandidate, city: string): string {
   const params = new URLSearchParams({
@@ -107,7 +121,11 @@ export default function OpportunityScoutPage() {
 
         <div className="mt-3 rounded-2xl border border-green/40 bg-green-soft/15 px-4 py-3 text-[11.5px] leading-relaxed text-ink-soft">
           AI is not finding events. It is scouting for route-relevant
-          opportunity access points.
+          opportunity access points. Opportunity, not consumption: a class
+          you pay to attend is not automatically better than a flea market
+          vendor slot, a grant, or an apprenticeship — search results
+          include both, labeled, so you can judge which one actually opens
+          something for this person.
         </div>
 
         <h1 className="mt-6 font-serif text-[26px] leading-tight text-ink">
@@ -231,8 +249,15 @@ export default function OpportunityScoutPage() {
                     <span className="text-[13.5px] font-semibold text-ink">
                       {candidate.title}
                     </span>
-                    <span className="shrink-0 rounded-full bg-green-soft px-2 py-0.5 text-[10px] font-semibold text-green">
-                      {CONFIDENCE_LABELS[candidate.confidence]}
+                    <span className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${CATEGORY_BADGE_CLASS[candidate.opportunityCategory]}`}
+                      >
+                        {OPPORTUNITY_CATEGORY_LABELS[candidate.opportunityCategory]}
+                      </span>
+                      <span className="rounded-full bg-green-soft px-2 py-0.5 text-[10px] font-semibold text-green">
+                        {CONFIDENCE_LABELS[candidate.confidence]}
+                      </span>
                     </span>
                   </div>
                   <p className="text-[11.5px] text-ink-faint">
