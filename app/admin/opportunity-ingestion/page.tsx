@@ -17,6 +17,7 @@ import {
 } from "@/lib/opportunitySchema";
 import { buildOpportunityFromDraft } from "@/lib/reviewedOpportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
+import { getNextActionSummary, getWhyThisAppeared } from "@/lib/opportunityNarrative";
 
 type SaveState =
   | { kind: "idle" }
@@ -264,6 +265,89 @@ export default function OpportunityIngestionPage() {
                 />
               </label>
 
+              <div className="flex flex-col gap-3 rounded-2xl border border-green/40 bg-green-soft/15 p-4">
+                <p className="text-[11.5px] font-medium leading-relaxed text-ink-soft">
+                  Pathoro is not saving events. It is saving real-world
+                  access points that help someone move along a path.
+                </p>
+
+                <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
+                  <span className="block text-[10.5px] text-ink-faint">
+                    Who is this for?
+                  </span>
+                  <input
+                    value={extracted.whoItIsFor}
+                    onChange={(e) => updateField("whoItIsFor", e.target.value)}
+                    placeholder="Add who this is for"
+                    className="mt-0.5 w-full bg-transparent text-[13px] font-medium text-ink outline-none placeholder:text-ink-faint/70"
+                  />
+                </label>
+
+                <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
+                  <span className="block text-[10.5px] text-ink-faint">
+                    Path it supports
+                  </span>
+                  <input
+                    value={extracted.pathItSupports}
+                    onChange={(e) => updateField("pathItSupports", e.target.value)}
+                    placeholder="Add what path this supports"
+                    className="mt-0.5 w-full bg-transparent text-[13px] font-medium text-ink outline-none placeholder:text-ink-faint/70"
+                  />
+                </label>
+
+                <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
+                  <span className="block text-[10.5px] text-ink-faint">
+                    What it may open next
+                  </span>
+                  <input
+                    value={extracted.whatItMayOpenNext}
+                    onChange={(e) => updateField("whatItMayOpenNext", e.target.value)}
+                    placeholder="Add what this may open next"
+                    className="mt-0.5 w-full bg-transparent text-[13px] font-medium text-ink outline-none placeholder:text-ink-faint/70"
+                  />
+                </label>
+
+                <div className="rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
+                  <span className="block text-[10.5px] text-ink-faint">
+                    Why this is an opportunity (auto-generated preview)
+                  </span>
+                  <p className="mt-0.5 text-[12.5px] text-ink-soft">
+                    {getWhyThisAppeared(extracted)}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
+                  <span className="block text-[10.5px] text-ink-faint">
+                    Next action (auto-generated preview)
+                  </span>
+                  <p className="mt-0.5 text-[12.5px] text-ink-soft">
+                    {getNextActionSummary(extracted)}
+                  </p>
+                </div>
+              </div>
+
+              <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
+                <span className="block text-[10.5px] text-ink-faint">
+                  Host name
+                </span>
+                <input
+                  value={extracted.hostName}
+                  onChange={(e) => updateField("hostName", e.target.value)}
+                  className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none"
+                />
+              </label>
+
+              <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
+                <span className="block text-[10.5px] text-ink-faint">
+                  Opportunity type
+                </span>
+                <input
+                  value={extracted.opportunityType}
+                  onChange={(e) => updateField("opportunityType", e.target.value)}
+                  className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none"
+                />
+              </label>
+
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
                   <span className="block text-[10.5px] text-ink-faint">
@@ -295,64 +379,6 @@ export default function OpportunityIngestionPage() {
                   value={extracted.locationLabel}
                   onChange={(e) => updateField("locationLabel", e.target.value)}
                   className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none"
-                />
-              </label>
-
-              <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
-                <span className="block text-[10.5px] text-ink-faint">
-                  Host name
-                </span>
-                <input
-                  value={extracted.hostName}
-                  onChange={(e) => updateField("hostName", e.target.value)}
-                  className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none"
-                />
-              </label>
-
-              <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
-                <span className="block text-[10.5px] text-ink-faint">
-                  Opportunity type
-                </span>
-                <input
-                  value={extracted.opportunityType}
-                  onChange={(e) => updateField("opportunityType", e.target.value)}
-                  className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none"
-                />
-              </label>
-
-              <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
-                <span className="block text-[10.5px] text-ink-faint">
-                  Who it&rsquo;s for
-                </span>
-                <input
-                  value={extracted.whoItIsFor}
-                  onChange={(e) => updateField("whoItIsFor", e.target.value)}
-                  placeholder="Add who this is for"
-                  className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint/70"
-                />
-              </label>
-
-              <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
-                <span className="block text-[10.5px] text-ink-faint">
-                  What path it supports
-                </span>
-                <input
-                  value={extracted.pathItSupports}
-                  onChange={(e) => updateField("pathItSupports", e.target.value)}
-                  placeholder="Add what path this supports"
-                  className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint/70"
-                />
-              </label>
-
-              <label className="block rounded-2xl border border-line/70 bg-cream-card px-3.5 py-2.25">
-                <span className="block text-[10.5px] text-ink-faint">
-                  What it may open next
-                </span>
-                <input
-                  value={extracted.whatItMayOpenNext}
-                  onChange={(e) => updateField("whatItMayOpenNext", e.target.value)}
-                  placeholder="Add what this may open next"
-                  className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint/70"
                 />
               </label>
 

@@ -10,6 +10,12 @@ Pathoro does not connect people randomly by interest. Pathoro connects people wh
 
 Pathoro is not only a place where people find opportunities. It is also a place where people, groups, businesses, mentors, teachers, organizers, and communities can make opportunities visible to the right people at the right point in their journey. Posting an opportunity on Pathoro is not the same as posting an event, job, or listing. The goal is not to broadcast opportunities to everyone. The goal is to place opportunities where they become meaningful and reachable.
 
+## Opportunity Intelligence Layer
+
+Pathoro does not ask what is happening nearby. It asks what real-world access point could help this person move.
+
+Every opportunity Pathoro shows — on the admin review screen, on a route-planning card, or on its detail page — is framed around why it appeared, what path it supports, what real-world access it creates, what it could open next, and how to take the next step. That framing is not cosmetic copy; it is the difference between an events feed and a path. Product language should prefer *opportunity*, *opening*, *route stop*, *real-world next step*, and *access point* over *event*, *listing*, or *activity*.
+
 ## People Are Part of the Landscape
 
 People are not a social feature in Pathoro. People are part of the opportunity landscape. They appear when they can make a path more reachable, more human, or more possible.

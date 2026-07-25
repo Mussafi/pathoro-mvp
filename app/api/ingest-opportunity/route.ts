@@ -190,7 +190,7 @@ function buildDraft(params: {
     dateLabel: params.dateLabel,
     costLabel: "",
     hostName: params.hostName,
-    opportunityType: ROUTE_OPPORTUNITY_TYPE_LABELS[suggestedRouteId] ?? "Class / Event",
+    opportunityType: ROUTE_OPPORTUNITY_TYPE_LABELS[suggestedRouteId] ?? "Class / Opening",
     whoItIsFor: "",
     pathItSupports: "",
     whatItMayOpenNext: "",
@@ -246,7 +246,7 @@ export async function POST(request: Request): Promise<Response> {
       {
         ok: false,
         error:
-          "Use Instagram/Facebook as a discovery signal. Please provide the organizer website, Eventbrite, Luma, booking page, newsletter, or canonical event page.",
+          "Use Instagram/Facebook as a discovery signal. Please provide the organizer website, Eventbrite, Luma, booking page, newsletter, or canonical source page.",
       } satisfies IngestionResponse,
       { status: 400 }
     );

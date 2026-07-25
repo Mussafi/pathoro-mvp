@@ -10,6 +10,11 @@ import { routes } from "@/lib/routes";
 import { routeOpportunities } from "@/lib/opportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
 import { OPPORTUNITY_STATUS_LABELS, type Opportunity } from "@/lib/opportunitySchema";
+import {
+  getNextActionSummary,
+  getWhatAccessThisCreates,
+  getWhyThisAppeared,
+} from "@/lib/opportunityNarrative";
 
 export default function OpportunityDetailPage() {
   const params = useParams<{ id: string }>();
@@ -81,9 +86,16 @@ function OpportunityDetailContent({ id }: { id: string }) {
           </div>
         ) : opportunity ? (
           <div className="shadow-card mt-4 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-6 py-6">
-            <span className="w-fit rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
-              {OPPORTUNITY_STATUS_LABELS[opportunity.status]}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-fit rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
+                {OPPORTUNITY_STATUS_LABELS[opportunity.status]}
+              </span>
+              {route && (
+                <span className="w-fit rounded-full border border-green/40 bg-green-soft px-2 py-0.5 text-[10px] font-medium text-green">
+                  Route stop on {route.title}
+                </span>
+              )}
+            </div>
             <h1 className="mt-2.5 font-serif text-[24px] leading-tight text-ink">
               {opportunity.title}
             </h1>
@@ -100,36 +112,51 @@ function OpportunityDetailContent({ id }: { id: string }) {
               </p>
             )}
 
-            <div className="mt-5 flex flex-col gap-3 border-t border-line/70 pt-5">
-              {route && (
-                <div>
-                  <span className="block text-[11px] font-semibold text-ink-faint">
-                    Route fit
-                  </span>
-                  <span className="mt-0.5 block text-[13px] text-ink">{route.title}</span>
-                </div>
-              )}
+            <div className="mt-5 flex flex-col gap-4 border-t border-line/70 pt-5">
+              <div>
+                <span className="block text-[11px] font-semibold text-ink-faint">
+                  Why this appeared
+                </span>
+                <p className="mt-0.5 text-[13px] leading-relaxed text-ink">
+                  {getWhyThisAppeared(opportunity)}
+                </p>
+              </div>
               {opportunity.pathItSupports && (
                 <div>
                   <span className="block text-[11px] font-semibold text-ink-faint">
-                    Why this appeared
+                    What path this supports
                   </span>
-                  <span className="mt-0.5 block text-[13px] text-ink">
-                    Supports: {opportunity.pathItSupports}
-                    {opportunity.whoItIsFor ? ` · For: ${opportunity.whoItIsFor}` : ""}
-                  </span>
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-ink">
+                    {opportunity.pathItSupports}
+                  </p>
                 </div>
               )}
+              <div>
+                <span className="block text-[11px] font-semibold text-ink-faint">
+                  What access this creates
+                </span>
+                <p className="mt-0.5 text-[13px] leading-relaxed text-ink">
+                  {getWhatAccessThisCreates(opportunity)}
+                </p>
+              </div>
               {opportunity.whatItMayOpenNext && (
                 <div>
                   <span className="block text-[11px] font-semibold text-ink-faint">
-                    What it may open next
+                    What it could open next
                   </span>
-                  <span className="mt-0.5 block text-[13px] text-ink">
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-ink">
                     {opportunity.whatItMayOpenNext}
-                  </span>
+                  </p>
                 </div>
               )}
+              <div>
+                <span className="block text-[11px] font-semibold text-ink-faint">
+                  How to take the next step
+                </span>
+                <p className="mt-0.5 text-[13px] leading-relaxed text-ink">
+                  {getNextActionSummary(opportunity)}
+                </p>
+              </div>
             </div>
 
             {opportunity.sourceUrl && (

@@ -8,6 +8,8 @@ import {
   getOpportunityDetailHref,
   type Opportunity,
 } from "@/lib/opportunitySchema";
+import { routes } from "@/lib/routes";
+import { getNextActionSummary, getWhyThisAppeared } from "@/lib/opportunityNarrative";
 
 function getDisplayTags(opportunity: Opportunity): string[] {
   const tags: string[] = [];
@@ -35,6 +37,9 @@ export function OpportunityTile({
   const isClickable = Boolean(detailHref);
   const tags = getDisplayTags(opportunity);
   const isMockSeed = opportunity.sourceType === "mock_seed";
+  const route = routes.find((r) => r.id === opportunity.routeId);
+  const whyAppeared = getWhyThisAppeared(opportunity);
+  const nextAction = getNextActionSummary(opportunity);
   const className =
     "flex w-full flex-col rounded-2xl border border-l-[3px] border-line/70 border-l-green/50 bg-cream-field px-3.5 py-3.5 text-left transition" +
     (isClickable ? " hover:border-green/40 hover:border-l-green hover:bg-cream-card" : " hover:border-green/30 hover:bg-cream-card");
@@ -57,13 +62,27 @@ export function OpportunityTile({
       </div>
       <span className="mt-1 flex items-center gap-1 text-[10.5px] font-semibold text-green">
         <RouteIcon className="h-2.5 w-2.5" strokeWidth={2} />
-        From your selected route
+        Route stop on {route?.title ?? "your selected route"}
       </span>
       <span className="mt-1 block text-[11px] font-medium text-ink-faint">
         {opportunity.opportunityType}
       </span>
       <p className="mt-1.5 text-[12px] leading-snug text-ink-soft">
         {opportunity.description}
+      </p>
+      <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
+        <span className="font-semibold text-ink-soft">Why this appeared — </span>
+        {whyAppeared}
+      </p>
+      {opportunity.whatItMayOpenNext && (
+        <p className="mt-1 text-[11px] leading-snug text-ink-faint">
+          <span className="font-semibold text-ink-soft">Could open — </span>
+          {opportunity.whatItMayOpenNext}
+        </p>
+      )}
+      <p className="mt-1 text-[11px] leading-snug text-ink-faint">
+        <span className="font-semibold text-ink-soft">Next step — </span>
+        {nextAction}
       </p>
       <div className="mt-2.5 flex flex-wrap gap-1.5">
         <span className="rounded-full border border-line/70 bg-cream-card px-2 py-0.5 text-[10.5px] text-ink-faint">
@@ -113,6 +132,7 @@ function OpportunityPreviewModal({
   onClose: () => void;
 }) {
   const detailHref = getOpportunityDetailHref(opportunity);
+  const whyAppeared = getWhyThisAppeared(opportunity);
 
   return (
     <div
@@ -152,6 +172,11 @@ function OpportunityPreviewModal({
             {opportunity.description}
           </p>
         )}
+
+        <p className="mt-3 text-[12px] leading-relaxed text-ink-faint">
+          <span className="font-semibold text-ink-soft">Why this appeared — </span>
+          {whyAppeared}
+        </p>
 
         <div className="mt-4 flex flex-col gap-2.5">
           {opportunity.whoItIsFor && (

@@ -84,7 +84,7 @@ export const RECOMMENDED_SOURCE_TYPES: OpportunitySourceType[] = [
 
 /** Maps a suggested routeId to a human-readable opportunity type label. */
 export const ROUTE_OPPORTUNITY_TYPE_LABELS: Record<string, string> = {
-  "real-openings": "Class / Event",
+  "real-openings": "Class / Opening",
   community: "Group / Community",
   people: "Person / Conversation",
   requirements: "Planning / Requirements",
