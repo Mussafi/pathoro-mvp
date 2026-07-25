@@ -1,5 +1,6 @@
 export type OpportunitySourceType =
   | "eventbrite"
+  | "luma"
   | "library"
   | "community_center"
   | "parks_rec"
@@ -8,6 +9,7 @@ export type OpportunitySourceType =
   | "newsletter"
   | "volunteer_board"
   | "direct_submission"
+  | "reddit_signal"
   | "mock_seed";
 
 export type OpportunityStatus =
@@ -50,6 +52,7 @@ export type Opportunity = {
 
 export const OPPORTUNITY_SOURCE_LABELS: Record<OpportunitySourceType, string> = {
   eventbrite: "Eventbrite",
+  luma: "Luma",
   library: "Library calendar",
   community_center: "Community center calendar",
   parks_rec: "Parks & recreation",
@@ -58,6 +61,7 @@ export const OPPORTUNITY_SOURCE_LABELS: Record<OpportunitySourceType, string> = 
   newsletter: "Local newsletter",
   volunteer_board: "Volunteer board",
   direct_submission: "Direct Pathoro submission",
+  reddit_signal: "Reddit local signal",
   mock_seed: "Mock seed data",
 };
 
@@ -72,6 +76,7 @@ export const OPPORTUNITY_STATUS_LABELS: Record<OpportunityStatus, string> = {
 
 export const RECOMMENDED_SOURCE_TYPES: OpportunitySourceType[] = [
   "eventbrite",
+  "luma",
   "library",
   "community_center",
   "parks_rec",

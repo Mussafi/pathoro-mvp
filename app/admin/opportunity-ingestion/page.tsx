@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import {
@@ -38,7 +38,25 @@ export default function OpportunityIngestionPage() {
   const [approvedId, setApprovedId] = useState<string | null>(null);
   const [adminToken, setAdminToken] = useState("");
   const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
+  const [prefilledFromDiscovery, setPrefilledFromDiscovery] = useState(false);
   const { reviewed, approve, clear } = useReviewedOpportunities();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const prefillUrl = params.get("sourceUrl");
+    if (!prefillUrl) return;
+
+    // Syncing initial form state from the URL (an external system) after
+    // mount, not deriving it from props/state — avoids an SSR/client
+    // hydration mismatch on these controlled inputs.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSourceUrl(prefillUrl);
+    const prefillType = params.get("sourceType");
+    if (prefillType) setSourceType(prefillType as OpportunitySourceType);
+    const prefillCity = params.get("city");
+    if (prefillCity) setCity(prefillCity);
+    setPrefilledFromDiscovery(true);
+  }, []);
 
   async function handleApprove() {
     if (!extracted) return;
@@ -129,11 +147,25 @@ export default function OpportunityIngestionPage() {
   return (
     <div className="min-h-screen bg-cream px-6 py-10 sm:px-10">
       <div className="mx-auto max-w-[720px]">
-        <div className="rounded-2xl border border-line/70 bg-cream-field px-4 py-3 text-[12px] text-ink-faint">
-          Internal prototype — not linked publicly. Approved opportunities
-          save to a real database. Admin protection is a temporary shared
-          token for v0.8, not real auth.
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line/70 bg-cream-field px-4 py-3 text-[12px] text-ink-faint">
+          <span>
+            Internal prototype — not linked publicly. Approved opportunities
+            save to a real database. Admin protection is a temporary shared
+            token for v0.8, not real auth.
+          </span>
+          <Link
+            href="/admin/discovery-queue"
+            className="shrink-0 text-[12px] font-semibold text-green underline"
+          >
+            Discovery queue
+          </Link>
         </div>
+
+        {prefilledFromDiscovery && (
+          <div className="mt-3 rounded-2xl border border-green/40 bg-green-soft/15 px-4 py-3 text-[11.5px] font-medium text-ink-soft">
+            Pre-filled from a discovery queue lead.
+          </div>
+        )}
 
         <div className="mt-3 rounded-2xl border border-line/70 bg-cream-field px-4 py-3 text-[11.5px] leading-relaxed text-ink-faint">
           <span className="block font-semibold text-ink-soft">
