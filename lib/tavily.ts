@@ -12,8 +12,17 @@ const MAX_CANDIDATES = 18;
 
 // Same policy as app/api/ingest-opportunity/route.ts: Instagram/Facebook are
 // a discovery signal at most, never a source Pathoro reads or searches for
-// structured details from.
-const EXCLUDED_DOMAINS = ["instagram.com", "facebook.com", "fb.com", "fb.watch"];
+// structured details from. Reddit is excluded here too (v0.11 constraint) —
+// the future Reddit *signal* layer is a deliberate, separate feature
+// (see docs/V0.9-DISCOVERY-SOURCES.md), not something the scout does today.
+const EXCLUDED_DOMAINS = [
+  "instagram.com",
+  "facebook.com",
+  "fb.com",
+  "fb.watch",
+  "reddit.com",
+  "redd.it",
+];
 
 const ROUTE_QUERY_HINTS: Record<string, string[]> = {
   "real-openings": ["beginner class", "public workshop"],
@@ -102,9 +111,11 @@ async function searchTavily(query: string, apiKey: string): Promise<TavilyResult
     TAVILY_SEARCH_URL,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
       body: JSON.stringify({
-        api_key: apiKey,
         query,
         search_depth: "basic",
         max_results: MAX_RESULTS_PER_QUERY,
@@ -115,7 +126,8 @@ async function searchTavily(query: string, apiKey: string): Promise<TavilyResult
   );
 
   if (!res.ok) {
-    throw new Error(`Tavily search failed with status ${res.status}`);
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Tavily search failed with status ${res.status}${detail ? `: ${detail}` : ""}`);
   }
 
   const data = (await res.json()) as { results?: TavilyResult[] };
