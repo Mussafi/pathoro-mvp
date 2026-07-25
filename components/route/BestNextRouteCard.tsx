@@ -6,6 +6,7 @@ import { routes } from "@/lib/routes";
 import { getOpportunityDetailHref } from "@/lib/opportunitySchema";
 import { mergeWithSeed, filterForRoute } from "@/lib/reviewedOpportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
+import { useLiveOpportunities } from "@/lib/useLiveOpportunities";
 import type { DirectionAnswers } from "@/lib/direction";
 import { OpportunityTile } from "@/components/route/OpportunityTile";
 
@@ -25,7 +26,12 @@ export function BestNextRouteCard({
   const selected = routes.find((r) => r.id === selectedRouteId) ?? routes[0];
   const isSuggested = selectedRouteId === suggestedRouteId;
   const { reviewed } = useReviewedOpportunities();
-  const opportunitiesForRoute = filterForRoute(mergeWithSeed(reviewed), selectedRouteId, answers.location);
+  const live = useLiveOpportunities();
+  const opportunitiesForRoute = filterForRoute(
+    mergeWithSeed(reviewed, live),
+    selectedRouteId,
+    answers.location
+  );
   const opportunity = opportunitiesForRoute[0];
   const moreCount = Math.max(opportunitiesForRoute.length - 1, 0);
   const detailHref = opportunity ? getOpportunityDetailHref(opportunity) : undefined;

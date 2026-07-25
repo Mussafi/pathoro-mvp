@@ -33,11 +33,18 @@ export function clearReviewedOpportunities(): Opportunity[] {
   return [];
 }
 
-/** Merges reviewed opportunities with seed data, reviewed ones taking priority on id clashes. */
-export function mergeWithSeed(reviewed: Opportunity[]): Opportunity[] {
-  const reviewedIds = new Set(reviewed.map((o) => o.id));
-  const seedWithoutOverridden = routeOpportunities.filter((o) => !reviewedIds.has(o.id));
-  return [...reviewed, ...seedWithoutOverridden];
+/**
+ * Merges opportunity sources in priority order: database-backed `live`
+ * opportunities first, then `reviewed` (the localStorage dev fallback),
+ * then seed/mock data — with later sources filtered to drop anything
+ * already present by `id` in an earlier, higher-priority source.
+ */
+export function mergeWithSeed(reviewed: Opportunity[], live: Opportunity[] = []): Opportunity[] {
+  const seenIds = new Set(live.map((o) => o.id));
+  const reviewedFiltered = reviewed.filter((o) => !seenIds.has(o.id));
+  reviewedFiltered.forEach((o) => seenIds.add(o.id));
+  const seedFiltered = routeOpportunities.filter((o) => !seenIds.has(o.id));
+  return [...live, ...reviewedFiltered, ...seedFiltered];
 }
 
 /** Filters a merged opportunity list for a route, sorting live and city-matched opportunities first. */

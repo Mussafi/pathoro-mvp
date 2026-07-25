@@ -15,7 +15,8 @@ export type OpportunityStatus =
   | "needs_review"
   | "live"
   | "expired"
-  | "preview";
+  | "preview"
+  | "rejected";
 
 export type EffortLevel = "Low" | "Medium" | "High";
 export type FrictionLevel = "Low" | "Medium" | "High";
@@ -66,6 +67,7 @@ export const OPPORTUNITY_STATUS_LABELS: Record<OpportunityStatus, string> = {
   live: "Live",
   expired: "Expired",
   preview: "Preview",
+  rejected: "Rejected",
 };
 
 export const RECOMMENDED_SOURCE_TYPES: OpportunitySourceType[] = [

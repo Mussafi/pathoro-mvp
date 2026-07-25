@@ -1,19 +1,58 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, ExternalLink, MapPin } from "lucide-react";
 import { TopoLines } from "@/components/TopoLines";
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
 import { routes } from "@/lib/routes";
-import { mergeWithSeed } from "@/lib/reviewedOpportunities";
+import { routeOpportunities } from "@/lib/opportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
-import { OPPORTUNITY_STATUS_LABELS } from "@/lib/opportunitySchema";
+import { OPPORTUNITY_STATUS_LABELS, type Opportunity } from "@/lib/opportunitySchema";
 
 export default function OpportunityDetailPage() {
   const params = useParams<{ id: string }>();
+  // Keyed by id so React remounts (and resets fetch state) on navigation
+  // between two different opportunity detail pages, instead of needing to
+  // reset state imperatively inside an effect.
+  return <OpportunityDetailContent key={params.id} id={params.id} />;
+}
+
+function OpportunityDetailContent({ id }: { id: string }) {
   const { reviewed } = useReviewedOpportunities();
-  const opportunity = mergeWithSeed(reviewed).find((o) => o.id === params.id);
+  const [dbOpportunity, setDbOpportunity] = useState<Opportunity | null>(null);
+  const [dbLoading, setDbLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`/api/opportunities/${id}`)
+      .then((res) => res.json())
+      .then((data: { ok: true; opportunity: Opportunity } | { ok: false; error: string }) => {
+        if (cancelled) return;
+        setDbOpportunity(data.ok ? data.opportunity : null);
+      })
+      .catch(() => {
+        if (!cancelled) setDbOpportunity(null);
+      })
+      .finally(() => {
+        if (!cancelled) setDbLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const seedOpportunity = routeOpportunities.find((o) => o.id === id);
+  const localOpportunity = reviewed.find((o) => o.id === id);
+
+  // Priority: database (live) -> seed data -> localStorage dev fallback.
+  // Wait for the database fetch to settle before falling through, so a
+  // slow network doesn't briefly flash "not found" for a real DB opportunity.
+  const opportunity = dbOpportunity ?? seedOpportunity ?? (dbLoading ? undefined : localOpportunity);
+  const stillResolving = dbLoading && !seedOpportunity;
   const route = opportunity ? routes.find((r) => r.id === opportunity.routeId) : null;
 
   return (
@@ -36,7 +75,11 @@ export default function OpportunityDetailPage() {
           Back to route planning
         </Link>
 
-        {opportunity ? (
+        {stillResolving ? (
+          <div className="shadow-card mt-4 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-6 py-6">
+            <p className="text-[13px] text-ink-faint">Loading opportunity…</p>
+          </div>
+        ) : opportunity ? (
           <div className="shadow-card mt-4 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-6 py-6">
             <span className="w-fit rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
               {OPPORTUNITY_STATUS_LABELS[opportunity.status]}
@@ -102,8 +145,9 @@ export default function OpportunityDetailPage() {
             )}
 
             <p className="mt-4 text-[11px] text-ink-faint">
-              Local prototype only — reviewed opportunities are stored in
-              this browser&rsquo;s localStorage, not a database.
+              {dbOpportunity
+                ? "Saved to the database."
+                : "Local prototype only — reviewed opportunities are stored in this browser's localStorage, not a database."}
             </p>
           </div>
         ) : (

@@ -11,11 +11,18 @@ import {
   type FrictionLevel,
   type IngestionDraft,
   type IngestionResponse,
+  type Opportunity,
   type OpportunitySourceType,
   type OpportunityStatus,
 } from "@/lib/opportunitySchema";
 import { buildOpportunityFromDraft } from "@/lib/reviewedOpportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
+
+type SaveState =
+  | { kind: "idle" }
+  | { kind: "saving" }
+  | { kind: "saved-db" }
+  | { kind: "saved-local-fallback"; reason: string };
 
 export default function OpportunityIngestionPage() {
   const [sourceUrl, setSourceUrl] = useState("");
@@ -28,7 +35,52 @@ export default function OpportunityIngestionPage() {
   const [routeId, setRouteId] = useState<string>("real-openings");
   const [status, setStatus] = useState<OpportunityStatus>("needs_review");
   const [approvedId, setApprovedId] = useState<string | null>(null);
+  const [adminToken, setAdminToken] = useState("");
+  const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
   const { reviewed, approve, clear } = useReviewedOpportunities();
+
+  async function handleApprove() {
+    if (!extracted) return;
+    const opportunity: Opportunity = buildOpportunityFromDraft(
+      extracted,
+      routeId,
+      "live",
+      approvedId ?? undefined
+    );
+
+    setSaveState({ kind: "saving" });
+
+    try {
+      const res = await fetch("/api/opportunities", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-token": adminToken,
+        },
+        body: JSON.stringify(opportunity),
+      });
+      const data = (await res.json()) as
+        | { ok: true; opportunity: Opportunity }
+        | { ok: false; error: string };
+
+      if (data.ok) {
+        setApprovedId(opportunity.id);
+        setSaveState({ kind: "saved-db" });
+        return;
+      }
+
+      approve(opportunity);
+      setApprovedId(opportunity.id);
+      setSaveState({ kind: "saved-local-fallback", reason: data.error });
+    } catch {
+      approve(opportunity);
+      setApprovedId(opportunity.id);
+      setSaveState({
+        kind: "saved-local-fallback",
+        reason: "Could not reach the database. Saved to this browser only.",
+      });
+    }
+  }
 
   async function handleExtract() {
     setLoading(true);
@@ -77,8 +129,9 @@ export default function OpportunityIngestionPage() {
     <div className="min-h-screen bg-cream px-6 py-10 sm:px-10">
       <div className="mx-auto max-w-[720px]">
         <div className="rounded-2xl border border-line/70 bg-cream-field px-4 py-3 text-[12px] text-ink-faint">
-          Internal prototype — not linked publicly. No database, no auth.
-          Nothing here persists beyond this page load.
+          Internal prototype — not linked publicly. Approved opportunities
+          save to a real database. Admin protection is a temporary shared
+          token for v0.8, not real auth.
         </div>
 
         <div className="mt-3 rounded-2xl border border-line/70 bg-cream-field px-4 py-3 text-[11.5px] leading-relaxed text-ink-faint">
@@ -176,8 +229,8 @@ export default function OpportunityIngestionPage() {
                 2. Extracted opportunity preview
               </h2>
               <p className="text-[11px] font-medium text-ink-soft">
-                Needs review before publishing. No database yet — this draft
-                is not saved.
+                Needs review before publishing. Nothing is saved until you
+                approve it below.
               </p>
 
               {warnings.length > 0 && (
@@ -405,28 +458,38 @@ export default function OpportunityIngestionPage() {
                 </select>
               </label>
 
+              <label className="block rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.25">
+                <span className="block text-[10.5px] text-ink-faint">
+                  Admin token
+                </span>
+                <input
+                  type="password"
+                  value={adminToken}
+                  onChange={(e) => setAdminToken(e.target.value)}
+                  placeholder="Paste the shared admin token"
+                  className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint/70"
+                />
+              </label>
+              <p className="text-[11px] text-ink-faint">
+                Admin protection is temporary for v0.8 — a single shared
+                token, not real auth. It will be replaced once admin
+                accounts exist.
+              </p>
+
               <button
                 type="button"
-                onClick={() => {
-                  if (!extracted) return;
-                  const opportunity = buildOpportunityFromDraft(
-                    extracted,
-                    routeId,
-                    "live",
-                    approvedId ?? undefined
-                  );
-                  approve(opportunity);
-                  setApprovedId(opportunity.id);
-                }}
-                className="flex items-center justify-center gap-2 rounded-full border border-green/40 bg-green-soft px-4 py-2.5 text-[13.5px] font-medium text-green outline-none transition hover:bg-green-soft/70 focus-visible:ring-2 focus-visible:ring-green/50"
+                onClick={handleApprove}
+                disabled={saveState.kind === "saving"}
+                className="flex items-center justify-center gap-2 rounded-full border border-green/40 bg-green-soft px-4 py-2.5 text-[13.5px] font-medium text-green outline-none transition hover:bg-green-soft/70 focus-visible:ring-2 focus-visible:ring-green/50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Approve for map
+                {saveState.kind === "saving" ? "Saving…" : "Approve for map"}
               </button>
-              {approvedId && (
+
+              {saveState.kind === "saved-db" && (
                 <div className="rounded-2xl border border-green/30 bg-green-soft/20 px-4 py-3">
                   <p className="text-[12px] font-medium text-ink-soft">
-                    Saved locally. This opportunity will now appear in your
-                    route map on this browser.
+                    Saved to database. This opportunity can now appear for
+                    public users.
                   </p>
                   <Link
                     href="/route-planning"
@@ -435,7 +498,25 @@ export default function OpportunityIngestionPage() {
                     View in route planning
                   </Link>
                   <p className="mt-1.5 text-[11px] text-ink-faint">
-                    Local prototype only — not saved to a database.
+                    Admin protection is temporary for v0.8.
+                  </p>
+                </div>
+              )}
+
+              {saveState.kind === "saved-local-fallback" && (
+                <div className="rounded-2xl border border-line/70 bg-cream-field px-4 py-3">
+                  <p className="text-[12px] font-medium text-ink-soft">
+                    Couldn&rsquo;t save to the database ({saveState.reason}).
+                    Saved to this browser&rsquo;s local storage instead.
+                  </p>
+                  <Link
+                    href="/route-planning"
+                    className="mt-1.5 inline-block text-[12px] font-semibold text-green underline"
+                  >
+                    View in route planning
+                  </Link>
+                  <p className="mt-1.5 text-[11px] text-ink-faint">
+                    Local prototype fallback only — not saved to a database.
                   </p>
                 </div>
               )}
@@ -446,7 +527,7 @@ export default function OpportunityIngestionPage() {
         <div className="shadow-card mt-6 flex flex-col gap-3 rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-[15px] font-semibold text-ink">
-              Locally approved opportunities
+              Local fallback approvals
             </h2>
             <Link
               href="/route-planning"
@@ -456,13 +537,15 @@ export default function OpportunityIngestionPage() {
             </Link>
           </div>
           <p className="text-[11px] text-ink-faint">
-            Local prototype only — stored in this browser&rsquo;s
-            localStorage, not a database.
+            Only opportunities that couldn&rsquo;t be saved to the database
+            land here — stored in this browser&rsquo;s localStorage as a
+            fallback. Successful database saves show up in the Supabase
+            table editor, not this list.
           </p>
 
           {reviewed.length === 0 ? (
             <p className="text-[12.5px] text-ink-faint">
-              No locally approved opportunities yet.
+              No local fallback approvals yet.
             </p>
           ) : (
             <ul className="flex flex-col gap-2">
