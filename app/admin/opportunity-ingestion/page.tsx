@@ -322,6 +322,7 @@ export default function OpportunityIngestionPage() {
                     <li>Does this open a next door?</li>
                     <li>Does this create ownership or agency?</li>
                     <li>Does this compound?</li>
+                    <li>Does it connect to a gateway community — respectfully, as a bridge in, not a way to extract?</li>
                     <li>Or is it mostly just a paid activity?</li>
                   </ul>
                 </div>

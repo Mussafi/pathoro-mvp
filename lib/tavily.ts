@@ -51,6 +51,31 @@ const OPPORTUNITY_ACCESS_HINTS = [
   "local resale OR side hustle opportunity",
 ];
 
+/**
+ * Signals that a path/goal is reaching for a wider network — trade,
+ * sourcing, a diaspora connection, entering a new community — not a single
+ * opportunity. Deliberately structure-based (matches words describing what
+ * the *admin typed*), never identity-based: it does not name or infer any
+ * specific ethnicity, culture, or community. See "Gateway Communities" in
+ * docs/MVP-LOCKED-PRINCIPLES.md.
+ */
+const GATEWAY_TRIGGER_PATTERN =
+  /\b(import|export|trade|sourcing|wholesale|resell|diaspora|chamber of commerce|cultural association|connect with|business network|new community|bridge (?:person|community)|international)\b/i;
+
+/** Institution-type query hints for gateway community search mode — never a specific culture/ethnicity. */
+const GATEWAY_QUERY_HINTS = [
+  "local chamber of commerce",
+  "cultural association",
+  "business improvement district",
+  "language exchange group",
+  "import export workshop",
+  "sourcing OR import community",
+  "trade meetup",
+  "small business development center",
+  "community business directory",
+  "neighborhood organization",
+];
+
 const CANONICAL_HOST_SOURCE_TYPES: { match: (host: string) => boolean; type: OpportunitySourceType }[] = [
   { match: (h) => h.includes("eventbrite."), type: "eventbrite" },
   { match: (h) => h.includes("lu.ma") || h.includes("luma."), type: "luma" },
@@ -95,7 +120,10 @@ export function isTavilyConfigured(): boolean {
  * biased, and higher-agency-opportunity-biased (flea markets, grants,
  * apprenticeships, resale, etc.) — so results aren't dominated by classes
  * and events. See "Opportunity, not consumption" in
- * docs/MVP-LOCKED-PRINCIPLES.md.
+ * docs/MVP-LOCKED-PRINCIPLES.md. If the path/goal signals interest in a
+ * wider network (trade, sourcing, diaspora, entering a new community), also
+ * adds gateway community queries — see "Gateway Communities" in the same
+ * doc.
  */
 export function generateSearchQueries(params: {
   city: string;
@@ -122,6 +150,15 @@ export function generateSearchQueries(params: {
     `${params.pathGoal} ${accessHintA} ${location}`,
     `${params.pathGoal} ${accessHintB} ${location}`,
   ];
+
+  if (GATEWAY_TRIGGER_PATTERN.test(params.pathGoal)) {
+    const gatewayHintA = GATEWAY_QUERY_HINTS[routeIndex % GATEWAY_QUERY_HINTS.length];
+    const gatewayHintB = GATEWAY_QUERY_HINTS[(routeIndex + 5) % GATEWAY_QUERY_HINTS.length];
+    queries.push(
+      `${params.pathGoal} ${gatewayHintA} ${location}`,
+      `${params.pathGoal} ${gatewayHintB} ${location}`
+    );
+  }
 
   if (params.keywords?.trim()) {
     queries.push(`${params.keywords.trim()} ${params.pathGoal} ${location}`);
@@ -203,6 +240,33 @@ const CATEGORY_KEYWORD_RULES: { category: OpportunityCategory; pattern: RegExp }
   {
     category: "ownership_path",
     pattern: /\b(small business grant|start(?:ing)? your (?:own )?business|entrepreneur(?:ship)?|business plan competition|storefront|launch your business)\b/,
+  },
+  // Gateway community values ("Gateway Communities" in
+  // docs/MVP-LOCKED-PRINCIPLES.md) — institution-type patterns only, never
+  // a specific ethnicity or culture, matching what the admin actually typed.
+  {
+    category: "trade_access_point",
+    pattern: /\b(import\/?export|sourcing|wholesale|trade meetup|trade association|trade show)\b/,
+  },
+  {
+    category: "diaspora_route",
+    pattern: /\b(diaspora|immigrant business|ethnic chamber|international trade)\b/,
+  },
+  {
+    category: "gateway_community",
+    pattern: /\b(chamber of commerce|cultural association|business improvement district)\b/,
+  },
+  {
+    category: "bridge_person",
+    pattern: /\b(bridge (?:person|builder)|community liaison|connector)\b/,
+  },
+  {
+    category: "place_based_network",
+    pattern: /\b(neighborhood organization|business corridor|neighborhood association)\b/,
+  },
+  {
+    category: "relationship_path",
+    pattern: /\b(language exchange|build(?:ing)? trust|long-?term relationship)\b/,
   },
   {
     category: "access_point",

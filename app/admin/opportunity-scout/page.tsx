@@ -128,6 +128,16 @@ export default function OpportunityScoutPage() {
           something for this person.
         </div>
 
+        <div className="mt-3 rounded-2xl border border-green/40 bg-green-soft/15 px-4 py-3 text-[11.5px] leading-relaxed text-ink-soft">
+          For goals about trade, sourcing, or entering a new community, the
+          scout also looks for gateway communities — chambers of commerce,
+          cultural associations, trade meetups, and similar bridges into a
+          wider network. This responds only to what you type here; it never
+          infers who someone is. Every opportunity found this way should
+          still be legitimate and community-respecting — a way in, not a way
+          to extract.
+        </div>
+
         <h1 className="mt-6 font-serif text-[26px] leading-tight text-ink">
           Opportunity scout (prototype)
         </h1>

@@ -66,10 +66,13 @@ export const OPPORTUNITY_SOURCE_LABELS: Record<OpportunitySourceType, string> = 
 };
 
 /**
- * "Opportunity, not consumption" — what kind of opportunity a scout
- * candidate looks like, independent of route/source fit. Scout-response-
- * only classification (see docs/V0.11-AI-OPPORTUNITY-SCOUT.md); not a field
- * on the persisted Opportunity type and not sent to Supabase.
+ * "Opportunity, not consumption" plus "Gateway Communities" — what kind of
+ * opportunity a scout candidate looks like, independent of route/source
+ * fit. Scout-response-only classification (see
+ * docs/V0.11-AI-OPPORTUNITY-SCOUT.md); not a field on the persisted
+ * Opportunity type and not sent to Supabase. The gateway-community values
+ * are structure-based (institution types), never identity-based — see
+ * docs/MVP-LOCKED-PRINCIPLES.md#gateway-communities.
  */
 export type OpportunityCategory =
   | "consumer_activity"
@@ -80,7 +83,13 @@ export type OpportunityCategory =
   | "proximity_builder"
   | "credential_step"
   | "community_entry"
-  | "compounding_opportunity";
+  | "compounding_opportunity"
+  | "gateway_community"
+  | "bridge_person"
+  | "place_based_network"
+  | "diaspora_route"
+  | "trade_access_point"
+  | "relationship_path";
 
 export const OPPORTUNITY_CATEGORY_LABELS: Record<OpportunityCategory, string> = {
   consumer_activity: "Consumer activity",
@@ -92,6 +101,12 @@ export const OPPORTUNITY_CATEGORY_LABELS: Record<OpportunityCategory, string> = 
   credential_step: "Credential step",
   community_entry: "Community entry",
   compounding_opportunity: "Compounding opportunity",
+  gateway_community: "Gateway community",
+  bridge_person: "Bridge person",
+  place_based_network: "Place-based network",
+  diaspora_route: "Diaspora route",
+  trade_access_point: "Trade access point",
+  relationship_path: "Relationship path",
 };
 
 export const OPPORTUNITY_STATUS_LABELS: Record<OpportunityStatus, string> = {

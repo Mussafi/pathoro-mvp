@@ -48,6 +48,46 @@ Every opportunity — during admin review, in the scout's classification, or on 
 
 A "yes" to any of the first six is a real opportunity. A "no" to all of them, with a "yes" only to the last, is consumption — still possibly worth surfacing, but not what Pathoro should reach for first.
 
+## Gateway Communities
+
+Pathoro should eventually map not just individual opportunities, but pathways into opportunity *networks*. This is a locked principle to build toward — v0.11 implements the scout-side query and classification support for it; the full mapping (an actual opportunity graph) is future work.
+
+**A gateway community is a place, group, institution, neighborhood, or cultural/business network that can open paths into wider opportunity worlds.**
+
+Example: Chinatown in New York City is not just a neighborhood. It can be a gateway into language, culture, trade, import/export, food businesses, logistics, sourcing, diaspora networks, travel, mentorship, and China-connected opportunity pathways. The same is true, in its own way, of a makerspace, a coworking space, a community garden, an immigrant business corridor, a religious or community institution, or a public library — each is a door into a wider network, not just a single opportunity.
+
+### This must be handled respectfully
+
+- Do not stereotype communities.
+- Do not treat communities as resources to extract from.
+- Emphasize mutuality, trust, contribution, learning, and relationship.
+- Opportunities surfaced through a gateway community must be legitimate and community-respecting.
+- Pathoro should help users find bridges into a community, not exploit or bypass the community's own relationships and norms.
+
+In practice, this means Pathoro's tools respond to *what a person says they're trying to do* (their own stated path/goal) and surface the *general type* of institutional bridge relevant to it — a chamber of commerce, a cultural association, a language exchange group — rather than ever assuming or inferring a person's ethnicity, culture, or community membership. The system is structure-based, not identity-based: it doesn't hardcode assumptions about any particular group, and it doesn't try to detect what community someone "should" belong to.
+
+### Product language
+
+- **Gateway community** — a place, group, institution, or network that can open paths into a wider world of opportunity: trade, language, mentorship, culture, business.
+- **Bridge person** — someone already inside a gateway community who can vouch for, introduce, or orient a newcomer. The human version of a gateway.
+- **Access pathway** — the concrete, legitimate, respectful first step from outside a gateway community to meaningfully inside it.
+- **Place-based opportunity network** — a gateway community anchored to a physical place (a neighborhood, a market district) rather than a purely online or institutional one.
+- **Diaspora opportunity route** — a path into opportunity that runs *through* a diaspora community's own institutions, trade, and relationships, with permission and mutuality — not around them.
+- **Community-based route** — a route (in Pathoro's five-route model) whose next step runs through a gateway community rather than a solo action.
+- **Opportunity graph** — the larger idea this is building toward: opportunities aren't a flat list. They connect to each other and to gateway communities, forming a graph a person can move through over time.
+
+### Examples of gateway communities
+
+| Gateway community | Can open into |
+|---|---|
+| Chinatown (or any diaspora neighborhood) | China-connected trade, language, sourcing, food, logistics, cultural/business networks |
+| Makerspaces | Hardware, robotics, fabrication, startup/building networks |
+| Coworking spaces | Founders, freelancers, startup jobs, investors |
+| Community gardens | Food systems, sustainability, volunteering, local relationships |
+| Immigrant business corridors | Trade, language, entrepreneurship, service networks |
+| Religious/community institutions | Trust, service, mentorship, support networks |
+| Public libraries | Free education, career resources, community programs |
+
 ## People Are Part of the Landscape
 
 People are not a social feature in Pathoro. People are part of the opportunity landscape. They appear when they can make a path more reachable, more human, or more possible.
