@@ -4,6 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import { SCOUT_REQUEST_STATUS_LABELS, type ScoutRequest, type ScoutRequestStatus } from "@/lib/scoutRequestSchema";
+import type { ScoutCandidateRecord, ScoutCandidateStatus } from "@/lib/scoutCandidatesDb";
+import { PATHORO_FIT_LABELS, type PathoroFit } from "@/lib/scoutFit";
+
+type ScoutRequestWithCandidates = ScoutRequest & { candidates: ScoutCandidateRecord[] };
+
+const CANDIDATE_STATUS_LABELS: Record<ScoutCandidateStatus, string> = {
+  candidate: "New candidate",
+  sent_to_ingestion: "Sent to ingestion",
+  dismissed: "Dismissed",
+  promoted: "Promoted",
+};
 
 function buildScoutHref(request: ScoutRequest): string {
   const params = new URLSearchParams({
@@ -20,14 +31,24 @@ function buildPublicResultUrl(request: ScoutRequest): string | null {
   return `/scout-request/${request.id}?token=${request.publicToken}`;
 }
 
+function buildIngestionHref(candidate: ScoutCandidateRecord, city: string): string {
+  const params = new URLSearchParams({
+    sourceUrl: candidate.url,
+    sourceType: candidate.sourceType,
+    city,
+  });
+  return `/admin/opportunity-ingestion?${params.toString()}`;
+}
+
 export default function ScoutRequestsAdminPage() {
   const [adminToken, setAdminToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [requests, setRequests] = useState<ScoutRequest[] | null>(null);
+  const [requests, setRequests] = useState<ScoutRequestWithCandidates[] | null>(null);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [summaryDrafts, setSummaryDrafts] = useState<Record<string, string>>({});
   const [savingSummaryId, setSavingSummaryId] = useState<string | null>(null);
+  const [actioningCandidateId, setActioningCandidateId] = useState<string | null>(null);
 
   async function handleLoad() {
     setLoading(true);
@@ -48,13 +69,56 @@ export default function ScoutRequestsAdminPage() {
       setRequests(data.requests);
       setSummaryDrafts(
         Object.fromEntries(
-          (data.requests as ScoutRequest[]).map((r) => [r.id, r.resultSummary])
+          (data.requests as ScoutRequestWithCandidates[]).map((r) => [r.id, r.resultSummary])
         )
       );
     } catch {
       setError("Something went wrong reaching Pathoro. Please try again.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleCandidateStatusChange(
+    candidateId: string,
+    requestId: string,
+    status: ScoutCandidateStatus
+  ) {
+    setActioningCandidateId(candidateId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/scout-candidates/${candidateId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-admin-token": adminToken },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setError(
+          res.status === 401
+            ? "Admin token required. This protects scout requests from public use."
+            : data.error
+        );
+        return;
+      }
+      setRequests((prev) =>
+        prev
+          ? prev.map((r) =>
+              r.id === requestId
+                ? {
+                    ...r,
+                    candidates: r.candidates.map((c) =>
+                      c.id === candidateId ? { ...c, status } : c
+                    ),
+                  }
+                : r
+            )
+          : prev
+      );
+    } catch {
+      setError("Something went wrong reaching Pathoro. Please try again.");
+    } finally {
+      setActioningCandidateId(null);
     }
   }
 
@@ -247,6 +311,82 @@ export default function ScoutRequestsAdminPage() {
                       {savingSummaryId === req.id ? "Saving…" : "Save summary"}
                     </button>
                   </label>
+
+                  {req.candidates.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[11px] font-semibold text-ink-faint">
+                        AI-found candidates ({req.candidates.length})
+                      </span>
+                      {req.candidates.map((candidate) => (
+                        <div
+                          key={candidate.id}
+                          className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.5"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <span className="text-[12.5px] font-semibold text-ink">
+                              {candidate.title}
+                            </span>
+                            <span className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                              <span className="rounded-full border border-green/40 bg-green-soft/60 px-2 py-0.5 text-[10px] font-semibold text-green">
+                                {PATHORO_FIT_LABELS[candidate.pathoroFit as PathoroFit] ??
+                                  candidate.pathoroFit}
+                              </span>
+                              {candidate.status !== "candidate" && (
+                                <span className="rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
+                                  {CANDIDATE_STATUS_LABELS[candidate.status]}
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          {candidate.snippet && (
+                            <p className="mt-1 text-[11.5px] leading-snug text-ink-soft">
+                              {candidate.snippet}
+                            </p>
+                          )}
+                          <div className="mt-2 flex flex-wrap items-center gap-3">
+                            <Link
+                              href={buildIngestionHref(candidate, req.city)}
+                              onClick={() =>
+                                handleCandidateStatusChange(candidate.id, req.id, "sent_to_ingestion")
+                              }
+                              className="text-[11.5px] font-medium text-green underline"
+                            >
+                              Send to ingestion
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCandidateStatusChange(candidate.id, req.id, "promoted")
+                              }
+                              disabled={actioningCandidateId === candidate.id}
+                              className="text-[11.5px] font-medium text-ink-faint underline disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Mark promoted
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleCandidateStatusChange(candidate.id, req.id, "dismissed")
+                              }
+                              disabled={actioningCandidateId === candidate.id}
+                              className="text-[11.5px] font-medium text-ink-faint underline disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Dismiss
+                            </button>
+                            <a
+                              href={candidate.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[11.5px] font-medium text-ink-faint underline"
+                            >
+                              Open source
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="mt-1 flex flex-wrap items-center gap-3">
                     <Link
                       href={buildScoutHref(req)}

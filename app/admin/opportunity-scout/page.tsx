@@ -203,6 +203,15 @@ export default function OpportunityScoutPage() {
           to extract.
         </div>
 
+        <div className="mt-3 rounded-2xl border border-line/70 bg-cream-field px-4 py-3 text-[11.5px] leading-relaxed text-ink-faint">
+          Public scout requests now run automatically — see{" "}
+          <Link href="/admin/scout-requests" className="font-semibold text-green underline">
+            Scout requests
+          </Link>
+          . This page is for manual scouting, re-scouting a request, and
+          deeper searches.
+        </div>
+
         <h1 className="mt-6 font-serif text-[26px] leading-tight text-ink">
           Opportunity scout (prototype)
         </h1>

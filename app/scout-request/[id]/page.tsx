@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Compass } from "lucide-react";
+import { ArrowLeft, Compass, ExternalLink, Sparkles } from "lucide-react";
 import { TopoLines } from "@/components/TopoLines";
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
 import { OpportunityTile } from "@/components/route/OpportunityTile";
@@ -14,11 +14,24 @@ import {
   type PublicScoutRequest,
 } from "@/lib/scoutRequestSchema";
 import type { Opportunity } from "@/lib/opportunitySchema";
+import type { ScoutCandidateRecord } from "@/lib/scoutCandidatesDb";
+import { PATHORO_FIT_LABELS, type PathoroFit } from "@/lib/scoutFit";
+
+const CONFIDENCE_LABELS: Record<string, string> = {
+  high: "High confidence",
+  medium: "Medium confidence",
+  low: "Low confidence",
+};
 
 type FetchState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
-  | { kind: "ready"; request: PublicScoutRequest; opportunities: Opportunity[] };
+  | {
+      kind: "ready";
+      request: PublicScoutRequest;
+      opportunities: Opportunity[];
+      candidates: ScoutCandidateRecord[];
+    };
 
 export default function ScoutRequestResultPage() {
   const params = useParams<{ id: string }>();
@@ -33,7 +46,12 @@ function ScoutRequestResultContent({ id }: { id: string }) {
     const token = new URLSearchParams(window.location.search).get("token");
 
     type FetchResult =
-      | { ok: true; request: PublicScoutRequest; opportunities: Opportunity[] }
+      | {
+          ok: true;
+          request: PublicScoutRequest;
+          opportunities: Opportunity[];
+          candidates: ScoutCandidateRecord[];
+        }
       | { ok: false; error: string };
 
     const request: Promise<FetchResult> = token
@@ -49,7 +67,12 @@ function ScoutRequestResultContent({ id }: { id: string }) {
           setState({ kind: "error", message: data.error });
           return;
         }
-        setState({ kind: "ready", request: data.request, opportunities: data.opportunities });
+        setState({
+          kind: "ready",
+          request: data.request,
+          opportunities: data.opportunities,
+          candidates: data.candidates,
+        });
       })
       .catch(() => {
         if (!cancelled) {
@@ -196,6 +219,84 @@ function ScoutRequestResultContent({ id }: { id: string }) {
                 ))}
               </div>
             )}
+
+            <div className="mt-5 flex flex-col gap-3 border-t border-line/70 pt-5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-green" strokeWidth={1.75} />
+                <span className="text-[13px] font-semibold text-ink">
+                  AI-found candidates
+                </span>
+              </div>
+              <p className="text-[11.5px] leading-relaxed text-ink-faint">
+                Pathoro automatically scouted for real-world access points
+                that may match this path. These are unreviewed candidates,
+                not guaranteed recommendations.
+              </p>
+
+              {state.candidates.length === 0 ? (
+                <p className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-3 text-[12.5px] leading-relaxed text-ink-faint">
+                  Pathoro is still looking. Refresh this page shortly.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  {state.candidates.map((candidate) => (
+                    <div
+                      key={candidate.id}
+                      className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-3"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <span className="text-[13px] font-semibold text-ink">
+                          {candidate.title}
+                        </span>
+                        <span className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                          <span className="rounded-full border border-green/40 bg-green-soft/60 px-2 py-0.5 text-[10px] font-semibold text-green">
+                            {PATHORO_FIT_LABELS[candidate.pathoroFit as PathoroFit] ?? candidate.pathoroFit}
+                          </span>
+                          <span className="rounded-full bg-cream-card px-2 py-0.5 text-[10px] font-semibold text-ink-faint">
+                            {CONFIDENCE_LABELS[candidate.confidence] ?? candidate.confidence}
+                          </span>
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-ink-faint">{candidate.sourceName}</p>
+                      {candidate.snippet && (
+                        <p className="mt-1.5 text-[12px] leading-snug text-ink-soft">
+                          {candidate.snippet}
+                        </p>
+                      )}
+                      {candidate.whyThisMayFit && (
+                        <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
+                          <span className="font-semibold text-ink-soft">Why this may fit — </span>
+                          {candidate.whyThisMayFit}
+                        </p>
+                      )}
+                      {candidate.leverageHint && (
+                        <p className="mt-1 text-[11px] leading-snug text-ink-faint">
+                          <span className="font-semibold text-ink-soft">
+                            What leverage it may create —{" "}
+                          </span>
+                          {candidate.leverageHint}
+                        </p>
+                      )}
+                      {candidate.suggestedNextStep && (
+                        <p className="mt-1 text-[11px] leading-snug text-ink-faint">
+                          <span className="font-semibold text-ink-soft">Suggested next step — </span>
+                          {candidate.suggestedNextStep}
+                        </p>
+                      )}
+                      <a
+                        href={candidate.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 flex w-fit items-center gap-1 text-[11.5px] font-medium text-green underline"
+                      >
+                        Open source
+                        <ExternalLink className="h-3 w-3" strokeWidth={2} />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <p className="mt-5 text-[11px] text-ink-faint">
               Save this link to check back — this page updates as Pathoro

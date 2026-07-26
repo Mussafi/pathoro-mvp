@@ -1,11 +1,14 @@
 import { isAuthorizedAdminRequest } from "@/lib/adminAuth";
 import { insertScoutRequest } from "@/lib/scoutRequestsDb";
 import { getScoutRequestsAdmin } from "@/lib/scoutRequestsAdminDb";
+import { getScoutCandidatesForRequests, saveScoutCandidates } from "@/lib/scoutCandidatesDb";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { createScoutRequestId } from "@/lib/scoutRequestSchema";
+import { isTavilyConfigured, scoutOpportunities } from "@/lib/tavily";
 
-// Admin-only: list all scout requests. Never public — a real user's
-// requested path/city is only ever readable with a valid ADMIN_TOKEN.
+// Admin-only: list all scout requests, each with its saved AI-found
+// candidates. Never public — a real user's requested path/city is only
+// ever readable with a valid ADMIN_TOKEN.
 export async function GET(request: Request): Promise<Response> {
   if (!isAuthorizedAdminRequest(request)) {
     return Response.json(
@@ -16,7 +19,12 @@ export async function GET(request: Request): Promise<Response> {
 
   try {
     const requests = await getScoutRequestsAdmin();
-    return Response.json({ ok: true, requests });
+    const candidatesByRequestId = await getScoutCandidatesForRequests(requests.map((r) => r.id));
+    const requestsWithCandidates = requests.map((r) => ({
+      ...r,
+      candidates: candidatesByRequestId[r.id] ?? [],
+    }));
+    return Response.json({ ok: true, requests: requestsWithCandidates });
   } catch (err) {
     console.error("GET /api/scout-requests failed:", err);
     return Response.json({ ok: true, requests: [] });
@@ -60,27 +68,49 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const id = createScoutRequestId();
+  const city = body.city.trim();
+  const state = body.state?.trim() ?? "";
+  const routeId = body.routeId.trim();
+  const pathGoal = body.pathGoal.trim();
 
+  let publicToken: string;
   try {
-    const { publicToken } = await insertScoutRequest({
+    ({ publicToken } = await insertScoutRequest({
       id,
-      city: body.city.trim(),
-      state: body.state?.trim() ?? "",
-      routeId: body.routeId.trim(),
-      pathGoal: body.pathGoal.trim(),
+      city,
+      state,
+      routeId,
+      pathGoal,
       userContext: body.userContext?.trim() ?? "",
       requestedFromPage: body.requestedFromPage?.trim() ?? "",
-    });
-    return Response.json({
-      ok: true,
-      message: "Scout request sent. Pathoro will look for real-world access points for this route.",
-      id,
-      publicToken,
-      resultUrl: `/scout-request/${id}?token=${publicToken}`,
-    });
+    }));
   } catch (err) {
     console.error("POST /api/scout-requests failed:", err);
     const message = err instanceof Error ? err.message : "Failed to save scout request.";
     return Response.json({ ok: false, error: message }, { status: 500 });
   }
+
+  // Automatically run the same scout used by /admin/opportunity-scout so
+  // the requester sees something without waiting on manual admin work.
+  // This never fails the request itself — the scout_requests row above is
+  // already saved either way, and the result page falls back to "still
+  // looking" copy when there are no candidates yet.
+  if (isTavilyConfigured()) {
+    try {
+      const { candidates } = await scoutOpportunities({ city, state, pathGoal, routeId });
+      await saveScoutCandidates(id, candidates);
+    } catch (err) {
+      console.error(`Automatic scout failed for request ${id}:`, err);
+    }
+  } else {
+    console.error(`Automatic scout skipped for request ${id}: TAVILY_API_KEY isn't configured.`);
+  }
+
+  return Response.json({
+    ok: true,
+    message: "Scout request sent. Pathoro will look for real-world access points for this route.",
+    id,
+    publicToken,
+    resultUrl: `/scout-request/${id}?token=${publicToken}`,
+  });
 }

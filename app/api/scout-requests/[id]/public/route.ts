@@ -1,5 +1,6 @@
 import { getScoutRequestByIdAdmin } from "@/lib/scoutRequestsAdminDb";
 import { getLiveOpportunities } from "@/lib/opportunitiesDb";
+import { getScoutCandidatesForRequest } from "@/lib/scoutCandidatesDb";
 import type { PublicScoutRequest } from "@/lib/scoutRequestSchema";
 
 // Public, token-gated: this is the one place a user without an admin
@@ -38,6 +39,12 @@ export async function GET(
       city: scoutRequest.city || undefined,
     });
 
+    // Dismissed candidates were judged not worth showing — everything else
+    // (candidate/sent_to_ingestion/promoted) is still a legitimate AI-found
+    // lead the requester should see.
+    const allCandidates = await getScoutCandidatesForRequest(scoutRequest.id);
+    const candidates = allCandidates.filter((c) => c.status !== "dismissed");
+
     const publicRequest: PublicScoutRequest = {
       id: scoutRequest.id,
       city: scoutRequest.city,
@@ -52,7 +59,7 @@ export async function GET(
       respondedAt: scoutRequest.respondedAt,
     };
 
-    return Response.json({ ok: true, request: publicRequest, opportunities });
+    return Response.json({ ok: true, request: publicRequest, opportunities, candidates });
   } catch (err) {
     console.error("GET /api/scout-requests/[id]/public failed:", err);
     return Response.json(
