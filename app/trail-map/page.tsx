@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bookmark } from "lucide-react";
 import { TopoLines } from "@/components/TopoLines";
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
@@ -19,6 +19,20 @@ export default function TrailMapPage() {
   const [branchId, setBranchId] = useState(goal.defaultBranchId);
 
   const selectedBranch = goal.branches.find((b) => b.id === branchId) ?? goal.branches[0];
+
+  // Read ?goal= after mount (not during render) so the server-rendered and
+  // first client render stay in sync — a matching request-scout param
+  // means /route-planning is linking here for a specific goal.
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("goal");
+    const matched = trailMapGoals.find((g) => g.id === requested);
+    Promise.resolve(matched).then((match) => {
+      if (match) {
+        setGoalId(match.id);
+        setBranchId(getTrailMapGoal(match.id).defaultBranchId);
+      }
+    });
+  }, []);
 
   function handleSelectGoal(id: TrailMapGoalId) {
     setGoalId(id);

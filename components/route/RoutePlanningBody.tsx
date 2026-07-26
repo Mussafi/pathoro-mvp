@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Compass, Map } from "lucide-react";
+import { Compass } from "lucide-react";
 import { RouteRevealMap } from "@/components/route/RouteRevealMap";
 import { BestNextRouteCard } from "@/components/route/BestNextRouteCard";
+import { TrailMapRecommendationCard } from "@/components/route/TrailMapRecommendationCard";
 import { ExploreOtherRoutes } from "@/components/route/ExploreOtherRoutes";
 import { ScoutRequestCard } from "@/components/route/ScoutRequestCard";
 import { AiFoundAccessPoints } from "@/components/route/AiFoundAccessPoints";
@@ -13,6 +13,7 @@ import { RouteFooterBar } from "@/components/route/RouteFooterBar";
 import { mapReachableToRouteId } from "@/lib/direction";
 import { useDirectionAnswers } from "@/lib/useDirectionAnswers";
 import { useLiveOpportunities } from "@/lib/useLiveOpportunities";
+import { shouldRecommendTrailMap } from "@/lib/goalSpecificity";
 
 export function RoutePlanningBody() {
   const { answers } = useDirectionAnswers();
@@ -25,6 +26,7 @@ export function RoutePlanningBody() {
   const hasLiveDbMatch = live.some(
     (o) => o.routeId === selectedId && o.city.toLowerCase().trim() === city
   );
+  const recommendTrailMap = shouldRecommendTrailMap(answers.moveToward, answers.reachable);
 
   function handleExploreOthers() {
     setExploreOpen(true);
@@ -52,6 +54,7 @@ export function RoutePlanningBody() {
           answers={answers}
         />
       </div>
+      {recommendTrailMap && <TrailMapRecommendationCard pathGoal={answers.moveToward} />}
       <BestNextRouteCard
         selectedRouteId={selectedId}
         suggestedRouteId={mappedRouteId}
@@ -79,13 +82,6 @@ export function RoutePlanningBody() {
       />
       <PostOpportunityCard />
       <RouteFooterBar />
-      <Link
-        href="/trail-map"
-        className="mt-4 flex w-fit items-center gap-1.5 text-[11.5px] font-medium text-ink-faint outline-none transition hover:text-ink-soft focus-visible:ring-2 focus-visible:ring-green/50"
-      >
-        <Map className="h-3.5 w-3.5" strokeWidth={1.75} />
-        Dev: Open Advanced Trail Map prototype
-      </Link>
     </div>
   );
 }

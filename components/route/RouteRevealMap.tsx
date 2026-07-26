@@ -5,55 +5,61 @@ import { routes } from "@/lib/routes";
 import type { DirectionAnswers } from "@/lib/direction";
 
 const VIEW_W = 900;
-const VIEW_H = 290;
-const CENTER = { x: 90, y: 145 };
+// Taller than the original 290 — 5 lanes need real vertical room between
+// them for a 3-line label to sit above/below its own lane without
+// reaching into a neighboring lane's curve, which is still transitioning
+// (not yet flat) through most of this x-range. See docs/route-reveal notes
+// in the label placement block below.
+const VIEW_H = 380;
+const CENTER = { x: 90, y: 190 };
 const BRANCH_X = 740;
-const BRANCH_Y = [17, 85, 145, 205, 273];
-// Nudged well outward from the original [0.32, 0.62, 0.88]. Two-line step
-// labels are ~23px tall (three-line ones ~34px) — near the center node all
-// five routes' curves are still bunched within a few px of each other, so
-// no offset can fit a label of that height into the gap without it
-// reaching into a neighboring route's line. Starting further out (where
-// the fanned-out curves are 40-60px apart) is what actually creates room,
-// not a bigger offset.
-const MARKER_T = [0.78, 0.86, 0.94];
-// Label offset as a percent of VIEW_H rather than a fixed pixel amount —
-// scales with the rendered container the same way the curve spacing does.
-// Kept modest: this only needs to clear the label's *own* curve (a few px
-// of stroke width), not a neighboring route — that's MARKER_T's job. A
-// large offset here would push upper/lower routes' labels toward whichever
-// neighbor sits on that side.
-const LABEL_OFFSET_PERCENT = 5;
+const BRANCH_Y = [30, 118, 190, 262, 350];
+// Every route's path curves out from center, then — past this x — travels
+// in a straight horizontal line at its own BRANCH_Y out to the branch node.
+// Step markers/labels sit on that straight run, so their y is always
+// exactly the row's own y (no bezier interpolation needed for them, no
+// risk of drifting toward a neighboring row). See MARKER_XS below.
+const LANE_START_X = 460;
+// Fixed marker columns, independent of route — evenly spaced along the
+// straight lane, purely decorative texture (the actual step text lives in
+// one stacked block, not spread across these).
+const MARKER_XS = [560, 650, 720];
+// All 3 steps for the selected route are rendered as a single stacked
+// block at one x position, not 3 separate floating labels spread along
+// the lane. A 3-column spread kept colliding with whichever neighboring
+// lane's curve was still transitioning through that x-range — collapsing
+// to one anchor point removes that collision surface entirely, and reads
+// just as clearly as a short numbered list next to the destination.
+const LABEL_X = 640;
+const LABEL_OFFSET_PERCENT = 10;
 
-function curveControlPoints(y: number) {
+function curveControlPoints(y: number, endX: number) {
   const startX = CENTER.x + 30;
   const startY = CENTER.y;
-  const midX = (startX + BRANCH_X) / 2;
+  const midX = (startX + endX) / 2;
   return {
     p0: { x: startX, y: startY },
     p1: { x: midX, y: startY },
     p2: { x: midX, y },
-    p3: { x: BRANCH_X, y },
+    p3: { x: endX, y },
   };
 }
 
-function curvePath(y: number) {
-  const { p0, p1, p2, p3 } = curveControlPoints(y);
+// Unselected routes keep the original pure bezier all the way to the
+// branch node — it only sits at its own BRANCH_Y right near the very end,
+// so it never lingers across the x-range where a *different* selected
+// route's labels are floating.
+function fullCurvePath(y: number) {
+  const { p0, p1, p2, p3 } = curveControlPoints(y, BRANCH_X);
   return `M ${p0.x} ${p0.y} C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${p3.x} ${p3.y}`;
 }
 
-function cubicPoint(
-  t: number,
-  p0: { x: number; y: number },
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-  p3: { x: number; y: number }
-) {
-  const mt = 1 - t;
-  return {
-    x: mt * mt * mt * p0.x + 3 * mt * mt * t * p1.x + 3 * mt * t * t * p2.x + t * t * t * p3.x,
-    y: mt * mt * mt * p0.y + 3 * mt * mt * t * p1.y + 3 * mt * t * t * p2.y + t * t * t * p3.y,
-  };
+// The selected route's path curves out, then — past LANE_START_X — runs
+// straight at its own BRANCH_Y, so step markers/labels can sit on it at
+// fixed, evenly-spaced x columns instead of bunched bezier points.
+function selectedLanePath(y: number) {
+  const { p0, p1, p2, p3 } = curveControlPoints(y, LANE_START_X);
+  return `M ${p0.x} ${p0.y} C ${p1.x} ${p1.y}, ${p2.x} ${p2.y}, ${p3.x} ${p3.y} L ${BRANCH_X} ${y}`;
 }
 
 type RouteRevealMapProps = {
@@ -73,8 +79,6 @@ export function RouteRevealMap({
   const suggestedRoute = routes.find((r) => r.id === suggestedRouteId);
   const selectedIndex = routes.findIndex((r) => r.id === selectedRouteId);
   const selectedRoute = routes[selectedIndex];
-  const selectedControlPoints =
-    selectedIndex >= 0 ? curveControlPoints(BRANCH_Y[selectedIndex]) : null;
   const isSuggested = selectedRouteId === suggestedRouteId;
 
   const personalSentence = !selectedRoute
@@ -111,7 +115,7 @@ export function RouteRevealMap({
                 style={{ animationDelay: `${120 + i * 70}ms` }}
               >
                 <path
-                  d={curvePath(BRANCH_Y[i])}
+                  d={isSelected ? selectedLanePath(BRANCH_Y[i]) : fullCurvePath(BRANCH_Y[i])}
                   fill="none"
                   stroke={isSelected ? "var(--color-green)" : "var(--color-line)"}
                   strokeWidth={isSelected ? 2.25 : 1.25}
@@ -122,68 +126,54 @@ export function RouteRevealMap({
             );
           })}
 
-          {/* subtle step markers along the selected route's path */}
-          {selectedControlPoints &&
-            selectedRoute &&
-            MARKER_T.map((t, i) => {
-              const { x, y } = cubicPoint(
-                t,
-                selectedControlPoints.p0,
-                selectedControlPoints.p1,
-                selectedControlPoints.p2,
-                selectedControlPoints.p3
-              );
-              return (
-                <circle
-                  key={i}
-                  cx={x}
-                  cy={y}
-                  r={4}
-                  fill="var(--color-cream-card)"
-                  stroke="var(--color-green)"
-                  strokeWidth={1.5}
-                  className="route-reveal-animate"
-                  style={{ animationDelay: `${400 + i * 90}ms` }}
-                />
-              );
-            })}
+          {/* subtle step markers along the selected route's straight lane */}
+          {selectedRoute &&
+            MARKER_XS.map((x, i) => (
+              <circle
+                key={i}
+                cx={x}
+                cy={BRANCH_Y[selectedIndex]}
+                r={4}
+                fill="var(--color-cream-card)"
+                stroke="var(--color-green)"
+                strokeWidth={1.5}
+                className="route-reveal-animate"
+                style={{ animationDelay: `${400 + i * 90}ms` }}
+              />
+            ))}
         </svg>
 
-        {/* step labels for the selected route — offset above or below the
-            curve depending on whether this route branches above or below
-            center, so the text never sits on top of the stroke. The offset
-            is added directly to the `top` percentage (not a fixed-px
-            transform) so it scales with the container, keeping consistent
-            clearance from neighboring routes' lines at any viewport width. */}
-        {selectedControlPoints &&
-          selectedRoute &&
+        {/* step list for the selected route — one small stacked block,
+            offset above or below the straight lane depending on whether
+            this route branches above or below center, so it never sits on
+            top of the stroke. */}
+        {selectedRoute &&
           (() => {
-            const isUpperRoute = BRANCH_Y[selectedIndex] < CENTER.y;
+            const y = BRANCH_Y[selectedIndex];
+            const isUpperRoute = y < CENTER.y;
             const verticalSign = isUpperRoute ? -1 : 1;
             const labelTransform = isUpperRoute ? "translate(-50%, -100%)" : "translate(-50%, 0)";
-            return MARKER_T.map((t, i) => {
-              const { x, y } = cubicPoint(
-                t,
-                selectedControlPoints.p0,
-                selectedControlPoints.p1,
-                selectedControlPoints.p2,
-                selectedControlPoints.p3
-              );
-              return (
-                <div
-                  key={i}
-                  className="route-reveal-animate absolute w-[104px] -translate-x-1/2 text-center text-[9.5px] font-semibold leading-[1.2] text-ink"
-                  style={{
-                    left: `${(x / VIEW_W) * 100}%`,
-                    top: `${(y / VIEW_H) * 100 + verticalSign * LABEL_OFFSET_PERCENT}%`,
-                    transform: labelTransform,
-                    animationDelay: `${400 + i * 90}ms`,
-                  }}
-                >
-                  {selectedRoute.steps[i]?.label}
-                </div>
-              );
-            });
+            return (
+              <div
+                className="route-reveal-animate absolute w-[192px] text-left"
+                style={{
+                  left: `${(LABEL_X / VIEW_W) * 100}%`,
+                  top: `${(y / VIEW_H) * 100 + verticalSign * LABEL_OFFSET_PERCENT}%`,
+                  transform: labelTransform,
+                  animationDelay: "400ms",
+                }}
+              >
+                {selectedRoute.steps.map((step, i) => (
+                  <p
+                    key={i}
+                    className="flex items-baseline gap-1.5 text-[9.5px] font-semibold leading-[1.25] text-ink"
+                  >
+                    <span className="text-green">{i + 1}.</span>
+                    {step.label}
+                  </p>
+                ))}
+              </div>
+            );
           })()}
 
         {/* center node */}
