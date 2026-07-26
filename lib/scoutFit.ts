@@ -29,3 +29,40 @@ export const PATHORO_FIT_RANK: Record<PathoroFit, number> = {
   consumer_activity: 1,
   weak_informational: 0,
 };
+
+/**
+ * Shared card/badge styling so every surface that renders a scout
+ * candidate (public scout result page, route-planning's AI-found section)
+ * downplays weak/consumer-only results the same way — see "Improve
+ * weak-result handling" in the v0.18 task notes.
+ */
+export const FIT_CARD_CLASS: Record<PathoroFit, string> = {
+  strong_opportunity: "border-green/40 bg-green-soft/30 shadow-[0_0_0_1px_rgba(84,120,32,0.06)]",
+  maybe_useful: "border-line/70 bg-cream-field",
+  consumer_activity: "border-line/70 bg-cream-field",
+  weak_informational: "border-line/50 bg-cream-field/50 opacity-70",
+};
+
+export const FIT_BADGE_CLASS: Record<PathoroFit, string> = {
+  strong_opportunity: "border border-green/40 bg-green-soft/70 text-green",
+  maybe_useful: "border border-line/70 bg-cream-card text-ink-soft",
+  consumer_activity: "border border-line/70 bg-cream-card text-ink-faint",
+  weak_informational: "border border-line/60 bg-cream-card text-ink-faint",
+};
+
+export const SCOUT_CONFIDENCE_LABELS: Record<string, string> = {
+  high: "High confidence",
+  medium: "Medium confidence",
+  low: "Low confidence",
+};
+
+const CANDIDATE_SNIPPET_MAX_LENGTH = 140;
+
+/** Client-side snippet truncation for scannability — snippets are already
+ * capped server-side, but shorter still reads better in a dense card list. */
+export function shortenSnippet(snippet: string): string {
+  if (snippet.length <= CANDIDATE_SNIPPET_MAX_LENGTH) return snippet;
+  const truncated = snippet.slice(0, CANDIDATE_SNIPPET_MAX_LENGTH);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return (lastSpace > CANDIDATE_SNIPPET_MAX_LENGTH * 0.6 ? truncated.slice(0, lastSpace) : truncated).trim() + "…";
+}

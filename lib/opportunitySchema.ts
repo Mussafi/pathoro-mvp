@@ -48,6 +48,15 @@ export type Opportunity = {
   status: OpportunityStatus;
   /** Internal Pathoro detail page, only set once a real detail page exists. */
   href?: string;
+  /**
+   * Seed/mock opportunities only — if set, this seed should only be shown
+   * when the user's pathGoal text contains one of these words. Keeps demo
+   * data from appearing on unrelated goals (a vegetarian cooking class
+   * showing up for "build wealth"). Reviewed/live/candidate opportunities
+   * are never filtered this way — only seed data needs it since real data
+   * is inherently already goal-relevant.
+   */
+  relevanceKeywords?: string[];
 };
 
 export const OPPORTUNITY_SOURCE_LABELS: Record<OpportunitySourceType, string> = {

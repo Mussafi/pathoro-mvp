@@ -4,7 +4,7 @@ import { getScoutRequestsAdmin } from "@/lib/scoutRequestsAdminDb";
 import { getScoutCandidatesForRequests, saveScoutCandidates } from "@/lib/scoutCandidatesDb";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { createScoutRequestId } from "@/lib/scoutRequestSchema";
-import { isTavilyConfigured, scoutOpportunities } from "@/lib/tavily";
+import { inferScoutMode, isTavilyConfigured, scoutOpportunities } from "@/lib/tavily";
 
 // Admin-only: list all scout requests, each with its saved AI-found
 // candidates. Never public — a real user's requested path/city is only
@@ -97,7 +97,8 @@ export async function POST(request: Request): Promise<Response> {
   // looking" copy when there are no candidates yet.
   if (isTavilyConfigured()) {
     try {
-      const { candidates } = await scoutOpportunities({ city, state, pathGoal, routeId });
+      const scoutMode = inferScoutMode(pathGoal);
+      const { candidates } = await scoutOpportunities({ city, state, pathGoal, routeId, scoutMode });
       await saveScoutCandidates(id, candidates);
     } catch (err) {
       console.error(`Automatic scout failed for request ${id}:`, err);

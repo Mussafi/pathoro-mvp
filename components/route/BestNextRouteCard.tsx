@@ -4,11 +4,13 @@ import Link from "next/link";
 import { ArrowRight, Clock, Heart, Lock, Sparkles, Star } from "lucide-react";
 import { routes } from "@/lib/routes";
 import { getOpportunityDetailHref } from "@/lib/opportunitySchema";
-import { mergeWithSeed, filterForRoute } from "@/lib/reviewedOpportunities";
+import { mergeReviewedOnly, getRelevantSeedOpportunities, filterForRoute } from "@/lib/reviewedOpportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
 import { useLiveOpportunities } from "@/lib/useLiveOpportunities";
+import { useLatestScoutCandidates } from "@/lib/useLatestScoutCandidates";
 import type { DirectionAnswers } from "@/lib/direction";
 import { OpportunityTile } from "@/components/route/OpportunityTile";
+import { ScoutCandidateCard } from "@/components/ScoutCandidateCard";
 import { useTrailMarkers } from "@/lib/useTrailMarkers";
 import { MARKER_TYPE_LABELS } from "@/lib/trailMarkerSchema";
 
@@ -18,6 +20,12 @@ type BestNextRouteCardProps = {
   answers: DirectionAnswers;
   onExploreOthers: () => void;
 };
+
+const ACCESS_POINT_HEADING = {
+  reviewed: "Local access point",
+  ai: "AI-found access points",
+  seed: "Example access point",
+} as const;
 
 export function BestNextRouteCard({
   selectedRouteId,
@@ -29,13 +37,46 @@ export function BestNextRouteCard({
   const isSuggested = selectedRouteId === suggestedRouteId;
   const { reviewed } = useReviewedOpportunities();
   const live = useLiveOpportunities();
-  const opportunitiesForRoute = filterForRoute(
-    mergeWithSeed(reviewed, live),
+
+  // Priority: reviewed/live Supabase opportunities first, then AI-found
+  // scout candidates for this exact path, then relevant seed/mock data,
+  // then nothing — see "Hide irrelevant seed opportunities" in the v0.18
+  // task notes. A vegetarian cooking class should never stand in as the
+  // access point for "build wealth."
+  const reviewedForRoute = filterForRoute(
+    mergeReviewedOnly(reviewed, live),
     selectedRouteId,
     answers.location
   );
-  const opportunity = opportunitiesForRoute[0];
-  const moreCount = Math.max(opportunitiesForRoute.length - 1, 0);
+  const reviewedOpportunity = reviewedForRoute[0];
+  const moreReviewedCount = Math.max(reviewedForRoute.length - 1, 0);
+
+  const { candidates: aiCandidates } = useLatestScoutCandidates({
+    city: answers.location,
+    routeId: selectedRouteId,
+    pathGoal: answers.moveToward,
+  });
+  const bestCandidate = !reviewedOpportunity
+    ? aiCandidates.find((c) => c.status !== "dismissed")
+    : undefined;
+
+  const seedForRoute =
+    !reviewedOpportunity && !bestCandidate
+      ? filterForRoute(getRelevantSeedOpportunities(answers.moveToward), selectedRouteId, answers.location)
+      : [];
+  const seedOpportunity = seedForRoute[0];
+  const moreSeedCount = Math.max(seedForRoute.length - 1, 0);
+
+  const accessPointKind: keyof typeof ACCESS_POINT_HEADING | "none" = reviewedOpportunity
+    ? "reviewed"
+    : bestCandidate
+      ? "ai"
+      : seedOpportunity
+        ? "seed"
+        : "none";
+
+  const opportunity = accessPointKind === "reviewed" ? reviewedOpportunity : seedOpportunity;
+  const moreCount = accessPointKind === "reviewed" ? moreReviewedCount : moreSeedCount;
   const detailHref = opportunity ? getOpportunityDetailHref(opportunity) : undefined;
   const { markers: trailMarkers } = useTrailMarkers({ opportunityId: opportunity?.id });
   const previewMarkers = trailMarkers.slice(0, 2);
@@ -105,10 +146,10 @@ export function BestNextRouteCard({
         </ol>
       </div>
 
-      {opportunity && (
+      {opportunity && (accessPointKind === "reviewed" || accessPointKind === "seed") && (
         <div className="mt-4 border-t border-line/70 pt-4">
           <span className="mb-2 block text-[13px] font-semibold text-ink">
-            Local access point
+            {ACCESS_POINT_HEADING[accessPointKind]}
           </span>
           <OpportunityTile opportunity={opportunity} location={answers.location} />
           {moreCount > 0 && (
@@ -136,7 +177,24 @@ export function BestNextRouteCard({
         </div>
       )}
 
-      {detailHref ? (
+      {accessPointKind === "ai" && bestCandidate && (
+        <div className="mt-4 border-t border-line/70 pt-4">
+          <span className="mb-2 block text-[13px] font-semibold text-ink">
+            {ACCESS_POINT_HEADING.ai}
+          </span>
+          <ScoutCandidateCard candidate={bestCandidate} />
+        </div>
+      )}
+
+      {accessPointKind === "none" && (
+        <div className="mt-4 border-t border-line/70 pt-4">
+          <p className="text-[12.5px] leading-relaxed text-ink-faint">
+            No reviewed access point yet for this path.
+          </p>
+        </div>
+      )}
+
+      {detailHref && (
         <Link
           href={detailHref}
           className="mt-5 flex items-center justify-center gap-2 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
@@ -144,7 +202,8 @@ export function BestNextRouteCard({
           Take this step
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
-      ) : (
+      )}
+      {opportunity && !detailHref && (accessPointKind === "reviewed" || accessPointKind === "seed") && (
         <>
           <button
             type="button"

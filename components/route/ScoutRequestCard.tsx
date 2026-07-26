@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Compass } from "lucide-react";
+import { saveLatestScoutRequest } from "@/lib/latestScoutRequest";
 
 export function ScoutRequestCard({
   routeId,
@@ -44,6 +45,17 @@ export function ScoutRequestCard({
         return;
       }
       setResultUrl(data.resultUrl ?? null);
+      if (data.id && data.publicToken && data.resultUrl) {
+        saveLatestScoutRequest({
+          id: data.id,
+          token: data.publicToken,
+          resultUrl: data.resultUrl,
+          city,
+          state: state ?? "",
+          routeId,
+          pathGoal,
+        });
+      }
       setStatus("sent");
     } catch {
       setError("Pathoro couldn't reach the server. Please try again in a moment.");

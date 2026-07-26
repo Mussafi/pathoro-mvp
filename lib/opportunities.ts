@@ -24,6 +24,7 @@ export const routeOpportunities: Opportunity[] = [
     trustLevel: "Medium",
     status: "live",
     href: "/opportunity/plant-based-cooking-class",
+    relevanceKeywords: ["vegetarian", "vegan", "plant-based", "plant based", "cooking", "food", "nutrition", "diet", "health"],
   },
   {
     id: "intro-ceramics-night",
@@ -47,6 +48,7 @@ export const routeOpportunities: Opportunity[] = [
     frictionLevel: "Medium",
     trustLevel: "Medium",
     status: "preview",
+    relevanceKeywords: ["ceramics", "pottery", "creative", "art", "craft", "hands-on", "hobby"],
   },
   {
     id: "beginner-vegetarian-meetup",
@@ -70,6 +72,7 @@ export const routeOpportunities: Opportunity[] = [
     frictionLevel: "Low",
     trustLevel: "Medium",
     status: "preview",
+    relevanceKeywords: ["vegetarian", "vegan", "plant-based", "plant based", "food", "health", "nutrition", "diet"],
   },
   {
     id: "running-walking-group",
@@ -93,6 +96,7 @@ export const routeOpportunities: Opportunity[] = [
     frictionLevel: "Low",
     trustLevel: "Medium",
     status: "preview",
+    relevanceKeywords: ["run", "running", "walk", "walking", "fitness", "exercise", "movement", "health"],
   },
   {
     id: "career-change-workshop",
@@ -116,6 +120,7 @@ export const routeOpportunities: Opportunity[] = [
     frictionLevel: "Medium",
     trustLevel: "Medium",
     status: "preview",
+    relevanceKeywords: ["career", "job", "work", "profession", "transition"],
   },
   {
     id: "library-skill-workshop",
@@ -153,6 +158,7 @@ export const routeOpportunities: Opportunity[] = [
     costLabel: "Free",
     hostName: "Bouldin Creek Community Garden",
     description: "A single low-pressure morning to see if this is something you actually enjoy.",
+    relevanceKeywords: ["garden", "gardening", "vegetarian", "vegan", "plant-based", "plant based", "food", "health", "habit", "lifestyle", "environment"],
     routeId: "try-it",
     opportunityType: "Small Trial",
     whoItIsFor: "Anyone curious but not ready to commit",
@@ -180,6 +186,7 @@ export const routeOpportunities: Opportunity[] = [
     opportunityType: "Person / Conversation",
     whoItIsFor: "People exploring a change and wanting to hear how others made it real",
     pathItSupports: "Start a new career",
+    relevanceKeywords: ["career", "job", "business", "founder", "entrepreneur", "startup", "professional", "work"],
     whatItMayOpenNext: "A one-on-one coffee chat or informal mentorship",
     effortLevel: "Low",
     frictionLevel: "Low",

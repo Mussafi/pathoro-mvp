@@ -34,17 +34,52 @@ export function clearReviewedOpportunities(): Opportunity[] {
 }
 
 /**
- * Merges opportunity sources in priority order: database-backed `live`
- * opportunities first, then `reviewed` (the localStorage dev fallback),
- * then seed/mock data — with later sources filtered to drop anything
- * already present by `id` in an earlier, higher-priority source.
+ * A seed with no relevanceKeywords is treated as goal-agnostic (always
+ * shown); one with keywords only shows when the user's pathGoal text
+ * contains at least one of them. Reviewed/live opportunities are real data
+ * and are never filtered this way — see product rule in
+ * docs/MVP-LOCKED-PRINCIPLES.md: a vegetarian cooking class should not
+ * appear as the access point for "build wealth."
  */
-export function mergeWithSeed(reviewed: Opportunity[], live: Opportunity[] = []): Opportunity[] {
+export function isSeedRelevantToGoal(opportunity: Opportunity, pathGoal: string): boolean {
+  if (!opportunity.relevanceKeywords?.length) return true;
+  const goal = pathGoal.toLowerCase();
+  return opportunity.relevanceKeywords.some((keyword) => goal.includes(keyword.toLowerCase()));
+}
+
+/** Seed/mock data relevant to the given goal — used as the last-resort "Example access point." */
+export function getRelevantSeedOpportunities(pathGoal: string): Opportunity[] {
+  return routeOpportunities.filter((o) => isSeedRelevantToGoal(o, pathGoal));
+}
+
+/**
+ * Merges database-backed `live` opportunities with `reviewed` (the
+ * localStorage dev fallback) — no seed data. Later sources are filtered to
+ * drop anything already present by `id` in an earlier, higher-priority
+ * source.
+ */
+export function mergeReviewedOnly(reviewed: Opportunity[], live: Opportunity[] = []): Opportunity[] {
   const seenIds = new Set(live.map((o) => o.id));
   const reviewedFiltered = reviewed.filter((o) => !seenIds.has(o.id));
-  reviewedFiltered.forEach((o) => seenIds.add(o.id));
-  const seedFiltered = routeOpportunities.filter((o) => !seenIds.has(o.id));
-  return [...live, ...reviewedFiltered, ...seedFiltered];
+  return [...live, ...reviewedFiltered];
+}
+
+/**
+ * Merges opportunity sources in priority order: database-backed `live`
+ * opportunities first, then `reviewed` (the localStorage dev fallback),
+ * then seed/mock data relevant to pathGoal — with later sources filtered
+ * to drop anything already present by `id` in an earlier, higher-priority
+ * source.
+ */
+export function mergeWithSeed(
+  reviewed: Opportunity[],
+  live: Opportunity[] = [],
+  pathGoal = ""
+): Opportunity[] {
+  const reviewedOnly = mergeReviewedOnly(reviewed, live);
+  const seenIds = new Set(reviewedOnly.map((o) => o.id));
+  const seedFiltered = getRelevantSeedOpportunities(pathGoal).filter((o) => !seenIds.has(o.id));
+  return [...reviewedOnly, ...seedFiltered];
 }
 
 /** Filters a merged opportunity list for a route, sorting live and city-matched opportunities first. */

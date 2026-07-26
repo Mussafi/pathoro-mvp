@@ -6,6 +6,7 @@ import { RouteRevealMap } from "@/components/route/RouteRevealMap";
 import { BestNextRouteCard } from "@/components/route/BestNextRouteCard";
 import { ExploreOtherRoutes } from "@/components/route/ExploreOtherRoutes";
 import { ScoutRequestCard } from "@/components/route/ScoutRequestCard";
+import { AiFoundAccessPoints } from "@/components/route/AiFoundAccessPoints";
 import { PostOpportunityCard } from "@/components/route/PostOpportunityCard";
 import { RouteFooterBar } from "@/components/route/RouteFooterBar";
 import { mapReachableToRouteId } from "@/lib/direction";
@@ -55,6 +56,11 @@ export function RoutePlanningBody() {
         suggestedRouteId={mappedRouteId}
         answers={answers}
         onExploreOthers={handleExploreOthers}
+      />
+      <AiFoundAccessPoints
+        city={answers.location}
+        routeId={selectedId}
+        pathGoal={answers.moveToward}
       />
       {!hasLiveDbMatch && (
         <ScoutRequestCard

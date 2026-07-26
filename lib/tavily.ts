@@ -260,6 +260,31 @@ const CANONICAL_HOST_SOURCE_TYPES: { match: (host: string) => boolean; type: Opp
 /** The three scout modes — see docs/V0.11-AI-OPPORTUNITY-SCOUT.md. */
 export type ScoutMode = "route" | "hidden" | "gateway";
 
+/** Wealth/income/business goals — use "hidden" mode so the scout searches
+ * flea markets, resale, grants, apprenticeships instead of defaulting to
+ * paid Eventbrite wealth seminars. See "the modern opportunity problem is
+ * not just finding events" in docs/MVP-LOCKED-PRINCIPLES.md. */
+const WEALTH_GOAL_PATTERN =
+  /\b(wealth|money|income|business|side hustle|resell|resale|ebay|arbitrage|entrepreneur|startup|opportunity|cashflow|cash flow)\b/i;
+
+/** Trade/sourcing/diaspora goals — use "gateway" mode so the scout searches
+ * chambers of commerce, cultural associations, trade meetups. See "Gateway
+ * Communities" in docs/MVP-LOCKED-PRINCIPLES.md. */
+const GATEWAY_GOAL_PATTERN =
+  /\b(china|import|export|sourcing|supplier|trade|diaspora|chinatown|international)\b/i;
+
+/**
+ * Infers which scout mode best fits a user's stated goal, for the
+ * automatic scout run right after a public scout request is submitted
+ * (POST /api/scout-requests) — there's no admin picking a mode by hand, so
+ * the goal text itself has to decide.
+ */
+export function inferScoutMode(pathGoal: string): ScoutMode {
+  if (WEALTH_GOAL_PATTERN.test(pathGoal)) return "hidden";
+  if (GATEWAY_GOAL_PATTERN.test(pathGoal)) return "gateway";
+  return "route";
+}
+
 export type ScoutConfidence = "low" | "medium" | "high";
 
 export type ScoutCandidate = {
