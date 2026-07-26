@@ -4,6 +4,7 @@ import {
   Compass,
   Flag,
   Inbox,
+  Map,
   Route as RouteIcon,
   Search,
   type LucideIcon,
@@ -53,6 +54,12 @@ const links: HubLink[] = [
     icon: RouteIcon,
     title: "Route Planning",
     description: "See the public product — what a user sees once they arrive.",
+  },
+  {
+    href: "/trail-map",
+    icon: Map,
+    title: "Advanced Trail Map",
+    description: "Prototype: a more detailed journey map for concentrated goals (e.g. become a therapist).",
   },
 ];
 
