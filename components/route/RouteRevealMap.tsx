@@ -135,32 +135,40 @@ export function RouteRevealMap({
             })}
         </svg>
 
-        {/* step labels for the selected route */}
+        {/* step labels for the selected route — offset above or below the
+            curve depending on whether this route branches above or below
+            center, so the text never sits on top of the stroke */}
         {selectedControlPoints &&
           selectedRoute &&
-          MARKER_T.map((t, i) => {
-            const { x, y } = cubicPoint(
-              t,
-              selectedControlPoints.p0,
-              selectedControlPoints.p1,
-              selectedControlPoints.p2,
-              selectedControlPoints.p3
-            );
-            return (
-              <div
-                key={i}
-                className="route-reveal-animate absolute w-[84px] -translate-x-1/2 text-center text-[9.5px] font-semibold leading-[1.2] text-ink"
-                style={{
-                  left: `${(x / VIEW_W) * 100}%`,
-                  top: `${(y / VIEW_H) * 100}%`,
-                  transform: "translate(-50%, 6px)",
-                  animationDelay: `${400 + i * 90}ms`,
-                }}
-              >
-                {selectedRoute.steps[i]?.label}
-              </div>
-            );
-          })}
+          (() => {
+            const isUpperRoute = BRANCH_Y[selectedIndex] < CENTER.y;
+            const labelTransform = isUpperRoute
+              ? "translate(-50%, calc(-100% - 8px))"
+              : "translate(-50%, 8px)";
+            return MARKER_T.map((t, i) => {
+              const { x, y } = cubicPoint(
+                t,
+                selectedControlPoints.p0,
+                selectedControlPoints.p1,
+                selectedControlPoints.p2,
+                selectedControlPoints.p3
+              );
+              return (
+                <div
+                  key={i}
+                  className="route-reveal-animate absolute w-[84px] -translate-x-1/2 text-center text-[9.5px] font-semibold leading-[1.2] text-ink"
+                  style={{
+                    left: `${(x / VIEW_W) * 100}%`,
+                    top: `${(y / VIEW_H) * 100}%`,
+                    transform: labelTransform,
+                    animationDelay: `${400 + i * 90}ms`,
+                  }}
+                >
+                  {selectedRoute.steps[i]?.label}
+                </div>
+              );
+            });
+          })()}
 
         {/* center node */}
         <div
