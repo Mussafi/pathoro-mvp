@@ -104,7 +104,7 @@ export function BestNextRouteCard({
       {opportunity && (
         <div className="mt-4 border-t border-line/70 pt-4">
           <span className="mb-2 block text-[13px] font-semibold text-ink">
-            Local opportunity
+            Local access point
           </span>
           <OpportunityTile opportunity={opportunity} location={answers.location} />
           {moreCount > 0 && (

@@ -62,3 +62,18 @@ export function getNextActionSummary(input: NarrativeInput): string {
   }
   return "Reach out to take the next step.";
 }
+
+const CONSUMER_ACTIVITY_TERMS = /\b(class|workshop|lesson|session|course|ticket|screening)\b/i;
+const ACCESS_TERMS =
+  /\b(mentor|apprentice|grant|market|vendor|program|sourcing|supplier|business|network|community|founder|coworking|trade|export|import|resale|arbitrage)\b/i;
+
+/**
+ * Opportunity, not consumption — a light transparency signal, not a gate.
+ * Approved opportunities can still be shown even when flagged; this just
+ * tells the user honestly what kind of thing they're looking at.
+ */
+export function isLikelyConsumerActivity(input: NarrativeInput): boolean {
+  const text = `${input.opportunityType} ${input.title}`.toLowerCase();
+  if (ACCESS_TERMS.test(text)) return false;
+  return CONSUMER_ACTIVITY_TERMS.test(text);
+}

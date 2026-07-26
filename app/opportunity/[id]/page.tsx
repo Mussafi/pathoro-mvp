@@ -157,6 +157,25 @@ function OpportunityDetailContent({ id }: { id: string }) {
                   {getNextActionSummary(opportunity)}
                 </p>
               </div>
+              <div>
+                <span className="block text-[11px] font-semibold text-ink-faint">
+                  Source &amp; trust
+                </span>
+                <p className="mt-0.5 flex items-center gap-1.5 text-[13px] leading-relaxed text-ink">
+                  {opportunity.sourceName}
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                      opportunity.trustLevel === "High"
+                        ? "border-green/40 bg-green-soft text-green"
+                        : opportunity.trustLevel === "Medium"
+                          ? "border-line/70 text-ink-soft"
+                          : "border-line/70 text-ink-faint"
+                    }`}
+                  >
+                    {opportunity.trustLevel} trust
+                  </span>
+                </p>
+              </div>
             </div>
 
             {opportunity.sourceUrl && (

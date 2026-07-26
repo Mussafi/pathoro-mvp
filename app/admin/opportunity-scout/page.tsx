@@ -95,7 +95,11 @@ export default function OpportunityScoutPage() {
       const data = (await res.json()) as ScoutResponse;
 
       if (!data.ok) {
-        setError(data.error);
+        setError(
+          res.status === 401
+            ? "Admin token required. This protects the scout from public use."
+            : data.error
+        );
         return;
       }
       setCandidates(data.candidates);
@@ -271,6 +275,10 @@ export default function OpportunityScoutPage() {
               placeholder="Paste the shared admin token"
               className="mt-0.5 w-full bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint/70"
             />
+            <span className="mt-1 block text-[10.5px] leading-snug text-ink-faint">
+              Use the ADMIN_TOKEN from your local .env.local / Vercel
+              environment variables.
+            </span>
           </label>
 
           <button

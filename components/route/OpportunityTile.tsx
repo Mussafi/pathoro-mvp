@@ -9,7 +9,12 @@ import {
   type Opportunity,
 } from "@/lib/opportunitySchema";
 import { routes } from "@/lib/routes";
-import { getNextActionSummary, getWhyThisAppeared } from "@/lib/opportunityNarrative";
+import {
+  getNextActionSummary,
+  getWhatAccessThisCreates,
+  getWhyThisAppeared,
+  isLikelyConsumerActivity,
+} from "@/lib/opportunityNarrative";
 
 function getDisplayTags(opportunity: Opportunity): string[] {
   const tags: string[] = [];
@@ -39,7 +44,9 @@ export function OpportunityTile({
   const isMockSeed = opportunity.sourceType === "mock_seed";
   const route = routes.find((r) => r.id === opportunity.routeId);
   const whyAppeared = getWhyThisAppeared(opportunity);
+  const accessCreated = getWhatAccessThisCreates(opportunity);
   const nextAction = getNextActionSummary(opportunity);
+  const consumerActivity = isLikelyConsumerActivity(opportunity);
   const className =
     "flex w-full flex-col rounded-2xl border border-l-[3px] border-line/70 border-l-green/50 bg-cream-field px-3.5 py-3.5 text-left transition" +
     (isClickable ? " hover:border-green/40 hover:border-l-green hover:bg-cream-card" : " hover:border-green/30 hover:bg-cream-card");
@@ -67,21 +74,32 @@ export function OpportunityTile({
       <span className="mt-1 block text-[11px] font-medium text-ink-faint">
         {opportunity.opportunityType}
       </span>
+      <p
+        className={`mt-1 text-[10.5px] font-semibold ${
+          consumerActivity ? "text-ink-faint" : "text-green"
+        }`}
+      >
+        {consumerActivity ? "Looks like a consumer activity" : "Looks like a real opportunity"}
+      </p>
       <p className="mt-1.5 text-[12px] leading-snug text-ink-soft">
         {opportunity.description}
       </p>
       <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
-        <span className="font-semibold text-ink-soft">Why this appeared — </span>
+        <span className="font-semibold text-ink-soft">Why this may be a real opportunity — </span>
         {whyAppeared}
+      </p>
+      <p className="mt-1 text-[11px] leading-snug text-ink-faint">
+        <span className="font-semibold text-ink-soft">What leverage this may create — </span>
+        {accessCreated}
       </p>
       {opportunity.whatItMayOpenNext && (
         <p className="mt-1 text-[11px] leading-snug text-ink-faint">
-          <span className="font-semibold text-ink-soft">Could open — </span>
+          <span className="font-semibold text-ink-soft">What this could open next — </span>
           {opportunity.whatItMayOpenNext}
         </p>
       )}
       <p className="mt-1 text-[11px] leading-snug text-ink-faint">
-        <span className="font-semibold text-ink-soft">Next step — </span>
+        <span className="font-semibold text-ink-soft">Real-world next step — </span>
         {nextAction}
       </p>
       <div className="mt-2.5 flex flex-wrap gap-1.5">
@@ -133,6 +151,8 @@ function OpportunityPreviewModal({
 }) {
   const detailHref = getOpportunityDetailHref(opportunity);
   const whyAppeared = getWhyThisAppeared(opportunity);
+  const accessCreated = getWhatAccessThisCreates(opportunity);
+  const consumerActivity = isLikelyConsumerActivity(opportunity);
 
   return (
     <div
@@ -145,9 +165,20 @@ function OpportunityPreviewModal({
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <span className="rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
-              {OPPORTUNITY_STATUS_LABELS[opportunity.status]}
-            </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
+                {OPPORTUNITY_STATUS_LABELS[opportunity.status]}
+              </span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  consumerActivity
+                    ? "border border-line/70 text-ink-faint"
+                    : "border border-green/40 bg-green-soft/60 text-green"
+                }`}
+              >
+                {consumerActivity ? "Consumer activity" : "Real opportunity"}
+              </span>
+            </div>
             <h3 className="mt-2 font-serif text-[19px] leading-tight text-ink">
               {opportunity.title}
             </h3>
@@ -174,11 +205,15 @@ function OpportunityPreviewModal({
         )}
 
         <p className="mt-3 text-[12px] leading-relaxed text-ink-faint">
-          <span className="font-semibold text-ink-soft">Why this appeared — </span>
+          <span className="font-semibold text-ink-soft">Why this may be a real opportunity — </span>
           {whyAppeared}
         </p>
 
         <div className="mt-4 flex flex-col gap-2.5">
+          <div className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.25">
+            <span className="block text-[10.5px] text-ink-faint">What leverage this may create</span>
+            <span className="mt-0.5 block text-[12.5px] text-ink">{accessCreated}</span>
+          </div>
           {opportunity.whoItIsFor && (
             <div className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.25">
               <span className="block text-[10.5px] text-ink-faint">Who it&rsquo;s for</span>

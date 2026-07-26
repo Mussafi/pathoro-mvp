@@ -61,10 +61,13 @@ export function RouteRevealMap({
   const selectedRoute = routes[selectedIndex];
   const selectedControlPoints =
     selectedIndex >= 0 ? curveControlPoints(BRANCH_Y[selectedIndex]) : null;
+  const isSuggested = selectedRouteId === suggestedRouteId;
 
-  const personalSentence = suggestedRoute
-    ? `You said “${answers.reachable}” would make this more reachable, so Pathoro opened ${suggestedRoute.title} first.`
-    : "Pathoro opened several routes from your answers.";
+  const personalSentence = !selectedRoute
+    ? "Pathoro opened several routes from your answers."
+    : isSuggested
+      ? `You said “${answers.reachable}” would make this more reachable, so Pathoro opened ${selectedRoute.title} first.`
+      : `You're exploring ${selectedRoute.title}. Based on “${answers.reachable},” Pathoro originally suggested ${suggestedRoute?.title ?? "a different route"} first.`;
 
   return (
     <div className="shadow-card flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
@@ -146,7 +149,7 @@ export function RouteRevealMap({
             return (
               <div
                 key={i}
-                className="route-reveal-animate absolute w-[76px] -translate-x-1/2 text-center text-[8px] leading-[1.15] text-ink-soft"
+                className="route-reveal-animate absolute w-[84px] -translate-x-1/2 text-center text-[9.5px] font-semibold leading-[1.2] text-ink"
                 style={{
                   left: `${(x / VIEW_W) * 100}%`,
                   top: `${(y / VIEW_H) * 100}%`,
