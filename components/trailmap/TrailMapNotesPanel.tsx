@@ -1,5 +1,5 @@
 import { BadgeCheck, Heart, MapPin } from "lucide-react";
-import type { TrailMapBranch, TrailNote } from "@/lib/trailMapData";
+import { getBranchAccentClasses, type TrailMapBranch, type TrailNote } from "@/lib/trailMapData";
 
 /** Detects the note's flavor from its own leading phrase so each note can
  * carry a small tag — "hidden friction," "better first step," "opened
@@ -14,19 +14,6 @@ function getNoteTag(body: string): string | null {
   return null;
 }
 
-const AVATAR_COLORS = [
-  "bg-teal-100 text-teal-700",
-  "bg-purple-100 text-purple-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-blue-100 text-blue-700",
-];
-
-function avatarClass(name: string): string {
-  const index = name.charCodeAt(0) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[index];
-}
-
 export function TrailMapNotesPanel({
   branch,
   notes,
@@ -37,6 +24,7 @@ export function TrailMapNotesPanel({
   notesTotal: number;
 }) {
   const forBranch = notes.filter((n) => n.branchId === branch.id);
+  const accent = getBranchAccentClasses(branch.id);
 
   return (
     <div className="shadow-card flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
@@ -66,7 +54,7 @@ export function TrailMapNotesPanel({
               <div key={note.id} className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-3">
                 <div className="flex items-start gap-2.5">
                   <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${avatarClass(note.author)}`}
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${accent.bg} ${accent.text}`}
                   >
                     {note.author.charAt(0)}
                   </span>

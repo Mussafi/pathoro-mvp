@@ -95,6 +95,18 @@ export function isFavorableRating(kind: "aiRisk" | "demand", value: RatingLevel)
   return RATING_FAVORABLE[kind].includes(value);
 }
 
+const RATING_ORDER: RatingLevel[] = ["Very Low", "Low", "Medium", "High", "Very High"];
+
+/** 1-5 fill count for a rating dot-strip, oriented so a higher fill always
+ * means "more favorable" — aiRisk is reversed (Very Low risk = full dots)
+ * since lower is better there, while demand is read directly (Very High
+ * demand = full dots). */
+export function getRatingFillCount(kind: "aiRisk" | "demand", value: RatingLevel): number {
+  const index = RATING_ORDER.indexOf(value);
+  if (index === -1) return 0;
+  return kind === "demand" ? index + 1 : RATING_ORDER.length - index;
+}
+
 /** Per-branch accent color for unselected map icons — purely visual, gives
  * each path its own identity the way the reference map's colored category
  * icons do. Selected state always overrides to green regardless of accent. */
@@ -128,6 +140,40 @@ const BRANCH_ACCENTS: Record<string, BranchAccent> = {
 
 export function getBranchAccent(branchId: string): BranchAccent {
   return BRANCH_ACCENTS[branchId] ?? "slate";
+}
+
+export type BranchAccentClasses = {
+  /** Icon circle background (unselected map icon). */
+  bg: string;
+  /** Icon glyph / accent text color. */
+  text: string;
+  /** Icon circle border. */
+  border: string;
+  /** Solid dot — comparison card indicator, note avatar. */
+  dot: string;
+  /** Faint tint for an unselected comparison card's left accent + wash. */
+  cardBorder: string;
+  cardBg: string;
+};
+
+/** One shared color set per accent, reused everywhere a branch's identity
+ * shows up (map icon, comparison card, note avatar) so the same path reads
+ * as the same color across the whole page — see "Branch color consistency"
+ * in the v0.22 task notes. */
+const ACCENT_CLASSES: Record<BranchAccent, BranchAccentClasses> = {
+  teal: { bg: "bg-teal-100", text: "text-teal-600", border: "border-teal-300", dot: "bg-teal-500", cardBorder: "border-teal-200", cardBg: "bg-teal-50/60" },
+  purple: { bg: "bg-purple-100", text: "text-purple-600", border: "border-purple-300", dot: "bg-purple-500", cardBorder: "border-purple-200", cardBg: "bg-purple-50/60" },
+  rose: { bg: "bg-rose-100", text: "text-rose-600", border: "border-rose-300", dot: "bg-rose-500", cardBorder: "border-rose-200", cardBg: "bg-rose-50/60" },
+  indigo: { bg: "bg-indigo-100", text: "text-indigo-600", border: "border-indigo-300", dot: "bg-indigo-500", cardBorder: "border-indigo-200", cardBg: "bg-indigo-50/60" },
+  amber: { bg: "bg-amber-100", text: "text-amber-600", border: "border-amber-300", dot: "bg-amber-500", cardBorder: "border-amber-200", cardBg: "bg-amber-50/60" },
+  orange: { bg: "bg-orange-100", text: "text-orange-600", border: "border-orange-300", dot: "bg-orange-500", cardBorder: "border-orange-200", cardBg: "bg-orange-50/60" },
+  slate: { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-300", dot: "bg-slate-500", cardBorder: "border-slate-200", cardBg: "bg-slate-50/60" },
+  red: { bg: "bg-red-100", text: "text-red-600", border: "border-red-300", dot: "bg-red-500", cardBorder: "border-red-200", cardBg: "bg-red-50/60" },
+  blue: { bg: "bg-blue-100", text: "text-blue-600", border: "border-blue-300", dot: "bg-blue-500", cardBorder: "border-blue-200", cardBg: "bg-blue-50/60" },
+};
+
+export function getBranchAccentClasses(branchId: string): BranchAccentClasses {
+  return ACCENT_CLASSES[getBranchAccent(branchId)];
 }
 
 const therapistGoal: TrailMapGoal = {

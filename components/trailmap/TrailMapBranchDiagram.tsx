@@ -1,6 +1,6 @@
 "use client";
 
-import { getBranchAccent, type BranchAccent, type TrailMapGoal } from "@/lib/trailMapData";
+import { getBranchAccentClasses, type TrailMapGoal } from "@/lib/trailMapData";
 
 const VIEW_W = 900;
 const MARGIN_Y = 95;
@@ -10,18 +10,6 @@ const ICON_X = 130;
 const LANE_START_X = 260;
 const NODE_XS = [430, 600, 770];
 const LAST_X = NODE_XS[NODE_XS.length - 1] + 35;
-
-const ACCENT_CLASSES: Record<BranchAccent, { bg: string; text: string; border: string }> = {
-  teal: { bg: "bg-teal-100", text: "text-teal-600", border: "border-teal-300" },
-  purple: { bg: "bg-purple-100", text: "text-purple-600", border: "border-purple-300" },
-  rose: { bg: "bg-rose-100", text: "text-rose-600", border: "border-rose-300" },
-  indigo: { bg: "bg-indigo-100", text: "text-indigo-600", border: "border-indigo-300" },
-  amber: { bg: "bg-amber-100", text: "text-amber-600", border: "border-amber-300" },
-  orange: { bg: "bg-orange-100", text: "text-orange-600", border: "border-orange-300" },
-  slate: { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-300" },
-  red: { bg: "bg-red-100", text: "text-red-600", border: "border-red-300" },
-  blue: { bg: "bg-blue-100", text: "text-blue-600", border: "border-blue-300" },
-};
 
 function laneY(index: number): number {
   return MARGIN_Y + index * LANE_GAP;
@@ -126,7 +114,7 @@ export function TrailMapBranchDiagram({
         {branches.map((branch, i) => {
           const Icon = branch.icon;
           const isSelected = branch.id === selectedBranchId;
-          const accent = ACCENT_CLASSES[getBranchAccent(branch.id)];
+          const accent = getBranchAccentClasses(branch.id);
           const y = laneY(i);
           return (
             <button

@@ -6,13 +6,14 @@ import {
   DollarSign,
   GraduationCap,
   Info,
+  Sparkles,
   TrendingUp,
   Users,
 } from "lucide-react";
 import { isFavorableRating, type RatingLevel, type TrailMapBranch } from "@/lib/trailMapData";
 
 const FIT_BADGE_CLASS: Record<TrailMapBranch["fit"], string> = {
-  "High match": "border-green/40 bg-green-soft text-green",
+  "High match": "border-green bg-green/15 text-green shadow-[0_0_0_3px_rgba(84,120,32,0.12)]",
   "Worth exploring": "border-line/70 bg-cream-field text-ink-soft",
   Consider: "border-line/70 bg-cream-field text-ink-faint",
   "Broader stretch": "border-line/70 bg-cream-field text-ink-faint",
@@ -20,6 +21,23 @@ const FIT_BADGE_CLASS: Record<TrailMapBranch["fit"], string> = {
 
 function ratingClass(kind: "aiRisk" | "demand", value: RatingLevel) {
   return isFavorableRating(kind, value) ? "text-green font-semibold" : "text-ink-soft";
+}
+
+/** $ / cost-style values get a subtle color cue too — cheap/free reads as
+ * favorable, and high income potential reads as favorable — without
+ * turning the whole sidebar into a scorecard. */
+function dollarClass(value: string, direction: "cost" | "income"): string {
+  const lower = value.toLowerCase();
+  if (lower.includes("free") || lower.includes("not applicable")) return "text-green font-medium";
+  const count = (value.match(/\$/g) ?? []).length;
+  if (direction === "cost") {
+    if (count > 0 && count <= 1) return "text-green font-medium";
+    if (count >= 4) return "text-amber-600 font-medium";
+    return "text-ink";
+  }
+  if (count >= 3) return "text-green font-medium";
+  if (count === 0) return "text-ink-faint";
+  return "text-ink";
 }
 
 export function TrailMapDetailSidebar({ branch }: { branch: TrailMapBranch }) {
@@ -32,8 +50,9 @@ export function TrailMapDetailSidebar({ branch }: { branch: TrailMapBranch }) {
           <span className="font-serif text-[18px] leading-tight text-ink">{branch.title}</span>
         </div>
         <span
-          className={`mt-2 w-fit rounded-full border px-2.5 py-0.5 text-[10.5px] font-semibold ${FIT_BADGE_CLASS[branch.fit]}`}
+          className={`mt-2 flex w-fit items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10.5px] font-semibold ${FIT_BADGE_CLASS[branch.fit]}`}
         >
+          {branch.fit === "High match" && <Sparkles className="h-3 w-3" strokeWidth={2} />}
           {branch.fit}
         </span>
         <p className="mt-3 text-[12px] leading-relaxed text-ink-soft">{branch.whyItFits}</p>
@@ -45,8 +64,18 @@ export function TrailMapDetailSidebar({ branch }: { branch: TrailMapBranch }) {
           </span>
           <ProfileRow icon={Clock} label="Typical time" value={factors.typicalTime} />
           <ProfileRow icon={GraduationCap} label="Education" value={factors.education} />
-          <ProfileRow icon={DollarSign} label="Cost / friction" value={factors.costFriction} />
-          <ProfileRow icon={TrendingUp} label="Income potential" value={factors.incomePotential} />
+          <ProfileRow
+            icon={DollarSign}
+            label="Cost / friction"
+            value={factors.costFriction}
+            valueClassName={dollarClass(factors.costFriction, "cost")}
+          />
+          <ProfileRow
+            icon={TrendingUp}
+            label="Income potential"
+            value={factors.incomePotential}
+            valueClassName={dollarClass(factors.incomePotential, "income")}
+          />
           <ProfileRow icon={Compass} label="Autonomy" value={factors.autonomy} />
           <ProfileRow icon={Brain} label="Emotional intensity" value={factors.emotionalIntensity} />
           <ProfileRow
