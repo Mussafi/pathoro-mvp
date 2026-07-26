@@ -93,8 +93,9 @@ export function TrailMapDetailSidebar({ branch }: { branch: TrailMapBranch }) {
         </div>
 
         <p className="mt-4 rounded-xl border border-line/70 bg-cream-field px-3 py-2.5 text-[10.5px] leading-relaxed text-ink-faint">
-          Requirements vary by state. Pathoro should verify licensing details
-          from official state sources before treating this as guidance.
+          Requirements vary by state, institution, and employer. Pathoro
+          should verify details from official sources before treating this as
+          guidance.
         </p>
 
         <div className="mt-4 border-t border-line/70 pt-4">

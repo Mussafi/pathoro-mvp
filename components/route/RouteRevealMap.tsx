@@ -212,6 +212,23 @@ export function RouteRevealMap({
         })}
       </div>
 
+      {/* Selected-route step preview — lives outside the SVG entirely, in
+          normal document flow, so it can never collide with the path line.
+          Full route detail still lives in the Best Next Route card below. */}
+      {selectedRoute && (
+        <div className="mt-3 rounded-2xl border border-line/70 bg-cream-field px-4 py-3">
+          <span className="text-[11px] font-semibold text-green">{selectedRoute.title}</span>
+          <ol className="mt-1.5 flex flex-col gap-1">
+            {selectedRoute.steps.map((step, i) => (
+              <li key={i} className="flex items-baseline gap-1.5 text-[11.5px] leading-snug text-ink-soft">
+                <span className="text-ink-faint">{i + 1}.</span>
+                {step.label}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">{personalSentence}</p>
 
       <a

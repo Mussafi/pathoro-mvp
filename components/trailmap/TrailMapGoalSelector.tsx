@@ -6,13 +6,13 @@ export function TrailMapGoalSelector({
   onSelect,
 }: {
   goals: TrailMapGoal[];
-  selectedGoalId: TrailMapGoalId;
+  selectedGoalId: TrailMapGoalId | null;
   onSelect: (id: TrailMapGoalId) => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
-        Demo goal
+      <span className="text-[10.5px] font-medium uppercase tracking-wide text-ink-faint/80">
+        Example maps
       </span>
       {goals.map((goal) => {
         const isSelected = goal.id === selectedGoalId;
@@ -21,10 +21,10 @@ export function TrailMapGoalSelector({
             key={goal.id}
             type="button"
             onClick={() => onSelect(goal.id)}
-            className={`rounded-full border px-3 py-1.5 text-[12px] font-medium transition ${
+            className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
               isSelected
                 ? "border-green/40 bg-green-soft text-green"
-                : "border-line/70 bg-cream-card text-ink-soft hover:border-ink-faint/40"
+                : "border-line/60 bg-cream-card/70 text-ink-faint hover:border-ink-faint/40 hover:text-ink-soft"
             }`}
           >
             {goal.label}

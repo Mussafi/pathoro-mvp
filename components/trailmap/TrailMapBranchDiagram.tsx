@@ -191,8 +191,8 @@ export function TrailMapBranchDiagram({
                 }}
               >
                 <span className="text-[12px] font-semibold text-cream">{selectedBranch.title}</span>
-                <p className="mt-1 line-clamp-2 text-[10.5px] leading-snug text-cream/70">
-                  {selectedBranch.whyItFits}
+                <p className="mt-1 text-[10.5px] leading-snug text-cream/70">
+                  {selectedBranch.pitch}
                 </p>
               </div>
             );

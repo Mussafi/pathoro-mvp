@@ -11,7 +11,7 @@ export type GoalSpecificity = "broad" | "concentrated";
  * money" is).
  */
 const CONCENTRATED_PATTERNS =
-  /\b(therapist|counselor|counsellor|therapy|school administrator|administrator|nurse|registered nurse|\brn\b|software engineer|engineer|real estate investor|real estate agent|resale|resell(?:ing|er)?|ebay|flea market|arbitrage|thrift|import[\s/-]?export|sourcing|vegetarian|vegan|plant[\s-]?based|small business|robotics|technician|electrician|plumber|accountant|paralegal|social worker|physician assistant|nurse practitioner|dental hygienist|real estate)\b/i;
+  /\b(therapist|counselor|counsellor|therapy|school administrator|principal|education administrator|administrator|nurse|registered nurse|\brn\b|nursing|lawyer|attorney|law school|legal career|doctor|physician|medical school|med school|software engineer|mechanical engineer|civil engineer|electrical engineer|robotics engineer|engineer|real estate investor|real estate agent|resale|resell(?:ing|er)?|ebay|flea market|arbitrage|thrift|import[\s/-]?export|sourcing|vegetarian|vegan|plant[\s-]?based|small business|robotics|technician|electrician|plumber|accountant|paralegal|social worker|physician assistant|nurse practitioner|dental hygienist|real estate)\b/i;
 
 /** Broad, early-stage goals — still finding direction, best served by the
  * Orientation Map's "which route do I need?" framing. */
@@ -38,6 +38,17 @@ export function mapGoalToTrailMapGoal(goalText: string): TrailMapGoalId | null {
   if (/resale|resell|ebay|flea market|arbitrage|thrift|vendor market|build wealth through selling/.test(text)) {
     return "resale";
   }
+  if (/nurse|registered nurse|\brn\b|nursing/.test(text)) return "nurse";
+  if (/lawyer|attorney|law school|legal career/.test(text)) return "lawyer";
+  if (/doctor|physician|medical school|med school/.test(text)) return "doctor";
+  if (
+    /software engineer|mechanical engineer|electrical engineer|civil engineer|robotics engineer|engineer|engineering/.test(
+      text
+    )
+  ) {
+    return "engineer";
+  }
+  if (/school administrator|principal|education administrator/.test(text)) return "school-admin";
   return null;
 }
 
