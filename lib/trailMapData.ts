@@ -19,7 +19,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type TrailMapGoalId = "therapist" | "vegetarian" | "resale-business";
+export type TrailMapGoalId = "therapist" | "vegetarian" | "resale";
 
 export type MilestoneStatus = "done" | "current" | "next" | "future";
 
@@ -93,6 +93,41 @@ const RATING_FAVORABLE: Record<"aiRisk" | "demand", RatingLevel[]> = {
 
 export function isFavorableRating(kind: "aiRisk" | "demand", value: RatingLevel): boolean {
   return RATING_FAVORABLE[kind].includes(value);
+}
+
+/** Per-branch accent color for unselected map icons — purely visual, gives
+ * each path its own identity the way the reference map's colored category
+ * icons do. Selected state always overrides to green regardless of accent. */
+export type BranchAccent = "teal" | "purple" | "rose" | "indigo" | "amber" | "orange" | "slate" | "red" | "blue";
+
+const BRANCH_ACCENTS: Record<string, BranchAccent> = {
+  // Therapist
+  "clinical-mental-health-counselor": "teal",
+  "marriage-family-therapist": "purple",
+  "clinical-social-worker": "rose",
+  psychologist: "indigo",
+  "school-counselor": "amber",
+  "somatic-therapist": "orange",
+  "private-practice": "slate",
+  // Vegetarian
+  "health-route": "red",
+  "cooking-skill-route": "amber",
+  "community-route": "purple",
+  "ethical-activism-route": "rose",
+  "food-business-route": "teal",
+  "low-friction-habit-route": "blue",
+  // Resale business
+  "flea-market-sourcing": "amber",
+  "ebay-resale": "blue",
+  "vintage-clothing": "purple",
+  "estate-sales": "teal",
+  "repair-refurbish": "orange",
+  "vendor-markets": "rose",
+  "supplier-relationships": "indigo",
+};
+
+export function getBranchAccent(branchId: string): BranchAccent {
+  return BRANCH_ACCENTS[branchId] ?? "slate";
 }
 
 const therapistGoal: TrailMapGoal = {
@@ -610,7 +645,7 @@ const vegetarianGoal: TrailMapGoal = {
 };
 
 const resaleBusinessGoal: TrailMapGoal = {
-  id: "resale-business",
+  id: "resale",
   label: "Build a resale business",
   pathTitle: "Resale Business",
   subtitle:

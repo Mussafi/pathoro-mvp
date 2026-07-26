@@ -36,7 +36,7 @@ export function mapGoalToTrailMapGoal(goalText: string): TrailMapGoalId | null {
   if (/therapist|counselor|counsellor|therapy/.test(text)) return "therapist";
   if (/vegetarian|vegan|plant[\s-]?based/.test(text)) return "vegetarian";
   if (/resale|resell|ebay|flea market|arbitrage|thrift|vendor market|build wealth through selling/.test(text)) {
-    return "resale-business";
+    return "resale";
   }
   return null;
 }

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bookmark } from "lucide-react";
-import { TopoLines } from "@/components/TopoLines";
+import { Bookmark, ChevronDown, ListFilter, SlidersHorizontal } from "lucide-react";
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
 import { TrailMapMilestoneSidebar } from "@/components/trailmap/TrailMapMilestoneSidebar";
 import { TrailMapBranchDiagram } from "@/components/trailmap/TrailMapBranchDiagram";
@@ -40,22 +39,12 @@ export default function TrailMapPage() {
   }
 
   return (
-    <div className="relative min-h-screen">
-      <TopoLines
-        className="pointer-events-none absolute inset-0 h-full w-full text-ink"
-        count={20}
-        opacityRange={[0.015, 0.035]}
-      />
-      <div className="relative border-b border-line/70">
-        <RoutePlanningHeader />
+    <div className="min-h-screen bg-cream">
+      <div className="border-b border-line/70">
+        <RoutePlanningHeader mode="trail" compassHref="/route-planning" />
       </div>
 
-      <div className="relative border-b border-line/70 bg-cream-field/60 px-6 py-2.5 text-center text-[11.5px] text-ink-faint sm:px-10">
-        Prototype — the Advanced Trail Map. Not linked from the main product
-        flow yet.
-      </div>
-
-      <main className="relative mx-auto w-full max-w-[1500px] px-6 py-6 sm:px-10">
+      <main className="mx-auto w-full max-w-[1500px] px-6 py-6 sm:px-10">
         <TrailMapGoalSelector goals={trailMapGoals} selectedGoalId={goalId} onSelect={handleSelectGoal} />
 
         <div className="mt-5 grid grid-cols-1 items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)_320px]">
@@ -63,20 +52,37 @@ export default function TrailMapPage() {
 
           <div className="flex min-w-0 flex-col">
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="flex items-center gap-2">
                 <h1 className="font-serif text-[26px] leading-tight text-ink">{goal.pathTitle}</h1>
-                <p className="mt-1.5 max-w-[560px] text-[13px] leading-relaxed text-ink-soft">
-                  {goal.subtitle}
-                </p>
+                <button
+                  type="button"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line/70 text-ink-faint transition hover:border-ink-faint/40 hover:text-ink"
+                  aria-label="Save this path"
+                >
+                  <Bookmark className="h-3.5 w-3.5" strokeWidth={1.75} />
+                </button>
               </div>
-              <button
-                type="button"
-                className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-line/70 text-ink-faint transition hover:border-ink-faint/40 hover:text-ink"
-                aria-label="Save this path"
-              >
-                <Bookmark className="h-3.5 w-3.5" strokeWidth={1.75} />
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 rounded-full border border-line/70 bg-cream-card px-3 py-1.5 text-[11.5px] font-medium text-ink-soft transition hover:border-ink-faint/40"
+                >
+                  <ListFilter className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  Legend
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 rounded-full border border-line/70 bg-cream-card px-3 py-1.5 text-[11.5px] font-medium text-ink-soft transition hover:border-ink-faint/40"
+                >
+                  <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  Filter
+                  <ChevronDown className="h-3 w-3" strokeWidth={2} />
+                </button>
+              </div>
             </div>
+            <p className="mt-1.5 max-w-[560px] text-[13px] leading-relaxed text-ink-soft">
+              {goal.subtitle}
+            </p>
 
             <div className="mt-4">
               <TrailMapBranchDiagram goal={goal} selectedBranchId={branchId} onSelect={setBranchId} />

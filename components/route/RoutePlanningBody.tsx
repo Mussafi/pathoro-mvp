@@ -45,6 +45,7 @@ export function RoutePlanningBody() {
           could help you move along your path.
         </p>
       </div>
+      {recommendTrailMap && <TrailMapRecommendationCard pathGoal={answers.moveToward} />}
       <div className="mt-4">
         <RouteRevealMap
           selectedRouteId={selectedId}
@@ -54,7 +55,6 @@ export function RoutePlanningBody() {
           answers={answers}
         />
       </div>
-      {recommendTrailMap && <TrailMapRecommendationCard pathGoal={answers.moveToward} />}
       <BestNextRouteCard
         selectedRouteId={selectedId}
         suggestedRouteId={mappedRouteId}

@@ -1,15 +1,27 @@
 "use client";
 
-import type { TrailMapGoal } from "@/lib/trailMapData";
+import { getBranchAccent, type BranchAccent, type TrailMapGoal } from "@/lib/trailMapData";
 
 const VIEW_W = 900;
-const MARGIN_Y = 60;
-const LANE_GAP = 78;
+const MARGIN_Y = 95;
+const LANE_GAP = 82;
 const CENTER_X = 45;
-const ICON_X = 120;
-const LANE_START_X = 250;
-const NODE_XS = [420, 590, 760];
-const LAST_X = NODE_XS[NODE_XS.length - 1] + 40;
+const ICON_X = 130;
+const LANE_START_X = 260;
+const NODE_XS = [430, 600, 770];
+const LAST_X = NODE_XS[NODE_XS.length - 1] + 35;
+
+const ACCENT_CLASSES: Record<BranchAccent, { bg: string; text: string; border: string }> = {
+  teal: { bg: "bg-teal-100", text: "text-teal-600", border: "border-teal-300" },
+  purple: { bg: "bg-purple-100", text: "text-purple-600", border: "border-purple-300" },
+  rose: { bg: "bg-rose-100", text: "text-rose-600", border: "border-rose-300" },
+  indigo: { bg: "bg-indigo-100", text: "text-indigo-600", border: "border-indigo-300" },
+  amber: { bg: "bg-amber-100", text: "text-amber-600", border: "border-amber-300" },
+  orange: { bg: "bg-orange-100", text: "text-orange-600", border: "border-orange-300" },
+  slate: { bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-300" },
+  red: { bg: "bg-red-100", text: "text-red-600", border: "border-red-300" },
+  blue: { bg: "bg-blue-100", text: "text-blue-600", border: "border-blue-300" },
+};
 
 function laneY(index: number): number {
   return MARGIN_Y + index * LANE_GAP;
@@ -40,14 +52,19 @@ export function TrailMapBranchDiagram({
   const branches = goal.branches;
   const height = viewHeight(branches.length);
   const centerY = height / 2;
+  const selectedIndex = Math.max(
+    branches.findIndex((b) => b.id === selectedBranchId),
+    0
+  );
+  const selectedBranch = branches[selectedIndex];
 
   return (
-    <div className="shadow-card overflow-x-auto rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
-      <div className="relative w-full min-w-[620px]" style={{ aspectRatio: `${VIEW_W} / ${height}` }}>
+    <div className="overflow-x-auto rounded-[26px] bg-cream-card px-2 pb-6 pt-20">
+      <div className="relative w-full min-w-[660px]" style={{ aspectRatio: `${VIEW_W} / ${height}` }}>
         <svg
           viewBox={`0 0 ${VIEW_W} ${height}`}
           preserveAspectRatio="none"
-          className="absolute inset-0 h-full w-full"
+          className="absolute inset-0 h-full w-full overflow-visible"
           aria-hidden="true"
         >
           {branches.map((branch, i) => {
@@ -55,6 +72,17 @@ export function TrailMapBranchDiagram({
             const y = laneY(i);
             return (
               <g key={branch.id}>
+                {isSelected && (
+                  <path
+                    d={lanePath(centerY, y)}
+                    fill="none"
+                    stroke="var(--color-green)"
+                    strokeWidth={8}
+                    strokeLinecap="round"
+                    opacity={0.28}
+                    style={{ filter: "blur(3px)" }}
+                  />
+                )}
                 <path
                   d={lanePath(centerY, y)}
                   fill="none"
@@ -63,17 +91,21 @@ export function TrailMapBranchDiagram({
                   strokeDasharray={isSelected ? undefined : "4 5"}
                   strokeLinecap="round"
                 />
-                {NODE_XS.map((nx, ni) => (
-                  <circle
-                    key={ni}
-                    cx={nx}
-                    cy={y}
-                    r={isSelected ? 6 : 5}
-                    fill={isSelected ? "var(--color-green)" : "var(--color-cream-card)"}
-                    stroke={isSelected ? "var(--color-cream-card)" : "var(--color-line)"}
-                    strokeWidth={isSelected ? 2 : 1.5}
-                  />
-                ))}
+                {NODE_XS.map((nx, ni) => {
+                  const isLast = ni === NODE_XS.length - 1;
+                  const r = isSelected && isLast ? 7 : isSelected ? 5 : 4.5;
+                  return (
+                    <circle
+                      key={ni}
+                      cx={nx}
+                      cy={y}
+                      r={r}
+                      fill={isSelected && isLast ? "var(--color-green)" : "var(--color-cream-card)"}
+                      stroke={isSelected ? "var(--color-green)" : "var(--color-line)"}
+                      strokeWidth={isSelected ? 2 : 1.5}
+                    />
+                  );
+                })}
               </g>
             );
           })}
@@ -94,6 +126,7 @@ export function TrailMapBranchDiagram({
         {branches.map((branch, i) => {
           const Icon = branch.icon;
           const isSelected = branch.id === selectedBranchId;
+          const accent = ACCENT_CLASSES[getBranchAccent(branch.id)];
           const y = laneY(i);
           return (
             <button
@@ -107,23 +140,23 @@ export function TrailMapBranchDiagram({
               }}
             >
               <span
-                className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition focus-visible:ring-2 focus-visible:ring-green/50 ${
+                className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition focus-visible:ring-2 focus-visible:ring-green/50 ${
                   isSelected
                     ? "border-green bg-green"
-                    : "border-line/70 bg-cream-card hover:border-ink-faint/40"
+                    : `${accent.border} ${accent.bg} hover:brightness-95`
                 }`}
               >
                 {isSelected && (
-                  <span className="absolute -inset-1.5 -z-10 rounded-full bg-green/25 blur-md" />
+                  <span className="absolute -inset-2 -z-10 rounded-full bg-green/30 blur-md" />
                 )}
                 <Icon
-                  className={`h-3 w-3 ${isSelected ? "text-cream" : "text-ink-soft"}`}
-                  strokeWidth={1.75}
+                  className={`h-3.5 w-3.5 ${isSelected ? "text-cream" : accent.text}`}
+                  strokeWidth={2}
                 />
               </span>
               <span
-                className={`w-[132px] text-[10.5px] leading-tight ${
-                  isSelected ? "font-semibold text-green" : "text-ink-faint"
+                className={`w-[128px] text-[10.5px] leading-tight ${
+                  isSelected ? "font-semibold text-green" : "text-ink-soft"
                 }`}
               >
                 {branch.title}
@@ -135,13 +168,16 @@ export function TrailMapBranchDiagram({
         {branches.map((branch, i) => {
           const isSelected = branch.id === selectedBranchId;
           const y = laneY(i);
+          const isUpper = y < centerY;
+          const labelAbove = isSelected && isUpper;
           return branch.nodes.map((node, ni) => (
             <div
               key={node.id}
-              className="absolute w-[140px] -translate-x-1/2 text-center text-[9.5px] leading-[1.2]"
+              className="absolute w-[138px] -translate-x-1/2 text-center text-[9.5px] leading-[1.2]"
               style={{
                 left: `${(NODE_XS[ni] / VIEW_W) * 100}%`,
-                top: `${(y / height) * 100 + 8.5}%`,
+                top: `${(y / height) * 100}%`,
+                transform: labelAbove ? "translate(-50%, calc(-100% - 14px))" : "translate(-50%, 12px)",
               }}
             >
               <span className={isSelected ? "font-semibold text-ink" : "text-ink-faint"}>
@@ -150,6 +186,29 @@ export function TrailMapBranchDiagram({
             </div>
           ));
         })}
+
+        {selectedBranch &&
+          (() => {
+            const y = laneY(selectedIndex);
+            const isUpper = y < centerY;
+            return (
+              <div
+                className="absolute w-[220px] rounded-2xl border border-green/40 bg-ink px-3.5 py-3 shadow-lg"
+                style={{
+                  left: `${(ICON_X / VIEW_W) * 100}%`,
+                  top: `${(y / height) * 100}%`,
+                  transform: isUpper
+                    ? "translate(-8%, calc(-100% - 22px))"
+                    : "translate(-8%, 22px)",
+                }}
+              >
+                <span className="text-[12px] font-semibold text-cream">{selectedBranch.title}</span>
+                <p className="mt-1 line-clamp-2 text-[10.5px] leading-snug text-cream/70">
+                  {selectedBranch.whyItFits}
+                </p>
+              </div>
+            );
+          })()}
       </div>
     </div>
   );
