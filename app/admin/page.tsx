@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ClipboardList,
+  Compass,
   Flag,
   Inbox,
   Route as RouteIcon,
@@ -22,6 +23,12 @@ const links: HubLink[] = [
     title: "Opportunity Scout",
     description:
       "Search the web for route-relevant, hidden-opportunity, and gateway-community candidates.",
+  },
+  {
+    href: "/admin/scout-requests",
+    icon: Compass,
+    title: "Scout Requests",
+    description: "See what real users asked Pathoro to go look for.",
   },
   {
     href: "/admin/discovery-queue",

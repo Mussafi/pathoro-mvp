@@ -1,0 +1,81 @@
+import { isAuthorizedAdminRequest } from "@/lib/adminAuth";
+import { insertScoutRequest } from "@/lib/scoutRequestsDb";
+import { getScoutRequestsAdmin } from "@/lib/scoutRequestsAdminDb";
+import { isSupabaseConfigured } from "@/lib/supabaseClient";
+import { createScoutRequestId } from "@/lib/scoutRequestSchema";
+
+// Admin-only: list all scout requests. Never public — a real user's
+// requested path/city is only ever readable with a valid ADMIN_TOKEN.
+export async function GET(request: Request): Promise<Response> {
+  if (!isAuthorizedAdminRequest(request)) {
+    return Response.json(
+      { ok: false, error: "Missing or invalid admin token." },
+      { status: 401 }
+    );
+  }
+
+  try {
+    const requests = await getScoutRequestsAdmin();
+    return Response.json({ ok: true, requests });
+  } catch (err) {
+    console.error("GET /api/scout-requests failed:", err);
+    return Response.json({ ok: true, requests: [] });
+  }
+}
+
+// No admin token required — this is the public "Request scout" CTA on
+// /route-planning. Safety mechanism: the anon insert policy in
+// supabase/migrations/003_create_scout_requests.sql only allows
+// status = 'new', so a submitted request can never appear pre-reviewed,
+// and there is no public read/update/delete path at all.
+export async function POST(request: Request): Promise<Response> {
+  if (!isSupabaseConfigured()) {
+    return Response.json(
+      { ok: false, error: "Supabase isn't configured for this deployment." },
+      { status: 500 }
+    );
+  }
+
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return Response.json({ ok: false, error: "Invalid request body." }, { status: 400 });
+  }
+
+  const body = payload as {
+    city?: string;
+    state?: string;
+    routeId?: string;
+    pathGoal?: string;
+    userContext?: string;
+    requestedFromPage?: string;
+  };
+
+  if (!body.city?.trim() || !body.routeId?.trim() || !body.pathGoal?.trim()) {
+    return Response.json(
+      { ok: false, error: "Missing required fields: city, routeId, pathGoal." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    await insertScoutRequest({
+      id: createScoutRequestId(),
+      city: body.city.trim(),
+      state: body.state?.trim() ?? "",
+      routeId: body.routeId.trim(),
+      pathGoal: body.pathGoal.trim(),
+      userContext: body.userContext?.trim() ?? "",
+      requestedFromPage: body.requestedFromPage?.trim() ?? "",
+    });
+    return Response.json({
+      ok: true,
+      message: "Scout request sent. Pathoro will look for real-world access points for this route.",
+    });
+  } catch (err) {
+    console.error("POST /api/scout-requests failed:", err);
+    const message = err instanceof Error ? err.message : "Failed to save scout request.";
+    return Response.json({ ok: false, error: message }, { status: 500 });
+  }
+}

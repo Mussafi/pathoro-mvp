@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 import {
@@ -76,6 +76,25 @@ export default function OpportunityScoutPage() {
   const [queriesUsed, setQueriesUsed] = useState<string[]>([]);
   const [savedUrls, setSavedUrls] = useState<Set<string>>(new Set());
   const { save: saveDiscoveryEntry } = useDiscoveryQueue();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const prefillCity = params.get("city");
+    if (!prefillCity) return;
+
+    // Syncing initial form state from the URL (an external system) after
+    // mount, not deriving it from props/state — avoids an SSR/client
+    // hydration mismatch on these controlled inputs. Matches the pattern
+    // in app/admin/opportunity-ingestion/page.tsx.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCity(prefillCity);
+    const prefillState = params.get("state");
+    if (prefillState) setState(prefillState);
+    const prefillRouteId = params.get("routeId");
+    if (prefillRouteId) setRouteId(prefillRouteId);
+    const prefillPathGoal = params.get("pathGoal");
+    if (prefillPathGoal) setPathGoal(prefillPathGoal);
+  }, []);
 
   async function handleSearch() {
     setLoading(true);

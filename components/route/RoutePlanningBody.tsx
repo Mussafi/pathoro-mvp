@@ -61,6 +61,7 @@ export function RoutePlanningBody() {
           routeId={selectedId}
           pathGoal={answers.moveToward}
           city={answers.location}
+          userContext={`Making room for: ${answers.makeRoomFor}. Starting from: ${answers.startingFrom}.`}
         />
       )}
       <ExploreOtherRoutes
