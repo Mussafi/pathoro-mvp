@@ -5,7 +5,7 @@ import {
   type OpportunityCategory,
   type OpportunitySourceType,
 } from "@/lib/opportunitySchema";
-import type { PathoroFit } from "@/lib/scoutFit";
+import { PATHORO_FIT_RANK, type PathoroFit } from "@/lib/scoutFit";
 
 const TAVILY_SEARCH_URL = "https://api.tavily.com/search";
 const FETCH_TIMEOUT_MS = 8000;
@@ -689,13 +689,7 @@ export async function scoutOpportunities(params: {
   });
 
   candidates.sort((a, b) => {
-    const fitRank: Record<PathoroFit, number> = {
-      strong_opportunity: 3,
-      maybe_useful: 2,
-      consumer_activity: 1,
-      weak_informational: 0,
-    };
-    const fitDiff = fitRank[b.pathoroFit] - fitRank[a.pathoroFit];
+    const fitDiff = PATHORO_FIT_RANK[b.pathoroFit] - PATHORO_FIT_RANK[a.pathoroFit];
     if (fitDiff !== 0) return fitDiff;
     const confidenceRank: Record<ScoutConfidence, number> = { high: 2, medium: 1, low: 0 };
     return confidenceRank[b.confidence] - confidenceRank[a.confidence];

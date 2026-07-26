@@ -2,6 +2,7 @@ import { getScoutRequestByIdAdmin } from "@/lib/scoutRequestsAdminDb";
 import { getLiveOpportunities } from "@/lib/opportunitiesDb";
 import { getScoutCandidatesForRequest } from "@/lib/scoutCandidatesDb";
 import type { PublicScoutRequest } from "@/lib/scoutRequestSchema";
+import { PATHORO_FIT_RANK, type PathoroFit } from "@/lib/scoutFit";
 
 // Public, token-gated: this is the one place a user without an admin
 // token can read a scout_requests row. Looked up server-side with the
@@ -41,9 +42,15 @@ export async function GET(
 
     // Dismissed candidates were judged not worth showing — everything else
     // (candidate/sent_to_ingestion/promoted) is still a legitimate AI-found
-    // lead the requester should see.
+    // lead the requester should see. Sorted strongest-fit first so the best
+    // candidates are easy to scan at the top of the list.
     const allCandidates = await getScoutCandidatesForRequest(scoutRequest.id);
-    const candidates = allCandidates.filter((c) => c.status !== "dismissed");
+    const candidates = allCandidates
+      .filter((c) => c.status !== "dismissed")
+      .sort(
+        (a, b) =>
+          PATHORO_FIT_RANK[b.pathoroFit as PathoroFit] - PATHORO_FIT_RANK[a.pathoroFit as PathoroFit]
+      );
 
     const publicRequest: PublicScoutRequest = {
       id: scoutRequest.id,

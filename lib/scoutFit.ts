@@ -18,5 +18,14 @@ export const PATHORO_FIT_LABELS: Record<PathoroFit, string> = {
   strong_opportunity: "Strong opportunity",
   maybe_useful: "Maybe useful",
   consumer_activity: "Consumer activity",
-  weak_informational: "Weak / mostly informational",
+  weak_informational: "Mostly informational",
+};
+
+/** Higher-fit tiers first — shared by lib/tavily.ts's candidate sort and
+ * anywhere else that needs to show the strongest candidates first. */
+export const PATHORO_FIT_RANK: Record<PathoroFit, number> = {
+  strong_opportunity: 3,
+  maybe_useful: 2,
+  consumer_activity: 1,
+  weak_informational: 0,
 };

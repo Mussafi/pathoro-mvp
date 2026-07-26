@@ -23,6 +23,32 @@ const CONFIDENCE_LABELS: Record<string, string> = {
   low: "Low confidence",
 };
 
+const CANDIDATE_SNIPPET_MAX_LENGTH = 140;
+
+function shortenSnippet(snippet: string): string {
+  if (snippet.length <= CANDIDATE_SNIPPET_MAX_LENGTH) return snippet;
+  const truncated = snippet.slice(0, CANDIDATE_SNIPPET_MAX_LENGTH);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return (lastSpace > CANDIDATE_SNIPPET_MAX_LENGTH * 0.6 ? truncated.slice(0, lastSpace) : truncated).trim() + "…";
+}
+
+// Strong opportunities get a confident, elevated card; weak/informational
+// ones are visually quieted down so they never read as equally credible —
+// see "Improve weak-result handling" in the v0.18 task notes.
+const FIT_CARD_CLASS: Record<PathoroFit, string> = {
+  strong_opportunity: "border-green/40 bg-green-soft/30 shadow-[0_0_0_1px_rgba(84,120,32,0.06)]",
+  maybe_useful: "border-line/70 bg-cream-field",
+  consumer_activity: "border-line/70 bg-cream-field",
+  weak_informational: "border-line/50 bg-cream-field/50 opacity-70",
+};
+
+const FIT_BADGE_CLASS: Record<PathoroFit, string> = {
+  strong_opportunity: "border border-green/40 bg-green-soft/70 text-green",
+  maybe_useful: "border border-line/70 bg-cream-card text-ink-soft",
+  consumer_activity: "border border-line/70 bg-cream-card text-ink-faint",
+  weak_informational: "border border-line/60 bg-cream-card text-ink-faint",
+};
+
 type FetchState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
@@ -139,10 +165,13 @@ function ScoutRequestResultContent({ id }: { id: string }) {
               </span>
               <span className="text-[15px] font-semibold text-ink">Scout request</span>
             </div>
-            <p className="mt-2 text-[12.5px] leading-relaxed text-ink-soft">
-              Pathoro is looking for real-world access points, hidden
-              opportunities, people, places, resources, and openings that
-              match this route.
+            <p className="mt-2 text-[12.5px] font-medium leading-relaxed text-green">
+              Pathoro is scouting for real-world access points — not just
+              events.
+            </p>
+            <p className="mt-1 text-[12px] leading-relaxed text-ink-faint">
+              Looking for people, places, resources, and openings that match
+              this route.
             </p>
 
             <div className="mt-4 flex flex-col gap-4 border-t border-line/70 pt-4">
@@ -228,9 +257,9 @@ function ScoutRequestResultContent({ id }: { id: string }) {
                 </span>
               </div>
               <p className="text-[11.5px] leading-relaxed text-ink-faint">
-                Pathoro automatically scouted for real-world access points
-                that may match this path. These are unreviewed candidates,
-                not guaranteed recommendations.
+                Pathoro already went looking and found these — real pages
+                that may be worth a look, not guaranteed recommendations.
+                Unreviewed, ranked strongest first.
               </p>
 
               {state.candidates.length === 0 ? (
@@ -239,18 +268,22 @@ function ScoutRequestResultContent({ id }: { id: string }) {
                 </p>
               ) : (
                 <div className="flex flex-col gap-2.5">
-                  {state.candidates.map((candidate) => (
+                  {state.candidates.map((candidate) => {
+                    const fit = (candidate.pathoroFit as PathoroFit) ?? "maybe_useful";
+                    return (
                     <div
                       key={candidate.id}
-                      className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-3"
+                      className={`rounded-2xl border px-3.5 py-3 ${FIT_CARD_CLASS[fit] ?? FIT_CARD_CLASS.maybe_useful}`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <span className="text-[13px] font-semibold text-ink">
                           {candidate.title}
                         </span>
                         <span className="flex shrink-0 flex-wrap justify-end gap-1.5">
-                          <span className="rounded-full border border-green/40 bg-green-soft/60 px-2 py-0.5 text-[10px] font-semibold text-green">
-                            {PATHORO_FIT_LABELS[candidate.pathoroFit as PathoroFit] ?? candidate.pathoroFit}
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${FIT_BADGE_CLASS[fit] ?? FIT_BADGE_CLASS.maybe_useful}`}
+                          >
+                            {PATHORO_FIT_LABELS[fit] ?? candidate.pathoroFit}
                           </span>
                           <span className="rounded-full bg-cream-card px-2 py-0.5 text-[10px] font-semibold text-ink-faint">
                             {CONFIDENCE_LABELS[candidate.confidence] ?? candidate.confidence}
@@ -260,28 +293,36 @@ function ScoutRequestResultContent({ id }: { id: string }) {
                       <p className="mt-1 text-[11px] text-ink-faint">{candidate.sourceName}</p>
                       {candidate.snippet && (
                         <p className="mt-1.5 text-[12px] leading-snug text-ink-soft">
-                          {candidate.snippet}
+                          {shortenSnippet(candidate.snippet)}
                         </p>
                       )}
-                      {candidate.whyThisMayFit && (
-                        <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
-                          <span className="font-semibold text-ink-soft">Why this may fit — </span>
-                          {candidate.whyThisMayFit}
-                        </p>
-                      )}
-                      {candidate.leverageHint && (
-                        <p className="mt-1 text-[11px] leading-snug text-ink-faint">
-                          <span className="font-semibold text-ink-soft">
-                            What leverage it may create —{" "}
-                          </span>
-                          {candidate.leverageHint}
-                        </p>
-                      )}
-                      {candidate.suggestedNextStep && (
-                        <p className="mt-1 text-[11px] leading-snug text-ink-faint">
-                          <span className="font-semibold text-ink-soft">Suggested next step — </span>
-                          {candidate.suggestedNextStep}
-                        </p>
+                      {/* Fit narrative (why/leverage/next step) is only shown for
+                          genuinely promising candidates — for weak/consumer-only
+                          results it would oversell a page that's really just a
+                          listicle or a browse page. */}
+                      {(fit === "strong_opportunity" || fit === "maybe_useful") && (
+                        <>
+                          {candidate.whyThisMayFit && (
+                            <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
+                              <span className="font-semibold text-ink-soft">Why this may fit — </span>
+                              {candidate.whyThisMayFit}
+                            </p>
+                          )}
+                          {candidate.leverageHint && (
+                            <p className="mt-1 text-[11px] leading-snug text-ink-faint">
+                              <span className="font-semibold text-ink-soft">
+                                What leverage it may create —{" "}
+                              </span>
+                              {candidate.leverageHint}
+                            </p>
+                          )}
+                          {candidate.suggestedNextStep && (
+                            <p className="mt-1 text-[11px] leading-snug text-ink-faint">
+                              <span className="font-semibold text-ink-soft">Suggested next step — </span>
+                              {candidate.suggestedNextStep}
+                            </p>
+                          )}
+                        </>
                       )}
                       <a
                         href={candidate.url}
@@ -293,7 +334,8 @@ function ScoutRequestResultContent({ id }: { id: string }) {
                         <ExternalLink className="h-3 w-3" strokeWidth={2} />
                       </a>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

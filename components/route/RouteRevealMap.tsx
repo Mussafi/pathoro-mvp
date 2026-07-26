@@ -9,7 +9,21 @@ const VIEW_H = 290;
 const CENTER = { x: 90, y: 145 };
 const BRANCH_X = 740;
 const BRANCH_Y = [17, 85, 145, 205, 273];
-const MARKER_T = [0.32, 0.62, 0.88];
+// Nudged well outward from the original [0.32, 0.62, 0.88]. Two-line step
+// labels are ~23px tall (three-line ones ~34px) — near the center node all
+// five routes' curves are still bunched within a few px of each other, so
+// no offset can fit a label of that height into the gap without it
+// reaching into a neighboring route's line. Starting further out (where
+// the fanned-out curves are 40-60px apart) is what actually creates room,
+// not a bigger offset.
+const MARKER_T = [0.78, 0.86, 0.94];
+// Label offset as a percent of VIEW_H rather than a fixed pixel amount —
+// scales with the rendered container the same way the curve spacing does.
+// Kept modest: this only needs to clear the label's *own* curve (a few px
+// of stroke width), not a neighboring route — that's MARKER_T's job. A
+// large offset here would push upper/lower routes' labels toward whichever
+// neighbor sits on that side.
+const LABEL_OFFSET_PERCENT = 5;
 
 function curveControlPoints(y: number) {
   const startX = CENTER.x + 30;
@@ -102,7 +116,7 @@ export function RouteRevealMap({
                   stroke={isSelected ? "var(--color-green)" : "var(--color-line)"}
                   strokeWidth={isSelected ? 2.25 : 1.25}
                   strokeLinecap="round"
-                  strokeOpacity={isSelected ? 0.9 : 0.55}
+                  strokeOpacity={isSelected ? 0.9 : 0.18}
                 />
               </g>
             );
@@ -137,14 +151,16 @@ export function RouteRevealMap({
 
         {/* step labels for the selected route — offset above or below the
             curve depending on whether this route branches above or below
-            center, so the text never sits on top of the stroke */}
+            center, so the text never sits on top of the stroke. The offset
+            is added directly to the `top` percentage (not a fixed-px
+            transform) so it scales with the container, keeping consistent
+            clearance from neighboring routes' lines at any viewport width. */}
         {selectedControlPoints &&
           selectedRoute &&
           (() => {
             const isUpperRoute = BRANCH_Y[selectedIndex] < CENTER.y;
-            const labelTransform = isUpperRoute
-              ? "translate(-50%, calc(-100% - 8px))"
-              : "translate(-50%, 8px)";
+            const verticalSign = isUpperRoute ? -1 : 1;
+            const labelTransform = isUpperRoute ? "translate(-50%, -100%)" : "translate(-50%, 0)";
             return MARKER_T.map((t, i) => {
               const { x, y } = cubicPoint(
                 t,
@@ -156,10 +172,10 @@ export function RouteRevealMap({
               return (
                 <div
                   key={i}
-                  className="route-reveal-animate absolute w-[84px] -translate-x-1/2 text-center text-[9.5px] font-semibold leading-[1.2] text-ink"
+                  className="route-reveal-animate absolute w-[104px] -translate-x-1/2 text-center text-[9.5px] font-semibold leading-[1.2] text-ink"
                   style={{
                     left: `${(x / VIEW_W) * 100}%`,
-                    top: `${(y / VIEW_H) * 100}%`,
+                    top: `${(y / VIEW_H) * 100 + verticalSign * LABEL_OFFSET_PERCENT}%`,
                     transform: labelTransform,
                     animationDelay: `${400 + i * 90}ms`,
                   }}
