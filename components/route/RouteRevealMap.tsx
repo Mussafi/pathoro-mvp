@@ -84,7 +84,7 @@ export function RouteRevealMap({
 
       <div
         className="relative mt-3 w-full"
-        style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}` }}
+        style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}`, minHeight: 210 }}
       >
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
@@ -210,24 +210,39 @@ export function RouteRevealMap({
             </div>
           );
         })}
-      </div>
 
-      {/* Selected-route step preview — lives outside the SVG entirely, in
-          normal document flow, so it can never collide with the path line.
-          Full route detail still lives in the Best Next Route card below. */}
-      {selectedRoute && (
-        <div className="mt-3 rounded-2xl border border-line/70 bg-cream-field px-4 py-3">
-          <span className="text-[11px] font-semibold text-green">{selectedRoute.title}</span>
-          <ol className="mt-1.5 flex flex-col gap-1">
-            {selectedRoute.steps.map((step, i) => (
-              <li key={i} className="flex items-baseline gap-1.5 text-[11.5px] leading-snug text-ink-soft">
-                <span className="text-ink-faint">{i + 1}.</span>
-                {step.label}
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
+        {/* Selected-route preview — an overlay "map annotation" pinned to
+            the lower-middle of the map area, not the path line itself. Its
+            near-opaque background means it simply sits on top of whatever
+            curve passes behind it, the way a label box sits on terrain, so
+            it never visually tangles with the path. Starts right of the
+            "You are here" node/label column (~19% wide) so the two never
+            collide even on narrow viewports. Lives inside the same
+            aspect-ratio container as the SVG so it's always visible
+            alongside the map, never below it. Full route detail still
+            lives in the Best Next Route card below. */}
+        {selectedRoute && (
+          <div
+            className="route-reveal-animate absolute w-[46%] max-w-[230px] rounded-2xl border border-line/70 bg-cream-card/95 px-3 py-2.5 shadow-md backdrop-blur-sm"
+            style={{ left: "22%", bottom: "4%", animationDelay: "460ms" }}
+          >
+            <div className="flex items-center gap-1.5">
+              <selectedRoute.icon className="h-3 w-3 shrink-0 text-green" strokeWidth={2} />
+              <span className="text-[10.5px] font-semibold leading-tight text-green">
+                {selectedRoute.title}
+              </span>
+            </div>
+            <ol className="mt-1 flex flex-col gap-0.5">
+              {selectedRoute.steps.map((step, i) => (
+                <li key={i} className="flex items-baseline gap-1 text-[9.5px] leading-snug text-ink-soft">
+                  <span className="shrink-0 text-ink-faint">{i + 1}.</span>
+                  <span>{step.label}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </div>
 
       <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">{personalSentence}</p>
 
