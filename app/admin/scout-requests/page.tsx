@@ -15,12 +15,19 @@ function buildScoutHref(request: ScoutRequest): string {
   return `/admin/opportunity-scout?${params.toString()}`;
 }
 
+function buildPublicResultUrl(request: ScoutRequest): string | null {
+  if (!request.publicToken) return null;
+  return `/scout-request/${request.id}?token=${request.publicToken}`;
+}
+
 export default function ScoutRequestsAdminPage() {
   const [adminToken, setAdminToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [requests, setRequests] = useState<ScoutRequest[] | null>(null);
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const [summaryDrafts, setSummaryDrafts] = useState<Record<string, string>>({});
+  const [savingSummaryId, setSavingSummaryId] = useState<string | null>(null);
 
   async function handleLoad() {
     setLoading(true);
@@ -39,6 +46,11 @@ export default function ScoutRequestsAdminPage() {
         return;
       }
       setRequests(data.requests);
+      setSummaryDrafts(
+        Object.fromEntries(
+          (data.requests as ScoutRequest[]).map((r) => [r.id, r.resultSummary])
+        )
+      );
     } catch {
       setError("Something went wrong reaching Pathoro. Please try again.");
     } finally {
@@ -71,6 +83,36 @@ export default function ScoutRequestsAdminPage() {
       setError("Something went wrong reaching Pathoro. Please try again.");
     } finally {
       setActioningId(null);
+    }
+  }
+
+  async function handleSaveSummary(id: string) {
+    setSavingSummaryId(id);
+    setError(null);
+    try {
+      const res = await fetch(`/api/scout-requests/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-admin-token": adminToken },
+        body: JSON.stringify({ resultSummary: summaryDrafts[id] ?? "" }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setError(
+          res.status === 401
+            ? "Admin token required. This protects scout requests from public use."
+            : data.error
+        );
+        return;
+      }
+      setRequests((prev) =>
+        prev
+          ? prev.map((r) => (r.id === id ? { ...r, resultSummary: data.request.resultSummary } : r))
+          : prev
+      );
+    } catch {
+      setError("Something went wrong reaching Pathoro. Please try again.");
+    } finally {
+      setSavingSummaryId(null);
     }
   }
 
@@ -173,6 +215,38 @@ export default function ScoutRequestsAdminPage() {
                       {req.userContext}
                     </p>
                   )}
+                  {buildPublicResultUrl(req) && (
+                    <a
+                      href={buildPublicResultUrl(req)!}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-fit text-[11.5px] font-medium text-green underline"
+                    >
+                      Public result link
+                    </a>
+                  )}
+                  <label className="block rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.25">
+                    <span className="block text-[10.5px] text-ink-faint">
+                      Result summary (shown to the requester)
+                    </span>
+                    <textarea
+                      value={summaryDrafts[req.id] ?? ""}
+                      onChange={(e) =>
+                        setSummaryDrafts((prev) => ({ ...prev, [req.id]: e.target.value }))
+                      }
+                      rows={2}
+                      placeholder="What did the scout find? A short note for the requester."
+                      className="mt-0.5 w-full resize-none bg-transparent text-[12.5px] text-ink outline-none placeholder:text-ink-faint/70"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleSaveSummary(req.id)}
+                      disabled={savingSummaryId === req.id}
+                      className="mt-1.5 text-[11.5px] font-medium text-green underline disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {savingSummaryId === req.id ? "Saving…" : "Save summary"}
+                    </button>
+                  </label>
                   <div className="mt-1 flex flex-wrap items-center gap-3">
                     <Link
                       href={buildScoutHref(req)}

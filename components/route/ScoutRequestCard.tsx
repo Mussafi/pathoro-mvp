@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Compass } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Compass } from "lucide-react";
 
 export function ScoutRequestCard({
   routeId,
@@ -18,6 +19,7 @@ export function ScoutRequestCard({
 }) {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
 
   async function handleRequest() {
     setStatus("sending");
@@ -41,6 +43,7 @@ export function ScoutRequestCard({
         setStatus("error");
         return;
       }
+      setResultUrl(data.resultUrl ?? null);
       setStatus("sent");
     } catch {
       setError("Pathoro couldn't reach the server. Please try again in a moment.");
@@ -63,10 +66,25 @@ export function ScoutRequestCard({
         people, places, resources, and openings that match this route.
       </p>
       {status === "sent" ? (
-        <p className="mt-3 rounded-2xl border border-green/40 bg-green-soft/50 px-3.5 py-3 text-[12.5px] leading-relaxed text-green">
-          Scout request sent. Pathoro will look for real-world access points
-          for this route.
-        </p>
+        <div className="mt-3 flex flex-col gap-2.5 rounded-2xl border border-green/40 bg-green-soft/50 px-3.5 py-3">
+          <div>
+            <p className="text-[12.5px] font-semibold leading-relaxed text-green">
+              Scout request sent.
+            </p>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-green">
+              Save this link to check results.
+            </p>
+          </div>
+          {resultUrl && (
+            <Link
+              href={resultUrl}
+              className="flex w-fit items-center gap-1.5 rounded-full bg-green px-3.5 py-2 text-[12.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+            >
+              View scout request
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
+        </div>
       ) : (
         <>
           {status === "error" && error && (

@@ -59,9 +59,11 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  const id = createScoutRequestId();
+
   try {
-    await insertScoutRequest({
-      id: createScoutRequestId(),
+    const { publicToken } = await insertScoutRequest({
+      id,
       city: body.city.trim(),
       state: body.state?.trim() ?? "",
       routeId: body.routeId.trim(),
@@ -72,6 +74,9 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({
       ok: true,
       message: "Scout request sent. Pathoro will look for real-world access points for this route.",
+      id,
+      publicToken,
+      resultUrl: `/scout-request/${id}?token=${publicToken}`,
     });
   } catch (err) {
     console.error("POST /api/scout-requests failed:", err);

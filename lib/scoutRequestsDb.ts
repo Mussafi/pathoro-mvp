@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
-import type { ScoutRequestStatus } from "@/lib/scoutRequestSchema";
+import { createScoutRequestPublicToken, type ScoutRequestStatus } from "@/lib/scoutRequestSchema";
 
 const TABLE = "scout_requests";
 
@@ -13,9 +13,12 @@ type ScoutRequestRow = {
   requested_from_page: string | null;
   status: string;
   admin_notes: string | null;
+  public_token: string | null;
+  result_summary: string | null;
   created_at: string;
   updated_at: string;
   reviewed_at: string | null;
+  responded_at: string | null;
 };
 
 /**
@@ -24,6 +27,11 @@ type ScoutRequestRow = {
  * supabase/migrations/003_create_scout_requests.sql). This is the one
  * place in the app where a public write goes straight to Supabase without
  * a service-role-gated API doing the write on the client's behalf.
+ *
+ * Generates the public_token server-side (in this function, before the
+ * insert) rather than trusting a client-supplied value — the RLS insert
+ * policy doesn't restrict which columns anon can set, so this is the only
+ * real guarantee that a request's token is actually random.
  */
 export async function insertScoutRequest(request: {
   id: string;
@@ -33,12 +41,17 @@ export async function insertScoutRequest(request: {
   pathGoal: string;
   userContext: string;
   requestedFromPage: string;
-}): Promise<void> {
+}): Promise<{ publicToken: string }> {
   if (!isSupabaseConfigured() || !supabase) {
     throw new Error("Supabase isn't configured.");
   }
 
-  const row: Omit<ScoutRequestRow, "created_at" | "updated_at" | "reviewed_at" | "admin_notes"> = {
+  const publicToken = createScoutRequestPublicToken();
+
+  const row: Omit<
+    ScoutRequestRow,
+    "created_at" | "updated_at" | "reviewed_at" | "responded_at" | "admin_notes" | "result_summary"
+  > = {
     id: request.id,
     city: request.city || null,
     state: request.state || null,
@@ -47,10 +60,13 @@ export async function insertScoutRequest(request: {
     user_context: request.userContext || null,
     requested_from_page: request.requestedFromPage || null,
     status: "new" satisfies ScoutRequestStatus,
+    public_token: publicToken,
   };
 
   const { error } = await supabase.from(TABLE).insert(row);
   if (error) {
     throw new Error(error.message);
   }
+
+  return { publicToken };
 }

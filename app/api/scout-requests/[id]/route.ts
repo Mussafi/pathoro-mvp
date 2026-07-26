@@ -36,7 +36,11 @@ export async function PATCH(
     return Response.json({ ok: false, error: "Invalid request body." }, { status: 400 });
   }
 
-  const { status, adminNotes } = payload as { status?: string; adminNotes?: string };
+  const { status, adminNotes, resultSummary } = payload as {
+    status?: string;
+    adminNotes?: string;
+    resultSummary?: string;
+  };
   if (status !== undefined && !VALID_STATUSES.includes(status as ScoutRequestStatus)) {
     return Response.json(
       { ok: false, error: `status must be one of: ${VALID_STATUSES.join(", ")}.` },
@@ -48,6 +52,7 @@ export async function PATCH(
     const scoutRequest = await updateScoutRequestAdmin(id, {
       status: status as ScoutRequestStatus | undefined,
       adminNotes,
+      resultSummary,
     });
     return Response.json({ ok: true, request: scoutRequest });
   } catch (err) {
