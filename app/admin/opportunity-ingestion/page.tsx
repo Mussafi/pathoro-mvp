@@ -154,6 +154,9 @@ export default function OpportunityIngestionPage() {
             token for v0.8, not real auth.
           </span>
           <span className="flex shrink-0 items-center gap-3">
+            <Link href="/admin" className="text-[12px] font-semibold text-green underline">
+              Admin hub
+            </Link>
             <Link
               href="/admin/opportunity-scout"
               className="text-[12px] font-semibold text-green underline"

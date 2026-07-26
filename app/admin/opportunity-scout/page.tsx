@@ -135,6 +135,9 @@ export default function OpportunityScoutPage() {
             and approved through ingestion.
           </span>
           <span className="flex shrink-0 items-center gap-3">
+            <Link href="/admin" className="text-[12px] font-semibold text-green underline">
+              Admin hub
+            </Link>
             <Link
               href="/admin/discovery-queue"
               className="text-[12px] font-semibold text-green underline"

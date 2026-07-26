@@ -48,6 +48,11 @@ export function OrientationCard() {
         You don&rsquo;t need perfect answers. Choose what feels closest —
         Pathoro will help shape the path.
       </p>
+      <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-faint">
+        Your goal and your city are what power everything Pathoro finds
+        next — the routes, the real-world opportunities, and the people
+        worth talking to.
+      </p>
 
       <div className="mt-3.5 flex items-center gap-2 rounded-full border border-line/70 bg-cream-field px-4 py-2">
         <MapPin className="h-3.5 w-3.5 shrink-0 text-green" strokeWidth={1.75} />
@@ -163,7 +168,8 @@ export function OrientationCard() {
       </div>
 
       <p className="mt-3 text-[12px] leading-relaxed text-ink-soft">
-        Pathoro will use this to suggest a route and nearby opportunities.
+        Pathoro will use this to suggest a route and find real-world
+        opportunity access near you.
       </p>
 
       <Link

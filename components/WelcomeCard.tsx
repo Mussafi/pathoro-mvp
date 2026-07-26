@@ -20,16 +20,17 @@ export function WelcomeCard() {
           </div>
 
           <h1 className="mt-3.5 font-serif text-[21px] leading-[1.2] text-ink">
-            A living landscape
+            Find the doors
             <br />
-            of opportunity.
+            still open.
           </h1>
           <p className="mt-1.5 font-serif italic text-[15px] text-green">
             Find your way.
           </p>
           <p className="mt-2 max-w-[260px] text-[12.5px] leading-relaxed text-ink-soft">
-            Pathoro helps you discover what&rsquo;s next, map a path that fits
-            your life, and take steps that move you forward.
+            Pathoro helps you find real-world opportunities, access points,
+            and next steps for the path you&rsquo;re trying to move along —
+            people, places, resources, and openings, not just events.
           </p>
 
           <a

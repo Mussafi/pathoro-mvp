@@ -69,12 +69,17 @@ export default function TrailMarkersAdminPage() {
             Internal prototype — not linked publicly. Review trail markers
             before they appear on any opportunity or route.
           </span>
-          <Link
-            href="/admin/opportunity-scout"
-            className="shrink-0 text-[12px] font-semibold text-green underline"
-          >
-            Opportunity scout
-          </Link>
+          <span className="flex shrink-0 items-center gap-3">
+            <Link href="/admin" className="text-[12px] font-semibold text-green underline">
+              Admin hub
+            </Link>
+            <Link
+              href="/admin/opportunity-scout"
+              className="text-[12px] font-semibold text-green underline"
+            >
+              Opportunity scout
+            </Link>
+          </span>
         </div>
 
         <div className="mt-3 rounded-2xl border border-green/40 bg-green-soft/15 px-4 py-3 text-[11.5px] leading-relaxed text-ink-soft">

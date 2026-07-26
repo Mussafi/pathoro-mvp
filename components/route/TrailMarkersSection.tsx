@@ -81,9 +81,24 @@ export function TrailMarkersSection({
         <span className="text-[15px] font-semibold text-ink">Trail markers</span>
       </div>
       <p className="mt-1.5 text-[12px] leading-relaxed text-ink-faint">
-        Notes from people who know this path — practical context, hidden
-        friction, and what this could open next.
+        Signs from people who know this path.
       </p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {[
+          "What to know before going",
+          "What this opened next",
+          "Hidden friction",
+          "Better first step",
+          "Access advice",
+        ].map((example) => (
+          <span
+            key={example}
+            className="rounded-full border border-line/70 bg-cream-field px-2.5 py-1 text-[10.5px] text-ink-faint"
+          >
+            {example}
+          </span>
+        ))}
+      </div>
 
       <div className="mt-4 flex flex-col gap-4 border-t border-line/70 pt-4">
         {loading ? (

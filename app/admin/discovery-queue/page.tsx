@@ -70,6 +70,9 @@ export default function DiscoveryQueuePage() {
             stored in this browser only, not Supabase.
           </span>
           <span className="flex shrink-0 items-center gap-3">
+            <Link href="/admin" className="text-[12px] font-semibold text-green underline">
+              Admin hub
+            </Link>
             <Link
               href="/admin/opportunity-scout"
               className="text-[12px] font-semibold text-green underline"
