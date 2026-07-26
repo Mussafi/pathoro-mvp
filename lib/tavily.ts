@@ -5,6 +5,7 @@ import {
   type OpportunityCategory,
   type OpportunitySourceType,
 } from "@/lib/opportunitySchema";
+import type { PathoroFit } from "@/lib/scoutFit";
 
 const TAVILY_SEARCH_URL = "https://api.tavily.com/search";
 const FETCH_TIMEOUT_MS = 8000;
@@ -99,6 +100,151 @@ const GATEWAY_QUERY_HINTS = [
   "neighborhood organization",
 ];
 
+// Hosts that are almost never a specific, takeable opportunity themselves —
+// review/directory/listicle aggregators. Seeing one of these means the
+// result is a page *about* many things, not one specific thing to do.
+const WEAK_HOST_PATTERNS = [
+  "yelp.",
+  "tripadvisor.",
+  "opentable.",
+  "thrillist.",
+  "timeout.",
+  "eater.",
+  "yellowpages.",
+  "manta.com",
+  "bbb.org",
+  "angi.com",
+  "nextdoor.com",
+  "pinterest.",
+  "quora.com",
+  "wikipedia.org",
+  "chamberofcommerce.com",
+];
+
+const LISTICLE_TITLE_PATTERN =
+  /\b(top\s*\d+|\d+\s+best\b|best\s+(?:\d+\s+)?[a-z\s]{0,24}(restaurants|places|spots|things to do|cafes|eats))\b/i;
+
+const RESTAURANT_ARTICLE_PATTERN =
+  /\b(best restaurants|top restaurants|where to eat|restaurant guide|dining guide|food guide)\b/i;
+
+const ERROR_OR_BOILERPLATE_PATTERN =
+  /\b(enable javascript|enable cookies|please wait while|loading\.{2,}|page not found|404 (?:error|not found)|access denied|verify you are human|are you a robot|browser (?:is )?(?:out of date|not supported)|using an old browser|internet connection seems to be having issues)\b/i;
+
+const NEXT_ACTION_PATTERN =
+  /\b(register|sign[\s-]?up|rsvp|apply now|application|volunteer|join (?:us|the|now)|enroll|get tickets|buy tickets|reserve your spot|reserve a spot|book now|book your|attend|donate)\b/i;
+
+const DATE_OR_TIME_PATTERN =
+  /\b(\d{1,2}:\d{2}\s*(am|pm)|(mon|tue|wed|thu|fri|sat|sun)[a-z]*,?\s*\d{1,2}|january|february|march|april|may|june|july|august|september|october|november|december)\b/i;
+
+function safePathOf(url: string): string {
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return "";
+  }
+}
+
+/** Eventbrite/Luma browse, category, or organizer pages — not one specific event. */
+function isGenericBrowsePage(hostname: string, url: string): boolean {
+  const path = safePathOf(url);
+  if (hostname.includes("eventbrite.")) {
+    return !/\/e\//.test(path);
+  }
+  if (hostname.includes("lu.ma") || hostname.startsWith("luma.")) {
+    return path === "/" || path === "" || /\/discover/.test(path);
+  }
+  return false;
+}
+
+/**
+ * Candidate quality gate — separate from route/category classification.
+ * Flags results that are real web pages but weak Pathoro opportunities:
+ * listicles, directories, generic browse pages, or pages with no clear next
+ * action. Checked in priority order; first match wins so the fit reason
+ * shown to the admin is the most specific one available.
+ */
+function isWeakResultPage(input: {
+  hostname: string;
+  url: string;
+  title: string;
+  snippet: string;
+  hasNextAction: boolean;
+  hasDateOrTime: boolean;
+}): { weak: boolean; reason?: string } {
+  const { hostname, url, title, snippet, hasNextAction, hasDateOrTime } = input;
+
+  if (ERROR_OR_BOILERPLATE_PATTERN.test(snippet)) {
+    return { weak: true, reason: "The page mostly shows loading/error boilerplate, not real content." };
+  }
+  if (WEAK_HOST_PATTERNS.some((h) => hostname.includes(h))) {
+    return {
+      weak: true,
+      reason: "This looks more like a directory or review listing than a direct opportunity.",
+    };
+  }
+  if (LISTICLE_TITLE_PATTERN.test(title)) {
+    return {
+      weak: true,
+      reason: "This reads like a “best of” listicle, not one specific opportunity to take.",
+    };
+  }
+  if (RESTAURANT_ARTICLE_PATTERN.test(title) && !hasNextAction) {
+    return {
+      weak: true,
+      reason: "This reads like a restaurant recommendation article, not a specific opportunity to take.",
+    };
+  }
+  if (isGenericBrowsePage(hostname, url)) {
+    return {
+      weak: true,
+      reason: "This looks like a generic browse or category page, not one specific opportunity.",
+    };
+  }
+  if (!hasNextAction && !hasDateOrTime) {
+    return { weak: true, reason: "This looks more like an informational page than a direct opportunity." };
+  }
+  return { weak: false };
+}
+
+// Footer/boilerplate markers that show up verbatim on Eventbrite and
+// similar organizer pages — once one of these appears, everything after it
+// in the extracted text is site chrome, not opportunity content.
+const SNIPPET_CUT_MARKERS = [
+  "how do you want to get there",
+  "refund policy",
+  "more events from",
+  "share this event",
+  "follow this organizer",
+  "report this event",
+  "about the organizer",
+  "sales have ended",
+  "log in sign up",
+  "tags:",
+];
+
+const SNIPPET_MAX_LENGTH = 220;
+
+/** Caps length and strips known Eventbrite/organizer-page footer boilerplate. */
+function cleanSnippet(raw: string): string {
+  let text = raw.replace(/\s+/g, " ").trim();
+  const lower = text.toLowerCase();
+
+  let cutIndex = text.length;
+  for (const marker of SNIPPET_CUT_MARKERS) {
+    const idx = lower.indexOf(marker);
+    if (idx !== -1 && idx < cutIndex) cutIndex = idx;
+  }
+  text = text.slice(0, cutIndex).trim();
+
+  if (text.length > SNIPPET_MAX_LENGTH) {
+    const truncated = text.slice(0, SNIPPET_MAX_LENGTH);
+    const lastSpace = truncated.lastIndexOf(" ");
+    text = (lastSpace > SNIPPET_MAX_LENGTH * 0.6 ? truncated.slice(0, lastSpace) : truncated).trim() + "…";
+  }
+
+  return text;
+}
+
 const CANONICAL_HOST_SOURCE_TYPES: { match: (host: string) => boolean; type: OpportunitySourceType }[] = [
   { match: (h) => h.includes("eventbrite."), type: "eventbrite" },
   { match: (h) => h.includes("lu.ma") || h.includes("luma."), type: "luma" },
@@ -130,6 +276,8 @@ export type ScoutCandidate = {
   sourceType: OpportunitySourceType;
   canonicalSourceLikely: boolean;
   opportunityCategory: OpportunityCategory;
+  pathoroFit: PathoroFit;
+  fitReason: string;
 };
 
 type TavilyResult = {
@@ -419,6 +567,31 @@ function looksCanonical(hostname: string, sourceType: OpportunitySourceType, url
   }
 }
 
+const FIT_REASON_FALLBACK: Record<PathoroFit, string> = {
+  strong_opportunity: "A specific, actionable page with a clear next step.",
+  maybe_useful: "Could be useful, but not yet clearly confirmed as one specific opportunity.",
+  consumer_activity: "A real, bookable activity — more consumer experience than access-building opportunity.",
+  weak_informational: "This looks more like an informational page than a direct opportunity.",
+};
+
+/**
+ * Combines page quality (is this even a specific, actionable page) with
+ * opportunity substance (is it consumption or access) into one label the
+ * admin can scan at a glance. See PathoroFit's doc comment for why these
+ * are kept as two separate inputs rather than one score.
+ */
+function computePathoroFit(params: {
+  weak: boolean;
+  opportunityCategory: OpportunityCategory;
+  confidence: ScoutConfidence;
+  hasNextAction: boolean;
+}): PathoroFit {
+  if (params.weak) return "weak_informational";
+  if (params.opportunityCategory === "consumer_activity") return "consumer_activity";
+  if (params.confidence === "high" && params.hasNextAction) return "strong_opportunity";
+  return "maybe_useful";
+}
+
 /** Rule-based classification — reuses the same keyword logic as ingestion, no second AI call. */
 function classifyResult(
   result: TavilyResult,
@@ -429,18 +602,29 @@ function classifyResult(
   if (!hostname || isExcludedHost(hostname)) return null;
 
   const title = result.title?.trim() || prettifyHostname(hostname);
-  const snippet = (result.content ?? "").trim();
+  const snippet = cleanSnippet(result.content ?? "");
   const likelyRouteId = suggestRouteIdFromText(`${title} ${snippet}`);
   const sourceType = classifySourceType(hostname);
   const canonicalSourceLikely = looksCanonical(hostname, sourceType, result.url);
   const routeMatches = likelyRouteId === requestedRouteId;
 
+  const combinedText = `${title} ${snippet}`;
+  const hasNextAction = NEXT_ACTION_PATTERN.test(combinedText);
+  const hasDateOrTime = DATE_OR_TIME_PATTERN.test(combinedText);
+
   let confidence: ScoutConfidence = "low";
   if (canonicalSourceLikely && routeMatches) confidence = "high";
   else if (canonicalSourceLikely || routeMatches) confidence = "medium";
   if ((result.score ?? 0) > 0.7 && confidence === "low") confidence = "medium";
+  if (hasDateOrTime && confidence === "low") confidence = "medium";
+  if (hasNextAction && confidence === "medium") confidence = "high";
+
+  const weakCheck = isWeakResultPage({ hostname, url: result.url, title, snippet, hasNextAction, hasDateOrTime });
+  if (weakCheck.weak) confidence = "low";
 
   const opportunityCategory = classifyOpportunityCategory(title, snippet);
+  const pathoroFit = computePathoroFit({ weak: weakCheck.weak, opportunityCategory, confidence, hasNextAction });
+  const fitReason = weakCheck.reason ?? FIT_REASON_FALLBACK[pathoroFit];
 
   return {
     title,
@@ -458,6 +642,8 @@ function classifyResult(
     sourceType,
     canonicalSourceLikely,
     opportunityCategory,
+    pathoroFit,
+    fitReason,
   };
 }
 
@@ -503,8 +689,16 @@ export async function scoutOpportunities(params: {
   });
 
   candidates.sort((a, b) => {
-    const rank: Record<ScoutConfidence, number> = { high: 2, medium: 1, low: 0 };
-    return rank[b.confidence] - rank[a.confidence];
+    const fitRank: Record<PathoroFit, number> = {
+      strong_opportunity: 3,
+      maybe_useful: 2,
+      consumer_activity: 1,
+      weak_informational: 0,
+    };
+    const fitDiff = fitRank[b.pathoroFit] - fitRank[a.pathoroFit];
+    if (fitDiff !== 0) return fitDiff;
+    const confidenceRank: Record<ScoutConfidence, number> = { high: 2, medium: 1, low: 0 };
+    return confidenceRank[b.confidence] - confidenceRank[a.confidence];
   });
 
   return { candidates: candidates.slice(0, MAX_CANDIDATES), queriesUsed: queries };

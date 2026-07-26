@@ -14,12 +14,20 @@ import {
 } from "@/lib/discoveryQueue";
 import { useDiscoveryQueue } from "@/lib/useDiscoveryQueue";
 import type { ScoutCandidate, ScoutMode } from "@/lib/tavily";
+import { PATHORO_FIT_LABELS } from "@/lib/scoutFit";
 import type { ScoutResponse } from "@/app/api/scout-opportunities/route";
 
 const CONFIDENCE_LABELS: Record<ScoutCandidate["confidence"], string> = {
   high: "High confidence",
   medium: "Medium confidence",
   low: "Low confidence",
+};
+
+const FIT_BADGE_CLASS: Record<ScoutCandidate["pathoroFit"], string> = {
+  strong_opportunity: "border border-green/40 bg-green-soft/60 text-green",
+  maybe_useful: "border border-line/70 bg-cream-field text-ink-soft",
+  consumer_activity: "border border-line/70 text-ink-faint",
+  weak_informational: "border border-red-200 bg-red-50 text-red-700",
 };
 
 const SCOUT_MODE_OPTIONS: { value: ScoutMode; label: string; description: string }[] = [
@@ -349,6 +357,11 @@ export default function OpportunityScoutPage() {
                     </span>
                     <span className="flex shrink-0 flex-wrap justify-end gap-1.5">
                       <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${FIT_BADGE_CLASS[candidate.pathoroFit]}`}
+                      >
+                        {PATHORO_FIT_LABELS[candidate.pathoroFit]}
+                      </span>
+                      <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${CATEGORY_BADGE_CLASS[candidate.opportunityCategory]}`}
                       >
                         {OPPORTUNITY_CATEGORY_LABELS[candidate.opportunityCategory]}
@@ -369,14 +382,14 @@ export default function OpportunityScoutPage() {
                   )}
                   <p
                     className={`text-[11px] font-semibold ${
-                      candidate.opportunityCategory === "consumer_activity"
-                        ? "text-ink-faint"
-                        : "text-green"
+                      candidate.pathoroFit === "weak_informational"
+                        ? "text-red-700"
+                        : candidate.pathoroFit === "consumer_activity"
+                          ? "text-ink-faint"
+                          : "text-green"
                     }`}
                   >
-                    {candidate.opportunityCategory === "consumer_activity"
-                      ? "Looks like a consumer activity"
-                      : "Looks like a real opportunity"}
+                    {candidate.fitReason}
                   </p>
                   <p className="text-[11.5px] leading-snug text-ink-faint">
                     <span className="font-semibold text-ink-soft">
