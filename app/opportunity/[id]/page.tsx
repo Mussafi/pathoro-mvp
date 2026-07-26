@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, ExternalLink, MapPin } from "lucide-react";
 import { TopoLines } from "@/components/TopoLines";
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
+import { TrailMarkersSection } from "@/components/route/TrailMarkersSection";
 import { routes } from "@/lib/routes";
 import { routeOpportunities } from "@/lib/opportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
@@ -196,7 +197,17 @@ function OpportunityDetailContent({ id }: { id: string }) {
                 : "Local prototype only — reviewed opportunities are stored in this browser's localStorage, not a database."}
             </p>
           </div>
-        ) : (
+        ) : null}
+
+        {!stillResolving && opportunity && (
+          <TrailMarkersSection
+            opportunityId={opportunity.id}
+            routeId={opportunity.routeId}
+            city={opportunity.city}
+          />
+        )}
+
+        {!stillResolving && !opportunity && (
           <div className="shadow-card mt-4 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-6 py-6">
             <h1 className="font-serif text-[19px] leading-tight text-ink">
               Opportunity not found

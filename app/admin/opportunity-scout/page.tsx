@@ -134,12 +134,20 @@ export default function OpportunityScoutPage() {
             candidates only; nothing here is saved until it&rsquo;s reviewed
             and approved through ingestion.
           </span>
-          <Link
-            href="/admin/discovery-queue"
-            className="shrink-0 text-[12px] font-semibold text-green underline"
-          >
-            Discovery queue
-          </Link>
+          <span className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/admin/discovery-queue"
+              className="text-[12px] font-semibold text-green underline"
+            >
+              Discovery queue
+            </Link>
+            <Link
+              href="/admin/trail-markers"
+              className="text-[12px] font-semibold text-green underline"
+            >
+              Trail markers
+            </Link>
+          </span>
         </div>
 
         <div className="mt-3 rounded-2xl border border-green/40 bg-green-soft/15 px-4 py-3 text-[11.5px] leading-relaxed text-ink-soft">

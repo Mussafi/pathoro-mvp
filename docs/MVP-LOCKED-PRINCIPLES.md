@@ -92,6 +92,35 @@ In practice, this means Pathoro's tools respond to *what a person says they're t
 | Religious/community institutions | Trust, service, mentorship, support networks |
 | Public libraries | Free education, career resources, community programs |
 
+## Trail Markers, Not Comments
+
+**"People who walked this path can leave signs for the next person."**
+
+People should not have to discover opportunity alone. They should be able to benefit from the path knowledge of others. Pathoro does not have a generic comment section — it has **trail markers**: structured notes left on an opportunity or route by someone with real insight, experience, or context that could help the next person.
+
+A trail marker is not a reaction, a reply, or a discussion post. Each one has a specific type, because "path knowledge" comes in specific shapes:
+
+- **Practical tip** — something that makes this easier to actually do.
+- **Hidden requirement** — a prerequisite that wasn't obvious from the listing.
+- **Access advice** — how to actually get in, get noticed, or get a yes.
+- **What it opened** — what this concretely led to for someone who took it.
+- **Warning / friction** — a real cost, catch, or thing to watch out for.
+- **Bridge person or group** — someone or somewhere that can vouch for or introduce the next person.
+- **Better first step** — a lower-friction way in than the one listed.
+- **Cheaper alternative** — a way to get similar value for less.
+- **Opportunity quality** — is this, in the marker-leaver's experience, a real opportunity or mostly a consumer activity?
+
+This is the same **[Opportunity, Not Consumption](#opportunity-not-consumption)** lens applied socially: the people who've already walked a path are often the ones best positioned to say whether it actually opened something. Trail markers are alpha-safe by design — no accounts, no likes, no follows, no messaging, no open social feed. Every marker is reviewed before it goes live, the same review discipline Pathoro applies to opportunities themselves.
+
+### Product language
+
+- **Trail marker**, not comment
+- **Path knowledge**, not user-generated content
+- **Signs from people ahead**, not posts
+- **Practical context**, **hidden friction**, **access advice** — not "tips and tricks"
+
+Avoid: comments, posts, social feed, discussion thread, reviews.
+
 ## People Are Part of the Landscape
 
 People are not a social feature in Pathoro. People are part of the opportunity landscape. They appear when they can make a path more reachable, more human, or more possible.

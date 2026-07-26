@@ -9,6 +9,8 @@ import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
 import { useLiveOpportunities } from "@/lib/useLiveOpportunities";
 import type { DirectionAnswers } from "@/lib/direction";
 import { OpportunityTile } from "@/components/route/OpportunityTile";
+import { useTrailMarkers } from "@/lib/useTrailMarkers";
+import { MARKER_TYPE_LABELS } from "@/lib/trailMarkerSchema";
 
 type BestNextRouteCardProps = {
   selectedRouteId: string;
@@ -35,6 +37,8 @@ export function BestNextRouteCard({
   const opportunity = opportunitiesForRoute[0];
   const moreCount = Math.max(opportunitiesForRoute.length - 1, 0);
   const detailHref = opportunity ? getOpportunityDetailHref(opportunity) : undefined;
+  const { markers: trailMarkers } = useTrailMarkers({ opportunityId: opportunity?.id });
+  const previewMarkers = trailMarkers.slice(0, 2);
 
   const personalSentence = `You said “${answers.reachable}” would make this more reachable, so Pathoro opened ${selected.title} first.`;
 
@@ -111,6 +115,23 @@ export function BestNextRouteCard({
             <p className="mt-2 text-[11px] text-ink-faint">
               +{moreCount} more local {moreCount === 1 ? "opportunity" : "opportunities"} for this route
             </p>
+          )}
+          {previewMarkers.length > 0 && (
+            <div className="mt-2.5 flex flex-col gap-1.5">
+              {previewMarkers.map((marker) => (
+                <div
+                  key={marker.id}
+                  className="rounded-2xl border border-line/70 bg-cream-field px-3 py-2"
+                >
+                  <span className="text-[9.5px] font-semibold uppercase tracking-wide text-green">
+                    Trail marker · {MARKER_TYPE_LABELS[marker.markerType]}
+                  </span>
+                  <p className="mt-0.5 text-[11.5px] leading-snug text-ink-soft">
+                    {marker.body}
+                  </p>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}
