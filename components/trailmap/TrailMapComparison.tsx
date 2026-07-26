@@ -1,5 +1,14 @@
-import { Clock, DollarSign } from "lucide-react";
-import { getBranchAccentClasses, getRatingFillCount, type TrailMapGoal } from "@/lib/trailMapData";
+import { Clock } from "lucide-react";
+import { getBranchAccentClasses, type TrailMapGoal } from "@/lib/trailMapData";
+import { computeBranchScores, getScoreFillCount, type ScoreDimension } from "@/lib/trailMapScoring";
+
+const COMPARE_DIMENSIONS: { dimension: ScoreDimension; label: string }[] = [
+  { dimension: "aiExposure", label: "AI exposure" },
+  { dimension: "demand", label: "Demand" },
+  { dimension: "incomePotential", label: "Income" },
+  { dimension: "autonomy", label: "Autonomy" },
+  { dimension: "costFriction", label: "Cost / friction" },
+];
 
 export function TrailMapComparison({
   goal,
@@ -12,14 +21,20 @@ export function TrailMapComparison({
 }) {
   return (
     <div className="shadow-card mt-6 rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
-      <span className="text-[13px] font-semibold text-ink">Path comparison</span>
-      <p className="mt-1 text-[11.5px] text-ink-faint">Compare key factors across paths.</p>
+      <div className="flex items-baseline justify-between gap-2">
+        <div>
+          <span className="text-[13px] font-semibold text-ink">Path comparison</span>
+          <p className="mt-1 text-[11.5px] text-ink-faint">Compare key factors across paths.</p>
+        </div>
+        <span className="shrink-0 text-[10px] font-medium text-ink-faint">Pathoro estimate</span>
+      </div>
 
       <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
         {goal.branches.map((branch) => {
           const isSelected = branch.id === selectedBranchId;
           const accent = getBranchAccentClasses(branch.id);
           const Icon = branch.icon;
+          const scores = computeBranchScores(branch.branchFactors);
           return (
             <button
               key={branch.id}
@@ -50,15 +65,13 @@ export function TrailMapComparison({
               </div>
               <div className="mt-2.5 flex flex-col gap-1.5">
                 <CompareRow icon={Clock} value={branch.factors.typicalTime} />
-                <CompareRow icon={DollarSign} value={branch.factors.costFriction} />
-                <RatingDots
-                  label="AI risk"
-                  fill={getRatingFillCount("aiRisk", branch.factors.aiRisk)}
-                />
-                <RatingDots
-                  label="Demand"
-                  fill={getRatingFillCount("demand", branch.factors.demand)}
-                />
+                {COMPARE_DIMENSIONS.map(({ dimension, label }) => (
+                  <RatingDots
+                    key={dimension}
+                    label={label}
+                    fill={getScoreFillCount(dimension, scoreLabelFor(dimension, scores))}
+                  />
+                ))}
               </div>
             </button>
           );
@@ -66,6 +79,32 @@ export function TrailMapComparison({
       </div>
     </div>
   );
+}
+
+function scoreLabelFor(
+  dimension: ScoreDimension,
+  scores: ReturnType<typeof computeBranchScores>
+): ReturnType<typeof computeBranchScores>["aiExposureLabel"] {
+  switch (dimension) {
+    case "aiExposure":
+      return scores.aiExposureLabel;
+    case "demand":
+      return scores.demandLabel;
+    case "incomePotential":
+      return scores.incomePotentialLabel;
+    case "autonomy":
+      return scores.autonomyLabel;
+    case "costFriction":
+      return scores.costFrictionLabel;
+    case "emotionalIntensity":
+      return scores.emotionalIntensityLabel;
+    case "timeFriction":
+      return scores.timeFrictionLabel;
+    case "relationshipLeverage":
+      return scores.relationshipLeverageLabel;
+    case "opportunityLeverage":
+      return scores.opportunityLeverageLabel;
+  }
 }
 
 function CompareRow({ icon: Icon, value }: { icon: typeof Clock; value: string }) {

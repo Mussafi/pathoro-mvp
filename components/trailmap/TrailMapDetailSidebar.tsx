@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import {
   ArrowRight,
   Brain,
@@ -5,12 +8,23 @@ import {
   Compass,
   DollarSign,
   GraduationCap,
+  HelpCircle,
   Info,
   Sparkles,
   TrendingUp,
   Users,
 } from "lucide-react";
-import { isFavorableRating, type RatingLevel, type TrailMapBranch } from "@/lib/trailMapData";
+import type { TrailMapBranch } from "@/lib/trailMapData";
+import {
+  computeBranchScores,
+  getAiExposureWhy,
+  getCostWhy,
+  getDemandWhy,
+  getIncomeWhy,
+  isFavorableScore,
+  SCORING_DISCLAIMER,
+  type ScoreDimension,
+} from "@/lib/trailMapScoring";
 
 const FIT_BADGE_CLASS: Record<TrailMapBranch["fit"], string> = {
   "High match": "border-green bg-green/15 text-green shadow-[0_0_0_3px_rgba(84,120,32,0.12)]",
@@ -19,29 +33,18 @@ const FIT_BADGE_CLASS: Record<TrailMapBranch["fit"], string> = {
   "Broader stretch": "border-line/70 bg-cream-field text-ink-faint",
 };
 
-function ratingClass(kind: "aiRisk" | "demand", value: RatingLevel) {
-  return isFavorableRating(kind, value) ? "text-green font-semibold" : "text-ink-soft";
-}
-
-/** $ / cost-style values get a subtle color cue too — cheap/free reads as
- * favorable, and high income potential reads as favorable — without
- * turning the whole sidebar into a scorecard. */
-function dollarClass(value: string, direction: "cost" | "income"): string {
-  const lower = value.toLowerCase();
-  if (lower.includes("free") || lower.includes("not applicable")) return "text-green font-medium";
-  const count = (value.match(/\$/g) ?? []).length;
-  if (direction === "cost") {
-    if (count > 0 && count <= 1) return "text-green font-medium";
-    if (count >= 4) return "text-amber-600 font-medium";
-    return "text-ink";
-  }
-  if (count >= 3) return "text-green font-medium";
-  if (count === 0) return "text-ink-faint";
-  return "text-ink";
+function scoreClass(dimension: ScoreDimension, score: number): string {
+  return isFavorableScore(dimension, score) ? "text-green font-semibold" : "text-ink-soft";
 }
 
 export function TrailMapDetailSidebar({ branch }: { branch: TrailMapBranch }) {
-  const { factors } = branch;
+  const { factors, branchFactors } = branch;
+  const scores = computeBranchScores(branchFactors);
+  const [openWhy, setOpenWhy] = useState<ScoreDimension | null>(null);
+
+  function toggleWhy(dimension: ScoreDimension) {
+    setOpenWhy((current) => (current === dimension ? null : dimension));
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -64,39 +67,58 @@ export function TrailMapDetailSidebar({ branch }: { branch: TrailMapBranch }) {
           </span>
           <ProfileRow icon={Clock} label="Typical time" value={factors.typicalTime} />
           <ProfileRow icon={GraduationCap} label="Education" value={factors.education} />
-          <ProfileRow
+          <ScoreRow
             icon={DollarSign}
             label="Cost / friction"
-            value={factors.costFriction}
-            valueClassName={dollarClass(factors.costFriction, "cost")}
+            dimension="costFriction"
+            scoreLabel={scores.costFrictionLabel}
+            score={scores.costFrictionScore}
+            why={getCostWhy(branchFactors)}
+            isOpen={openWhy === "costFriction"}
+            onToggle={() => toggleWhy("costFriction")}
           />
-          <ProfileRow
+          <ScoreRow
             icon={TrendingUp}
             label="Income potential"
-            value={factors.incomePotential}
-            valueClassName={dollarClass(factors.incomePotential, "income")}
+            dimension="incomePotential"
+            scoreLabel={scores.incomePotentialLabel}
+            score={scores.incomePotentialScore}
+            why={getIncomeWhy(branchFactors)}
+            isOpen={openWhy === "incomePotential"}
+            onToggle={() => toggleWhy("incomePotential")}
           />
-          <ProfileRow icon={Compass} label="Autonomy" value={factors.autonomy} />
-          <ProfileRow icon={Brain} label="Emotional intensity" value={factors.emotionalIntensity} />
-          <ProfileRow
+          <ProfileRow icon={Compass} label="Autonomy" value={scores.autonomyLabel} />
+          <ProfileRow icon={Brain} label="Emotional intensity" value={scores.emotionalIntensityLabel} />
+          <ScoreRow
             icon={Info}
-            label="AI risk"
-            value={factors.aiRisk}
-            valueClassName={ratingClass("aiRisk", factors.aiRisk)}
+            label="AI exposure"
+            dimension="aiExposure"
+            scoreLabel={scores.aiExposureLabel}
+            score={scores.aiExposureScore}
+            why={getAiExposureWhy(branchFactors)}
+            isOpen={openWhy === "aiExposure"}
+            onToggle={() => toggleWhy("aiExposure")}
           />
-          <ProfileRow
+          <ScoreRow
             icon={Users}
             label="Demand"
-            value={factors.demand}
-            valueClassName={ratingClass("demand", factors.demand)}
+            dimension="demand"
+            scoreLabel={scores.demandLabel}
+            score={scores.demandScore}
+            why={getDemandWhy(branchFactors)}
+            isOpen={openWhy === "demand"}
+            onToggle={() => toggleWhy("demand")}
           />
         </div>
 
-        <p className="mt-4 rounded-xl border border-line/70 bg-cream-field px-3 py-2.5 text-[10.5px] leading-relaxed text-ink-faint">
-          Requirements vary by state, institution, and employer. Pathoro
-          should verify details from official sources before treating this as
-          guidance.
-        </p>
+        <div className="mt-4 flex flex-col gap-1.5 rounded-xl border border-line/70 bg-cream-field px-3 py-2.5 text-[10.5px] leading-relaxed text-ink-faint">
+          <p>
+            Requirements vary by state, institution, and employer. Pathoro
+            should verify details from official sources before treating this
+            as guidance.
+          </p>
+          <p>{SCORING_DISCLAIMER}</p>
+        </div>
 
         <div className="mt-4 border-t border-line/70 pt-4">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
@@ -156,6 +178,57 @@ function ProfileRow({
         {label}
       </span>
       <span className={`text-right ${valueClassName ?? "text-ink"}`}>{value}</span>
+    </div>
+  );
+}
+
+/** Like ProfileRow, but for computed scores: adds a small "Why?" affordance
+ * that reveals a one-line, factor-driven explanation on click — see
+ * lib/trailMapScoring.ts's getXWhy helpers for how each is generated. */
+function ScoreRow({
+  icon: Icon,
+  label,
+  dimension,
+  scoreLabel,
+  score,
+  why,
+  isOpen,
+  onToggle,
+}: {
+  icon: typeof Clock;
+  label: string;
+  dimension: ScoreDimension;
+  scoreLabel: string;
+  score: number;
+  why: string;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between gap-2 text-[12px]">
+        <span className="flex items-center gap-1.5 text-ink-faint">
+          <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+          {label}
+        </span>
+        <span className="flex items-center gap-1">
+          <span className={`text-right ${scoreClass(dimension, score)}`}>{scoreLabel}</span>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-label={`Why is ${label.toLowerCase()} ${scoreLabel.toLowerCase()}?`}
+            aria-expanded={isOpen}
+            className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-ink-faint outline-none transition hover:text-ink-soft focus-visible:ring-2 focus-visible:ring-green/50"
+          >
+            <HelpCircle className="h-3.5 w-3.5" strokeWidth={1.75} />
+          </button>
+        </span>
+      </div>
+      {isOpen && (
+        <p className="rounded-lg bg-cream-field px-2.5 py-1.5 text-[10.5px] leading-snug text-ink-faint">
+          Why: {why}
+        </p>
+      )}
     </div>
   );
 }
