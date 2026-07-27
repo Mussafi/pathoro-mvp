@@ -194,7 +194,7 @@ function OpportunityDetailContent({ id }: { id: string }) {
             <p className="mt-4 text-[11px] text-ink-faint">
               {dbOpportunity
                 ? "Saved to the database."
-                : "Local prototype only — reviewed opportunities are stored in this browser's localStorage, not a database."}
+                : "This access point isn't saved to Pathoro's database yet — it's stored locally in this browser."}
             </p>
           </div>
         ) : null}

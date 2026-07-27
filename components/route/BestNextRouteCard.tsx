@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Clock, Heart, Lock, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Heart, Lock, Sparkles, Star } from "lucide-react";
 import { routes } from "@/lib/routes";
 import { getOpportunityDetailHref } from "@/lib/opportunitySchema";
 import { mergeReviewedOnly, getRelevantSeedOpportunities, filterForRoute } from "@/lib/reviewedOpportunities";
@@ -204,23 +204,13 @@ export function BestNextRouteCard({
         </Link>
       )}
       {opportunity && !detailHref && (accessPointKind === "reviewed" || accessPointKind === "seed") && (
-        <>
-          <button
-            type="button"
-            disabled
-            className="mt-5 flex cursor-not-allowed items-center justify-center gap-2 rounded-full border border-line/70 bg-cream-field py-2.75 text-[13.5px] font-medium text-ink-faint"
-          >
-            <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
-            Opportunity preview coming soon
-          </button>
-          <Link
-            href="/opportunity/plant-based-cooking-class"
-            className="mt-2 flex items-center justify-center gap-2 rounded-full border border-line/70 py-2.75 text-[13.5px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
-          >
-            View sample opportunity detail
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </>
+        <Link
+          href="/opportunity/plant-based-cooking-class"
+          className="mt-5 flex items-center justify-center gap-2 rounded-full border border-line/70 py-2.75 text-[13.5px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
+        >
+          View sample opportunity detail
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       )}
       <button
         type="button"

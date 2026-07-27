@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bookmark, ChevronDown, ListFilter, SlidersHorizontal } from "lucide-react";
+import { Bookmark, ChevronDown, ListFilter, Map, SlidersHorizontal } from "lucide-react";
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
 import { TrailMapMilestoneSidebar } from "@/components/trailmap/TrailMapMilestoneSidebar";
 import { TrailMapBranchDiagram } from "@/components/trailmap/TrailMapBranchDiagram";
@@ -77,6 +77,15 @@ export default function TrailMapPage() {
             selectedGoalId={unmatchedGoal ? null : goalId}
             onSelect={handleSelectGoal}
           />
+        </div>
+
+        <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-line/70 bg-cream-field px-4 py-3">
+          <Map className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green" strokeWidth={1.75} />
+          <p className="text-[11.5px] leading-relaxed text-ink-soft">
+            Pathoro does not just search for pages. It maps the path,
+            compares branches, scouts access points, and connects you to
+            trail markers and people ahead.
+          </p>
         </div>
 
         {unmatchedGoal ? (

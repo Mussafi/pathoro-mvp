@@ -117,7 +117,7 @@ export function OpportunityTile({
       </div>
       {isMockSeed && (
         <p className="mt-2 text-[10px] text-ink-faint/80">
-          Preview data · Mock seed · Real ingestion coming soon
+          Preview data — not yet a live, ingested opportunity
         </p>
       )}
     </>
@@ -254,7 +254,7 @@ function OpportunityPreviewModal({
               View detail page
             </Link>
           ) : (
-            <p className="text-center text-[11.5px] text-ink-faint">Detail page coming soon</p>
+            <p className="text-center text-[11.5px] text-ink-faint">No dedicated detail page for this preview yet</p>
           )}
         </div>
       </div>
