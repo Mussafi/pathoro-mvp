@@ -5,42 +5,77 @@ import { Signpost } from "lucide-react";
 import type { TrailMapBranch, TrailMapGoal, TrailMapGoalId } from "@/lib/trailMapData";
 import { PathGuideRequestModal } from "@/components/trailmap/PathGuideRequestModal";
 
+/** How credible a recommended guide's expertise is for this path — shown
+ * as a small badge so a user never mistakes lived experience for a
+ * credential, or a credential for something it isn't. Only "Licensed
+ * guide" and "Verified experience" are assigned today; the other two
+ * exist so future goals (or a peer trail-marker flow) have somewhere to
+ * land without inventing a new label. */
+type GuideBadge = "Licensed guide" | "Verified experience" | "Peer trail marker" | "Credential not verified";
+
+const GUIDE_BADGE_CLASS: Record<GuideBadge, string> = {
+  "Licensed guide": "border-green/50 bg-green/20 text-green",
+  "Verified experience": "border-cream/30 bg-cream/10 text-cream/70",
+  "Peer trail marker": "border-cream/25 bg-cream/5 text-cream/55",
+  "Credential not verified": "border-amber-400/40 bg-amber-400/10 text-amber-200",
+};
+
 /** Goal-specific framing for "who ahead on this path could you talk to" —
- * intentionally not generic "coaching" language. Doctor and school-admin
- * follow the same pattern as the task's worked examples (therapist,
- * nurse, lawyer, engineer, resale, vegetarian). */
-const GUIDE_CONTENT: Record<TrailMapGoalId, { cta: string; subtitle: string }> = {
+ * intentionally not generic "coaching" language, and not a generic
+ * "health and lifestyle coach" default either. For paths that touch
+ * professional, clinical, legal, medical, or licensure-related questions,
+ * the recommended guide is a licensed/credentialed person; for habit or
+ * practical-experience paths, it's someone with verified lived
+ * experience — and where a licensed domain overlaps (nutrition, finance),
+ * `note` points to the right kind of professional instead of implying
+ * the Path Guide can give that advice. */
+const GUIDE_CONTENT: Record<
+  TrailMapGoalId,
+  { cta: string; subtitle: string; badge: GuideBadge; note?: string }
+> = {
   therapist: {
-    cta: "Talk to a licensed counselor",
+    cta: "Talk to a licensed therapist",
     subtitle: "Ask what supervision, licensure, and real caseloads actually feel like.",
+    badge: "Licensed guide",
   },
   nurse: {
-    cta: "Talk to an ICU nurse",
+    cta: "Talk to a registered nurse",
     subtitle: "Learn what a real week looks like before choosing this branch.",
+    badge: "Licensed guide",
   },
   lawyer: {
     cta: "Talk to a practicing attorney",
     subtitle: "Ask what this legal path actually rewards and costs.",
+    badge: "Licensed guide",
+    note: "This is lived-path perspective, not legal advice.",
   },
   doctor: {
-    cta: "Talk to a practicing physician",
+    cta: "Talk to a physician or resident",
     subtitle: "Ask what residency and this specialty actually demand day to day.",
+    badge: "Licensed guide",
+    note: "This is lived-path perspective, not medical advice.",
   },
   engineer: {
     cta: "Talk to an engineer in this field",
     subtitle: "Ask what skills matter before choosing a track.",
+    badge: "Verified experience",
   },
   "school-admin": {
     cta: "Talk to a school administrator",
     subtitle: "Ask what changed most once they moved from the classroom.",
+    badge: "Licensed guide",
   },
   vegetarian: {
     cta: "Talk to someone who made the switch",
     subtitle: "Ask how they made the habit stick in real life.",
+    badge: "Verified experience",
+    note: "For nutrition or medical dietary questions, look for a registered dietitian or licensed clinician.",
   },
   resale: {
-    cta: "Talk to a reseller",
+    cta: "Talk to an experienced reseller",
     subtitle: "Ask where beginners actually source inventory.",
+    badge: "Verified experience",
+    note: "For financial or tax advice, look for a licensed financial professional.",
   },
 };
 
@@ -59,8 +94,18 @@ export function PathGuideCard({ goal, branch }: { goal: TrailMapGoal; branch: Tr
         <span className="text-[14px] font-semibold text-cream">Need a path guide?</span>
       </div>
 
-      <p className="relative mt-2.5 text-[12px] font-semibold text-cream/90">{content.cta}</p>
+      <div className="relative mt-2.5 flex items-center gap-1.5">
+        <span className="text-[12px] font-semibold text-cream/90">{content.cta}</span>
+        <span
+          className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[8.5px] font-semibold uppercase tracking-wide ${GUIDE_BADGE_CLASS[content.badge]}`}
+        >
+          {content.badge}
+        </span>
+      </div>
       <p className="relative mt-1 text-[11.5px] leading-relaxed text-cream/70">{content.subtitle}</p>
+      {content.note && (
+        <p className="relative mt-1.5 text-[10.5px] leading-snug text-cream/45">{content.note}</p>
+      )}
 
       <button
         type="button"
@@ -75,6 +120,10 @@ export function PathGuideCard({ goal, branch }: { goal: TrailMapGoal; branch: Tr
 
       <p className="relative mt-3 text-[10px] leading-snug text-cream/40">
         Path Guides are people ahead on the path — not generic coaches.
+      </p>
+      <p className="relative mt-1 text-[10px] leading-snug text-cream/30">
+        Pathoro distinguishes licensed guidance from lived experience.
+        Regulated advice should come from licensed professionals.
       </p>
 
       {requestOpen && (
