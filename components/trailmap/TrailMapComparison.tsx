@@ -3,7 +3,7 @@ import { getBranchAccentClasses, type TrailMapGoal } from "@/lib/trailMapData";
 import { computeBranchScores, getScoreFillCount, type ScoreDimension } from "@/lib/trailMapScoring";
 
 const COMPARE_DIMENSIONS: { dimension: ScoreDimension; label: string }[] = [
-  { dimension: "aiExposure", label: "AI exposure" },
+  { dimension: "aiRisk", label: "AI resilience" },
   { dimension: "demand", label: "Demand" },
   { dimension: "incomePotential", label: "Income" },
   { dimension: "autonomy", label: "Autonomy" },
@@ -84,10 +84,10 @@ export function TrailMapComparison({
 function scoreLabelFor(
   dimension: ScoreDimension,
   scores: ReturnType<typeof computeBranchScores>
-): ReturnType<typeof computeBranchScores>["aiExposureLabel"] {
+): ReturnType<typeof computeBranchScores>["aiRiskLabel"] {
   switch (dimension) {
-    case "aiExposure":
-      return scores.aiExposureLabel;
+    case "aiRisk":
+      return scores.aiRiskLabel;
     case "demand":
       return scores.demandLabel;
     case "incomePotential":

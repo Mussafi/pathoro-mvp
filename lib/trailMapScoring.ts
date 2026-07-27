@@ -1,9 +1,17 @@
 /** Centralized scoring for Trail Map branches. Every branch stores raw
  * 0-5 factor inputs (see BranchFactors); everything the UI displays —
- * AI exposure, demand, income, autonomy, cost, etc. — is computed from
- * those inputs here rather than hand-typed per branch. This is a
+ * AI replacement risk, demand, income, autonomy, cost, etc. — is computed
+ * from those inputs here rather than hand-typed per branch. This is a
  * transparent Pathoro heuristic for prototype purposes, not official
- * labor-market or licensing data. */
+ * labor-market or licensing data.
+ *
+ * AI risk naming: the underlying score answers "how automatable/
+ * replaceable does this path look" (higher = riskier). The sidebar shows
+ * that directly as "AI replacement risk" (Very Low = good). The
+ * comparison-card dot strip shows the same score inverted as "AI
+ * resilience" so more dots always reads as more favorable — a 5-dot row
+ * labeled "AI exposure" previously read as "highly exposed," which is
+ * backwards from what a low-risk score is meant to communicate. */
 
 export type BranchFactors = {
   /** How much of the work is routine, repeatable cognitive tasks. */
@@ -41,7 +49,7 @@ export type BranchFactors = {
 export type ScoreLabel = "Very Low" | "Low" | "Medium" | "High" | "Very High";
 
 export type ScoreDimension =
-  | "aiExposure"
+  | "aiRisk"
   | "demand"
   | "incomePotential"
   | "autonomy"
@@ -52,8 +60,11 @@ export type ScoreDimension =
   | "opportunityLeverage";
 
 export type TrailMapComputedScores = {
-  aiExposureScore: number;
-  aiExposureLabel: ScoreLabel;
+  /** Higher = more automatable/replaceable. Display as "AI replacement
+   * risk" (direct) in the sidebar, or invert via getScoreFillCount for
+   * the "AI resilience" comparison-card dots. */
+  aiRiskScore: number;
+  aiRiskLabel: ScoreLabel;
   demandScore: number;
   demandLabel: ScoreLabel;
   incomePotentialScore: number;
@@ -74,6 +85,9 @@ export type TrailMapComputedScores = {
 
 export const SCORING_DISCLAIMER =
   "These scores are Pathoro estimates for comparison, not official labor-market or licensing data.";
+
+export const AI_RESILIENCE_EXPLANATION =
+  "AI resilience reflects how protected this path appears from automation based on human trust, licensure, physical presence, judgment, and relationship-heavy work.";
 
 function clamp(n: number): number {
   return Math.max(0, Math.min(100, n));
@@ -97,12 +111,12 @@ export function scoreToLabel(score: number): ScoreLabel {
   return "Very High";
 }
 
-/** AI exposure heuristic — the only multi-factor formula here. Trust,
- * regulation, physical presence, and emotional judgment lower exposure;
- * routine cognitive work, automation-tool fit, and remote/digital-only
- * work raise it. Weighted around a neutral midpoint of 50 so a branch
- * with all-medium factors lands near "Medium". */
-export function computeAiExposureScore(f: BranchFactors): number {
+/** AI replacement risk heuristic — the only multi-factor formula here.
+ * Trust, regulation, physical presence, and emotional judgment lower
+ * risk; routine cognitive work, automation-tool fit, and remote/
+ * digital-only work raise it. Weighted around a neutral midpoint of 50
+ * so a branch with all-medium factors lands near "Medium". */
+export function computeAiRiskScore(f: BranchFactors): number {
   const raw =
     frac(f.routineCognitiveWork) * 25 +
     frac(f.automationToolFit) * 25 +
@@ -115,7 +129,7 @@ export function computeAiExposureScore(f: BranchFactors): number {
 }
 
 export function computeBranchScores(f: BranchFactors): TrailMapComputedScores {
-  const aiExposureScore = computeAiExposureScore(f);
+  const aiRiskScore = computeAiRiskScore(f);
   const demandScore = scale(f.marketDemand);
   const incomePotentialScore = scale(f.incomeUpside);
   const autonomyScore = scale(f.autonomyPotential);
@@ -126,8 +140,8 @@ export function computeBranchScores(f: BranchFactors): TrailMapComputedScores {
   const opportunityLeverageScore = scale(f.opportunityLeverage);
 
   return {
-    aiExposureScore,
-    aiExposureLabel: scoreToLabel(aiExposureScore),
+    aiRiskScore,
+    aiRiskLabel: scoreToLabel(aiRiskScore),
     demandScore,
     demandLabel: scoreToLabel(demandScore),
     incomePotentialScore,
@@ -148,9 +162,9 @@ export function computeBranchScores(f: BranchFactors): TrailMapComputedScores {
 }
 
 /** Dimensions where a LOWER score is more favorable (e.g. less AI
- * exposure, less cost friction). Everything else favors higher. */
+ * replacement risk, less cost friction). Everything else favors higher. */
 const REVERSED_DIMENSIONS: ScoreDimension[] = [
-  "aiExposure",
+  "aiRisk",
   "costFriction",
   "emotionalIntensity",
   "timeFriction",
@@ -175,7 +189,7 @@ export function getScoreFillCount(dimension: ScoreDimension, label: ScoreLabel):
 /** Short, transparent "why" explanations for the sidebar's info affordance.
  * Built from whichever input factors actually drove the score, not a
  * fixed script, so the explanation stays honest per branch. */
-export function getAiExposureWhy(f: BranchFactors): string {
+export function getAiRiskWhy(f: BranchFactors): string {
   const lowering: string[] = [];
   const raising: string[] = [];
   if (f.humanTrustNeed >= 4) lowering.push("high human trust");
@@ -191,7 +205,9 @@ export function getAiExposureWhy(f: BranchFactors): string {
   }
   const parts: string[] = [];
   if (lowering.length > 0) {
-    parts.push(`${lowering.join(" and ")} lower${lowering.length === 1 ? "s" : ""} exposure`);
+    parts.push(
+      `${lowering.join(" and ")} lower${lowering.length === 1 ? "s" : ""} replacement risk`
+    );
   }
   if (raising.length > 0) {
     parts.push(`${raising.join(" and ")} raise${raising.length === 1 ? "s" : ""} it`);

@@ -58,8 +58,9 @@ export type TrailMilestone = {
 export type FitLevel = "High match" | "Worth exploring" | "Consider" | "Broader stretch";
 
 /** Only the two descriptive, non-scored factors stay as hand-authored
- * text. Everything else (cost, income, autonomy, AI exposure, demand,
- * etc.) is computed from `branchFactors` — see lib/trailMapScoring.ts. */
+ * text. Everything else (cost, income, autonomy, AI replacement risk,
+ * demand, etc.) is computed from `branchFactors` — see
+ * lib/trailMapScoring.ts. */
 export type TrailMapFactors = {
   typicalTime: string;
   education: string;

@@ -16,8 +16,9 @@ import {
 } from "lucide-react";
 import type { TrailMapBranch } from "@/lib/trailMapData";
 import {
+  AI_RESILIENCE_EXPLANATION,
   computeBranchScores,
-  getAiExposureWhy,
+  getAiRiskWhy,
   getCostWhy,
   getDemandWhy,
   getIncomeWhy,
@@ -91,13 +92,13 @@ export function TrailMapDetailSidebar({ branch }: { branch: TrailMapBranch }) {
           <ProfileRow icon={Brain} label="Emotional intensity" value={scores.emotionalIntensityLabel} />
           <ScoreRow
             icon={Info}
-            label="AI exposure"
-            dimension="aiExposure"
-            scoreLabel={scores.aiExposureLabel}
-            score={scores.aiExposureScore}
-            why={getAiExposureWhy(branchFactors)}
-            isOpen={openWhy === "aiExposure"}
-            onToggle={() => toggleWhy("aiExposure")}
+            label="AI replacement risk"
+            dimension="aiRisk"
+            scoreLabel={scores.aiRiskLabel}
+            score={scores.aiRiskScore}
+            why={getAiRiskWhy(branchFactors)}
+            isOpen={openWhy === "aiRisk"}
+            onToggle={() => toggleWhy("aiRisk")}
           />
           <ScoreRow
             icon={Users}
@@ -118,6 +119,7 @@ export function TrailMapDetailSidebar({ branch }: { branch: TrailMapBranch }) {
             as guidance.
           </p>
           <p>{SCORING_DISCLAIMER}</p>
+          <p>{AI_RESILIENCE_EXPLANATION}</p>
         </div>
 
         <div className="mt-4 border-t border-line/70 pt-4">
