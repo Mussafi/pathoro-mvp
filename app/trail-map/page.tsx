@@ -130,7 +130,7 @@ export default function TrailMapPage() {
 
             <div className="flex flex-col gap-4">
               <TrailMapDetailSidebar branch={selectedBranch} />
-              <PathGuideCard goalId={goal.id} />
+              <PathGuideCard goal={goal} branch={selectedBranch} />
               <TrailMapNotesPanel branch={selectedBranch} notes={goal.notes} notesTotal={goal.notesTotal} />
             </div>
           </div>

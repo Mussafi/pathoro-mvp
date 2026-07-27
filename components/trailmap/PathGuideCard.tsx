@@ -1,5 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import { Signpost } from "lucide-react";
-import type { TrailMapGoalId } from "@/lib/trailMapData";
+import type { TrailMapBranch, TrailMapGoal, TrailMapGoalId } from "@/lib/trailMapData";
+import { PathGuideRequestModal } from "@/components/trailmap/PathGuideRequestModal";
 
 /** Goal-specific framing for "who ahead on this path could you talk to" —
  * intentionally not generic "coaching" language. Doctor and school-admin
@@ -40,8 +44,9 @@ const GUIDE_CONTENT: Record<TrailMapGoalId, { cta: string; subtitle: string }> =
   },
 };
 
-export function PathGuideCard({ goalId }: { goalId: TrailMapGoalId }) {
-  const content = GUIDE_CONTENT[goalId];
+export function PathGuideCard({ goal, branch }: { goal: TrailMapGoal; branch: TrailMapBranch }) {
+  const content = GUIDE_CONTENT[goal.id];
+  const [requestOpen, setRequestOpen] = useState(false);
 
   return (
     <div className="shadow-card relative flex flex-col overflow-hidden rounded-[26px] border border-green/40 bg-ink px-5 py-5">
@@ -59,18 +64,27 @@ export function PathGuideCard({ goalId }: { goalId: TrailMapGoalId }) {
 
       <button
         type="button"
-        disabled
-        className="relative mt-3.5 flex w-full cursor-not-allowed items-center justify-between gap-2 rounded-full bg-cream/10 px-4 py-2.5 text-left"
+        onClick={() => setRequestOpen(true)}
+        className="relative mt-3.5 flex w-full items-center justify-between gap-2 rounded-full bg-cream/10 px-4 py-2.5 text-left outline-none transition hover:bg-cream/15 focus-visible:ring-2 focus-visible:ring-green/50"
       >
-        <span className="text-[12.5px] font-semibold text-cream/60">Find a guide</span>
-        <span className="rounded-full bg-cream/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-cream/50">
-          Coming soon
+        <span className="text-[12.5px] font-semibold text-cream">Find a guide</span>
+        <span className="rounded-full bg-cream/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-cream/60">
+          Alpha
         </span>
       </button>
 
       <p className="relative mt-3 text-[10px] leading-snug text-cream/40">
         Path Guides are people ahead on the path — not generic coaches.
       </p>
+
+      {requestOpen && (
+        <PathGuideRequestModal
+          goal={goal}
+          branch={branch}
+          defaultGuideType={content.cta.replace(/^Talk to /i, "")}
+          onClose={() => setRequestOpen(false)}
+        />
+      )}
     </div>
   );
 }

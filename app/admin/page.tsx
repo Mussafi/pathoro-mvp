@@ -7,6 +7,7 @@ import {
   Map,
   Route as RouteIcon,
   Search,
+  Signpost,
   type LucideIcon,
 } from "lucide-react";
 
@@ -48,6 +49,12 @@ const links: HubLink[] = [
     icon: Flag,
     title: "Trail Marker Review",
     description: "Approve or reject signs left by people who've walked a path.",
+  },
+  {
+    href: "/admin/path-guide-requests",
+    icon: Signpost,
+    title: "Path Guide Requests",
+    description: "See who's asking for a path guide, and manually match them with someone ahead.",
   },
   {
     href: "/route-planning",
