@@ -7,6 +7,7 @@ import { getBranchAccentClasses, type TrailMapBranch, type TrailNote } from "@/l
  * comment label. */
 function getNoteTag(body: string): string | null {
   const lower = body.toLowerCase();
+  if (lower.startsWith("warning")) return "Warning from someone ahead";
   if (lower.startsWith("hidden friction")) return "Hidden friction";
   if (lower.startsWith("better first step")) return "Better first step";
   if (lower.includes("opened doors")) return "What opened doors";
@@ -36,9 +37,9 @@ export function TrailMapNotesPanel({
         <span className="text-[11px] font-medium text-green">View all</span>
       </div>
       <p className="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
-        Notes from people ahead of you on this exact path — hidden friction,
-        better first steps, what actually opened doors. Not generic
-        comments.
+        Notes from people ahead of you on this exact path — hidden
+        friction, better first steps, what opened doors, or a warning
+        worth knowing. Trail notes are attached to the path — not a feed.
       </p>
 
       <div className="mt-3 flex flex-col gap-2.5">

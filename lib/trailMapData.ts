@@ -534,7 +534,7 @@ const therapistGoal: TrailMapGoal = {
       branchId: "clinical-mental-health-counselor",
       author: "Dana",
       role: "LPC, 4 years",
-      body: "Talk to someone in this role before paying for a program. Supervision quality varies a ton.",
+      body: "Warning: supervision quality varies a ton. Talk to someone in this role before paying for a program.",
       likes: 41,
       verified: true,
     },

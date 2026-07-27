@@ -119,11 +119,8 @@ export function PathGuideCard({ goal, branch }: { goal: TrailMapGoal; branch: Tr
       </button>
 
       <p className="relative mt-3 text-[10px] leading-snug text-cream/40">
-        Path Guides are people ahead on the path — not generic coaches.
-      </p>
-      <p className="relative mt-1 text-[10px] leading-snug text-cream/30">
-        Pathoro distinguishes licensed guidance from lived experience.
-        Regulated advice should come from licensed professionals.
+        Path Guides are people ahead on this path. Pathoro distinguishes
+        licensed guidance from lived experience.
       </p>
 
       {requestOpen && (
