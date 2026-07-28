@@ -6,6 +6,8 @@ import { routes } from "@/lib/routes";
 import { SCOUT_REQUEST_STATUS_LABELS, type ScoutRequest, type ScoutRequestStatus } from "@/lib/scoutRequestSchema";
 import type { ScoutCandidateRecord, ScoutCandidateStatus } from "@/lib/scoutCandidatesDb";
 import { PATHORO_FIT_LABELS, type PathoroFit } from "@/lib/scoutFit";
+import { createOpportunityId } from "@/lib/reviewedOpportunities";
+import type { Opportunity, OpportunitySourceType, TrustLevel } from "@/lib/opportunitySchema";
 
 type ScoutRequestWithCandidates = ScoutRequest & { candidates: ScoutCandidateRecord[] };
 
@@ -40,6 +42,45 @@ function buildIngestionHref(candidate: ScoutCandidateRecord, city: string): stri
   return `/admin/opportunity-ingestion?${params.toString()}`;
 }
 
+function candidateConfidenceToTrustLevel(confidence: string): TrustLevel {
+  if (confidence === "high") return "High";
+  if (confidence === "low") return "Low";
+  return "Medium";
+}
+
+/** Builds a real, live Opportunity draft directly from an unreviewed
+ * scout candidate — the "Create opportunity" action skips the manual
+ * ingestion-form retyping step for candidates that are already good
+ * enough to publish as-is. */
+function buildOpportunityFromCandidate(
+  candidate: ScoutCandidateRecord,
+  request: ScoutRequest
+): Opportunity {
+  return {
+    id: createOpportunityId(candidate.title),
+    title: candidate.title,
+    sourceUrl: candidate.url,
+    sourceName: candidate.sourceName || "AI-found candidate",
+    sourceType: (candidate.sourceType as OpportunitySourceType) || "direct_submission",
+    city: request.city,
+    state: request.state,
+    locationLabel: [request.city, request.state].filter(Boolean).join(", "),
+    dateLabel: "",
+    costLabel: "",
+    hostName: candidate.sourceName || "",
+    description: candidate.snippet,
+    routeId: candidate.likelyRouteId || "real-openings",
+    opportunityType: candidate.opportunityType || "Access point",
+    whoItIsFor: "",
+    pathItSupports: request.pathGoal,
+    whatItMayOpenNext: candidate.leverageHint || candidate.suggestedNextStep,
+    effortLevel: "Medium",
+    frictionLevel: "Medium",
+    trustLevel: candidateConfidenceToTrustLevel(candidate.confidence),
+    status: "live",
+  };
+}
+
 export default function ScoutRequestsAdminPage() {
   const [adminToken, setAdminToken] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,6 +90,7 @@ export default function ScoutRequestsAdminPage() {
   const [summaryDrafts, setSummaryDrafts] = useState<Record<string, string>>({});
   const [savingSummaryId, setSavingSummaryId] = useState<string | null>(null);
   const [actioningCandidateId, setActioningCandidateId] = useState<string | null>(null);
+  const [promotedOpportunityIds, setPromotedOpportunityIds] = useState<Record<string, string>>({});
 
   async function handleLoad() {
     setLoading(true);
@@ -115,6 +157,38 @@ export default function ScoutRequestsAdminPage() {
             )
           : prev
       );
+    } catch {
+      setError("Something went wrong reaching Pathoro. Please try again.");
+    } finally {
+      setActioningCandidateId(null);
+    }
+  }
+
+  /** Creates a real, live opportunity from a candidate (POST
+   * /api/opportunities, same endpoint the ingestion form uses), then
+   * marks the candidate "promoted" so the row shows a link to the new
+   * /opportunity/[id] page instead of just a status label. */
+  async function handlePromoteCandidate(candidate: ScoutCandidateRecord, request: ScoutRequest) {
+    setActioningCandidateId(candidate.id);
+    setError(null);
+    try {
+      const opportunity = buildOpportunityFromCandidate(candidate, request);
+      const res = await fetch("/api/opportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-token": adminToken },
+        body: JSON.stringify(opportunity),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setError(
+          res.status === 401
+            ? "Admin token required. This protects scout requests from public use."
+            : data.error
+        );
+        return;
+      }
+      setPromotedOpportunityIds((prev) => ({ ...prev, [candidate.id]: data.opportunity.id }));
+      await handleCandidateStatusChange(candidate.id, request.id, "promoted");
     } catch {
       setError("Something went wrong reaching Pathoro. Please try again.");
     } finally {
@@ -353,16 +427,18 @@ export default function ScoutRequestsAdminPage() {
                             >
                               Send to ingestion
                             </Link>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleCandidateStatusChange(candidate.id, req.id, "promoted")
-                              }
-                              disabled={actioningCandidateId === candidate.id}
-                              className="text-[11.5px] font-medium text-ink-faint underline disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              Mark promoted
-                            </button>
+                            {candidate.status !== "promoted" && (
+                              <button
+                                type="button"
+                                onClick={() => handlePromoteCandidate(candidate, req)}
+                                disabled={actioningCandidateId === candidate.id}
+                                className="text-[11.5px] font-medium text-green underline disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {actioningCandidateId === candidate.id
+                                  ? "Creating…"
+                                  : "Create opportunity"}
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() =>
@@ -381,6 +457,14 @@ export default function ScoutRequestsAdminPage() {
                             >
                               Open source
                             </a>
+                            {promotedOpportunityIds[candidate.id] && (
+                              <Link
+                                href={`/opportunity/${promotedOpportunityIds[candidate.id]}`}
+                                className="text-[11.5px] font-medium text-green underline"
+                              >
+                                View opportunity page
+                              </Link>
+                            )}
                           </div>
                         </div>
                       ))}

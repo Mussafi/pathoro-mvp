@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 import { X } from "lucide-react";
-import type { TrailMapBranch, TrailMapGoal } from "@/lib/trailMapData";
 
 const PROMPT_EXAMPLES = [
   "What should I know before paying for a program?",
@@ -13,14 +12,24 @@ const PROMPT_EXAMPLES = [
 
 const MIN_QUESTION_LENGTH = 8;
 
+/** Plain-string props rather than full TrailMapGoal/TrailMapBranch
+ * objects, so this modal works for any "ask someone ahead" flow — a
+ * Trail Map branch or an opportunity detail page — without either
+ * caller having to fake the other's shape. The API only ever stored
+ * goalId/goalTitle/branchId/branchTitle text anyway (see
+ * lib/pathGuideRequestSchema.ts). */
 export function PathGuideRequestModal({
-  goal,
-  branch,
+  goalId,
+  goalTitle,
+  branchId,
+  branchTitle,
   defaultGuideType,
   onClose,
 }: {
-  goal: TrailMapGoal;
-  branch: TrailMapBranch;
+  goalId: string;
+  goalTitle: string;
+  branchId: string;
+  branchTitle: string;
   defaultGuideType: string;
   onClose: () => void;
 }) {
@@ -44,10 +53,10 @@ export function PathGuideRequestModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          goalId: goal.id,
-          goalTitle: goal.pathTitle,
-          branchId: branch.id,
-          branchTitle: branch.title,
+          goalId,
+          goalTitle,
+          branchId,
+          branchTitle,
           question: trimmed,
           requestedGuideType: guideType.trim(),
           contactEmail: contactEmail.trim(),
@@ -82,7 +91,7 @@ export function PathGuideRequestModal({
             </h3>
             {status !== "sent" && (
               <p className="mt-1 text-[12px] text-ink-faint">
-                {branch.title} · {goal.pathTitle}
+                {branchTitle} · {goalTitle}
               </p>
             )}
           </div>

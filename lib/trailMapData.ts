@@ -161,6 +161,11 @@ export type TrailMapGoal = {
    * PathCategory so a creative-service path doesn't read like a licensing
    * warning. Unused for template_verified goals. */
   disclaimer?: string;
+  /** An illustrative /opportunity/[slug] link shown on generated drafts
+   * for a handful of categories (v0.32 Part 8) — always rendered as an
+   * explicitly-labeled example, never implying it's verified or specific
+   * to the user's area. Unset for most categories/goals. */
+  exampleOpportunity?: { slug: string; title: string };
 };
 
 export function getMapConfidence(goal: TrailMapGoal): MapConfidence {

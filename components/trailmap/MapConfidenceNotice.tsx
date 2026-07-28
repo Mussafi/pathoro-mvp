@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, FilePlus, MapPinned, MessageCircle, ShieldCheck, Users, Wand2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, FilePlus, MapPinned, MessageCircle, ShieldCheck, Users, Wand2 } from "lucide-react";
 import type { TrailMapBranch, TrailMapGoal } from "@/lib/trailMapData";
 import { loadDirectionAnswers, saveDirectionAnswers } from "@/lib/direction";
 import { PathGuideRequestModal } from "@/components/trailmap/PathGuideRequestModal";
@@ -86,10 +87,30 @@ export function MapConfidenceNotice({ goal, branch }: { goal: TrailMapGoal; bran
         </div>
       </div>
 
+      {goal.exampleOpportunity && (
+        <div className="mt-3 border-t border-amber-400/30 pt-3">
+          <span className="text-[10.5px] font-semibold uppercase tracking-wide text-amber-700">
+            Example access point
+          </span>
+          <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
+            Illustrative only — not scouted for your area yet.
+          </p>
+          <Link
+            href={`/opportunity/${goal.exampleOpportunity.slug}`}
+            className="mt-1.5 flex w-fit items-center gap-1 rounded-full border border-line/70 bg-cream-card px-2.5 py-1 text-[10.5px] font-medium text-ink-soft outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50"
+          >
+            {goal.exampleOpportunity.title}
+            <ArrowRight className="h-3 w-3 shrink-0" strokeWidth={1.75} />
+          </Link>
+        </div>
+      )}
+
       {guideOpen && (
         <PathGuideRequestModal
-          goal={goal}
-          branch={branch}
+          goalId={goal.id}
+          goalTitle={goal.pathTitle}
+          branchId={branch.id}
+          branchTitle={branch.title}
           defaultGuideType={(goal.pathGuide?.cta ?? "someone on this path").replace(/^Talk to /i, "")}
           onClose={() => setGuideOpen(false)}
         />

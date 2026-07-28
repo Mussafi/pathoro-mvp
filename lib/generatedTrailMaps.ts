@@ -658,6 +658,16 @@ const CATEGORY_BRANCHES: Record<PathCategory, BranchSpec[]> = {
   ],
 };
 
+/** Only wired for the two categories with a real example opportunity
+ * seeded in lib/opportunities.ts (v0.32 Part 8) — every other category
+ * gets no link rather than a made-up one. MapConfidenceNotice always
+ * renders this as an explicit "Example access point," never as if it
+ * were scouted for the user's specific area. */
+const CATEGORY_EXAMPLE_OPPORTUNITY: Partial<Record<PathCategory, { slug: string; title: string }>> = {
+  licensed_trade: { slug: "hvac-apprenticeship-info-session", title: "HVAC Apprenticeship Info Session" },
+  creative_service: { slug: "wedding-photographer-assistant-opportunity", title: "Wedding Photographer Assistant Opportunity" },
+};
+
 const CATEGORY_DISCLAIMERS: Record<PathCategory, string> = {
   licensed_trade:
     "Licensing, apprenticeship, certification, and code requirements vary by state, municipality, union, employer, and governing body. Treat this as a starting map, not official guidance.",
@@ -819,5 +829,6 @@ export function generateStarterTrailMap(goalText: string, context: GenerateTrail
     confidence: "generated_starter",
     pathGuide: pathGuideForCategory(category, roleTitle),
     disclaimer: CATEGORY_DISCLAIMERS[category],
+    exampleOpportunity: CATEGORY_EXAMPLE_OPPORTUNITY[category],
   };
 }

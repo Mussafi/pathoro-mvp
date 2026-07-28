@@ -576,12 +576,22 @@ export default function OpportunityIngestionPage() {
                     Saved to database. This opportunity can now appear for
                     public users.
                   </p>
-                  <Link
-                    href="/route-planning"
-                    className="mt-1.5 inline-block text-[12px] font-semibold text-green underline"
-                  >
-                    View in route planning
-                  </Link>
+                  <div className="mt-1.5 flex flex-wrap gap-3">
+                    {approvedId && (
+                      <Link
+                        href={`/opportunity/${approvedId}`}
+                        className="text-[12px] font-semibold text-green underline"
+                      >
+                        View opportunity page
+                      </Link>
+                    )}
+                    <Link
+                      href="/route-planning"
+                      className="text-[12px] font-semibold text-green underline"
+                    >
+                      View in route planning
+                    </Link>
+                  </div>
                   <p className="mt-1.5 text-[11px] text-ink-faint">
                     Admin protection is temporary for v0.8.
                   </p>
@@ -594,12 +604,22 @@ export default function OpportunityIngestionPage() {
                     Couldn&rsquo;t save to the database ({saveState.reason}).
                     Saved to this browser&rsquo;s local storage instead.
                   </p>
-                  <Link
-                    href="/route-planning"
-                    className="mt-1.5 inline-block text-[12px] font-semibold text-green underline"
-                  >
-                    View in route planning
-                  </Link>
+                  <div className="mt-1.5 flex flex-wrap gap-3">
+                    {approvedId && (
+                      <Link
+                        href={`/opportunity/${approvedId}`}
+                        className="text-[12px] font-semibold text-green underline"
+                      >
+                        View opportunity page
+                      </Link>
+                    )}
+                    <Link
+                      href="/route-planning"
+                      className="text-[12px] font-semibold text-green underline"
+                    >
+                      View in route planning
+                    </Link>
+                  </div>
                   <p className="mt-1.5 text-[11px] text-ink-faint">
                     Local prototype fallback only — not saved to a database.
                   </p>

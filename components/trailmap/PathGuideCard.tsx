@@ -130,8 +130,10 @@ export function PathGuideCard({ goal, branch }: { goal: TrailMapGoal; branch: Tr
 
       {requestOpen && (
         <PathGuideRequestModal
-          goal={goal}
-          branch={branch}
+          goalId={goal.id}
+          goalTitle={goal.pathTitle}
+          branchId={branch.id}
+          branchTitle={branch.title}
           defaultGuideType={content.cta.replace(/^Talk to /i, "")}
           onClose={() => setRequestOpen(false)}
         />
