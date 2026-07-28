@@ -127,6 +127,50 @@ const ARCHETYPE_ICON: Record<BranchArchetype, LucideIcon> = {
   oversight: Briefcase,
 };
 
+/** LucideIcon components are React elements, not data — they don't
+ * survive a JSON round-trip (POST /api/trail-map/generate serializes
+ * the goal, which turns each `icon` into an inert `{}`-ish object).
+ * Exported so the client can look the real component back up by name
+ * after fetching — see lib/trailMapNormalize.ts's normalizeIcon. */
+export const ICON_BY_NAME: Record<string, LucideIcon> = {
+  Compass,
+  ShieldCheck,
+  HardHat,
+  GraduationCap,
+  UserCog,
+  Users,
+  Store,
+  Rocket,
+  Briefcase,
+};
+
+/** The reverse of ICON_BY_NAME. A lucide-react component's own
+ * `displayName` property is non-enumerable, so it does NOT survive
+ * `JSON.stringify` — confirmed to serialize as `{}` with no trace of
+ * which icon it was. Relying on it after a JSON round-trip is what
+ * caused the production crash: the API route must call this to get an
+ * explicit, serializable string *before* responding, rather than
+ * sending the component (or hoping something JSON-shaped falls out of
+ * it) and trying to recover the name on the other side. */
+export function getIconName(icon: LucideIcon): string {
+  const match = Object.entries(ICON_BY_NAME).find(([, component]) => component === icon);
+  return match ? match[0] : "Compass";
+}
+
+/** Call this on a generated goal right before `Response.json(...)` in
+ * the API route — never send `branch.icon` as-is over the wire.
+ * Everything else on TrailMapGoal is plain data and survives JSON
+ * fine; icon is the one field that's actually a React component. */
+export function serializeTrailMapGoalForWire(goal: TrailMapGoal): TrailMapGoal {
+  return {
+    ...goal,
+    branches: goal.branches.map((branch) => ({
+      ...branch,
+      icon: getIconName(branch.icon) as unknown as LucideIcon,
+    })),
+  };
+}
+
 const ARCHETYPE_FACTORS: Record<BranchArchetype, BranchFactors> = {
   entry: {
     routineCognitiveWork: 1, automationToolFit: 1, remoteDigitalWork: 1, humanTrustNeed: 2,

@@ -17,6 +17,7 @@ import { TrailMapGenericShell } from "@/components/trailmap/TrailMapGenericShell
 import { TrailMapLegend } from "@/components/trailmap/TrailMapLegend";
 import { trailMapGoals, getTrailMapGoal, type TrailMapGoal, type TrailMapGoalId } from "@/lib/trailMapData";
 import { mapGoalToTrailMapGoal } from "@/lib/goalSpecificity";
+import { normalizeTrailMapGoal } from "@/lib/trailMapNormalize";
 
 /** Only the original, broadest-appeal goals show as chips — the row stays
  * short and elegant rather than growing with every new goal added.
@@ -44,7 +45,10 @@ export default function TrailMapPage() {
   // last-resort fallback, not the everyday "no template" path anymore.
   const [genError, setGenError] = useState<string | null>(null);
 
-  const activeGoal: TrailMapGoal = generatedGoal ?? getTrailMapGoal(goalId);
+  // Every goal — curated or generated — is normalized right before use,
+  // so a malformed field (most notably a LucideIcon mangled by the
+  // generate API's JSON response) can never crash the render tree.
+  const activeGoal: TrailMapGoal = normalizeTrailMapGoal(generatedGoal ?? getTrailMapGoal(goalId));
   const [branchId, setBranchId] = useState(activeGoal.defaultBranchId);
 
   const selectedBranch = activeGoal.branches.find((b) => b.id === branchId) ?? activeGoal.branches[0];
@@ -60,8 +64,9 @@ export default function TrailMapPage() {
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Failed to generate a starter map.");
-      setGeneratedGoal(data.goal as TrailMapGoal);
-      setBranchId((data.goal as TrailMapGoal).defaultBranchId);
+      const normalized = normalizeTrailMapGoal(data.goal as TrailMapGoal);
+      setGeneratedGoal(normalized);
+      setBranchId(normalized.defaultBranchId);
     } catch {
       setGenError(text);
     } finally {

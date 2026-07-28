@@ -1,4 +1,4 @@
-import { generateStarterTrailMap } from "@/lib/generatedTrailMaps";
+import { generateStarterTrailMap, serializeTrailMapGoalForWire } from "@/lib/generatedTrailMaps";
 
 const MIN_GOAL_LENGTH = 2;
 const MAX_GOAL_LENGTH = 120;
@@ -37,7 +37,12 @@ export async function POST(request: Request): Promise<Response> {
       state: body.state?.trim() || undefined,
       userContext: body.userContext?.trim() || undefined,
     });
-    return Response.json({ ok: true, goal });
+    // branch.icon is a React component, not data — it must never go
+    // over the wire as-is (see serializeTrailMapGoalForWire's comment;
+    // this is the fix for the production crash where the mangled icon
+    // that came back from a plain JSON round-trip made every branch
+    // throw on render).
+    return Response.json({ ok: true, goal: serializeTrailMapGoalForWire(goal) });
   } catch (err) {
     console.error("POST /api/trail-map/generate failed:", err);
     return Response.json({ ok: false, error: "Failed to generate a starter map." }, { status: 500 });
