@@ -101,7 +101,15 @@ export function OpportunityDetailCard({
   scoutHref: string;
 }) {
   const [saved, setSaved] = useState(false);
-  const [takeModalOpen, setTakeModalOpen] = useState(false);
+  // Lets an external "Take this opportunity" link (e.g. Best Next Route's
+  // access-point card) land here with the action already focused, instead
+  // of just linking to the page and leaving the user to find the button.
+  // Lazy-initialized (not an effect) so there's no flash of the closed
+  // modal before it opens — window is undefined during SSR, so this
+  // always reads false there and picks up the real value on first client render.
+  const [takeModalOpen, setTakeModalOpen] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("openTake") === "1"
+  );
   const consumerActivity = isLikelyConsumerActivity(opportunity);
   const hiddenRequirements = getHiddenRequirementsNote(opportunity);
 

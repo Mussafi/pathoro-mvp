@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Heart, Lock, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Compass, Heart, Lock, Sparkles, Star } from "lucide-react";
 import { routes } from "@/lib/routes";
 import { getOpportunityDetailHref } from "@/lib/opportunitySchema";
 import { mergeReviewedOnly, getRelevantSeedOpportunities, filterForRoute } from "@/lib/reviewedOpportunities";
@@ -174,6 +174,23 @@ export function BestNextRouteCard({
               ))}
             </div>
           )}
+          {detailHref && (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Link
+                href={`${detailHref}?openTake=1`}
+                className="flex items-center justify-center gap-1.5 rounded-full bg-green px-5 py-2.5 text-[13px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+              >
+                Take this opportunity
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                href={detailHref}
+                className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
+              >
+                View details
+              </Link>
+            </div>
+          )}
         </div>
       )}
 
@@ -188,31 +205,35 @@ export function BestNextRouteCard({
 
       {accessPointKind === "none" && (
         <div className="mt-4 border-t border-line/70 pt-4">
-          <p className="text-[12.5px] leading-relaxed text-ink-faint">
-            Pathoro has not found a reviewed access point for this path yet.
-          </p>
-          <a
-            href="#scout-request"
-            className="mt-1.5 inline-block text-[12.5px] font-semibold text-green underline"
-          >
-            Ask Pathoro to scout access points.
-          </a>
+          <div className="rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-4">
+            <div className="flex items-center gap-2">
+              <Compass className="h-4 w-4 text-green" strokeWidth={1.75} />
+              <span className="text-[13.5px] font-semibold text-ink">
+                Pathoro can scout access points for this path.
+              </span>
+            </div>
+            <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
+              No reviewed opportunity is available yet. Ask Pathoro to look for real classes,
+              events, openings, people, programs, or local access points.
+            </p>
+            <a
+              href="#scout-request"
+              className="mt-3 flex items-center justify-center gap-2 rounded-full bg-green px-5 py-2.5 text-[13px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+            >
+              Scout access points
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+            <p className="mt-2 text-[11px] leading-snug text-ink-faint">
+              This is how this path becomes more concrete.
+            </p>
+          </div>
         </div>
       )}
 
-      {detailHref && (
-        <Link
-          href={detailHref}
-          className="mt-5 flex items-center justify-center gap-2 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
-        >
-          Take this step
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      )}
       <button
         type="button"
         onClick={onExploreOthers}
-        className="mt-2 flex items-center justify-center gap-2 rounded-full border border-line/70 py-2.75 text-[13.5px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
+        className="mt-5 flex items-center justify-center gap-2 rounded-full border border-line/70 py-2.75 text-[13.5px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
       >
         Explore other routes
         <ArrowRight className="h-3.5 w-3.5" />
