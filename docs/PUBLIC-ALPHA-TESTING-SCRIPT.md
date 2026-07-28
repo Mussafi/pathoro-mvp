@@ -50,3 +50,9 @@ Ask these after they've clicked through, before offering any explanation of your
 3. Did the Trail Map help you understand your options?
 4. Did the Path Guide idea feel valuable?
 5. What felt fake, confusing, or missing?
+
+## Future-direction questions
+
+Not tied to a live feature — asked to gauge interest in a direction Pathoro hasn't built yet:
+
+6. Would a role dialogue be more useful than another job board?

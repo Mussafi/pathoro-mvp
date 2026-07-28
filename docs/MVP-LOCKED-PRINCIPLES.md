@@ -144,3 +144,35 @@ Each question maps to a distinct part of orienting someone within their journey:
 | Where are you starting from? | Current location |
 | What would make this feel more reachable? | Route type / support need |
 | What could you try first? | First movement |
+
+## Job Dialogue, Not Job Board
+
+Pathoro should not become another job board. We do not need more ghost job boards.
+
+**A job is not just a listing. It is a possible branch on someone's path.**
+
+Pathoro should treat jobs as opportunities to understand through dialogue, not postings to browse:
+
+- Is this real?
+- Is it still active?
+- Is it reachable from where I am?
+- What path does it open?
+- What hidden requirements matter?
+- What would make me competitive?
+- Who ahead of me can explain this role?
+- What is the next practical move?
+
+**"Pathoro is not a job board. It is a job dialogue. A listing becomes useful only when it is placed in a path: what it opens, who it is for, what it requires, whether it is real, and what the next move should be."**
+
+This is the same [Opportunity Intelligence Layer](#opportunity-intelligence-layer) lens applied to jobs specifically: a listing by itself is not the product. Placing it in a path — what it opens, who it's for, whether it's real — is the product.
+
+### Future concept: Role Dialogue / Opportunity Dialogue
+
+Not built yet. Documented here as the direction to build toward — see `docs/JOB-DIALOGUE-CONCEPT.md` for the fuller concept, including a mock "Role dialogue" card and its trust-label vocabulary. Explicitly not yet in scope: scraping job boards, a full job board of our own, accounts, applications, or employer posting.
+
+### Product language
+
+- **Role dialogue** / **Opportunity dialogue**, not job listing
+- **Understand this role**, **Check if this is real**, **Map my path to this role**, **Find someone ahead**, **Start role dialogue** — not "Apply"
+
+Avoid: job board, listing feed, apply now, browse jobs.

@@ -8,6 +8,7 @@ import { TrailMapBranchDiagram } from "@/components/trailmap/TrailMapBranchDiagr
 import { TrailMapDetailSidebar } from "@/components/trailmap/TrailMapDetailSidebar";
 import { TrailMapNotesPanel } from "@/components/trailmap/TrailMapNotesPanel";
 import { PathGuideCard } from "@/components/trailmap/PathGuideCard";
+import { RoleDialogueCard } from "@/components/trailmap/RoleDialogueCard";
 import { TrailMapComparison } from "@/components/trailmap/TrailMapComparison";
 import { TrailMapGoalSelector } from "@/components/trailmap/TrailMapGoalSelector";
 import { TrailMapGoalSearch } from "@/components/trailmap/TrailMapGoalSearch";
@@ -153,6 +154,7 @@ export default function TrailMapPage() {
 
             <div className="flex flex-col gap-4">
               <TrailMapDetailSidebar branch={selectedBranch} />
+              <RoleDialogueCard />
               <PathGuideCard goal={goal} branch={selectedBranch} />
               <TrailMapNotesPanel branch={selectedBranch} notes={goal.notes} notesTotal={goal.notesTotal} />
             </div>
