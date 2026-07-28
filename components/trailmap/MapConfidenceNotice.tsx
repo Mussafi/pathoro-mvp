@@ -1,16 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, FilePlus, MapPinned, MessageCircle, ShieldCheck, Users, Wand2 } from "lucide-react";
-import { isLikelyRegulatedPath, type TrailMapBranch, type TrailMapGoal } from "@/lib/trailMapData";
+import type { TrailMapBranch, TrailMapGoal } from "@/lib/trailMapData";
+import { loadDirectionAnswers, saveDirectionAnswers } from "@/lib/direction";
 import { PathGuideRequestModal } from "@/components/trailmap/PathGuideRequestModal";
 
 export function MapConfidenceNotice({ goal, branch }: { goal: TrailMapGoal; branch: TrailMapBranch }) {
   const [guideOpen, setGuideOpen] = useState(false);
+  const router = useRouter();
 
   if (goal.confidence !== "generated_starter") return null;
-  const regulated = isLikelyRegulatedPath(goal);
+
+  function handleScout() {
+    // Carries the generated goal into the compass-mode scout flow by
+    // updating the same DirectionAnswers state /route-planning already
+    // reads (lib/direction.ts) — reusing existing state rather than
+    // building a parallel prefill mechanism.
+    saveDirectionAnswers({ ...loadDirectionAnswers(), moveToward: goal.pathTitle });
+    router.push("/route-planning");
+  }
 
   return (
     <div className="mt-4 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-3.5">
@@ -24,12 +34,10 @@ export function MapConfidenceNotice({ goal, branch }: { goal: TrailMapGoal; bran
         Pathoro created this first-pass map from your goal. Requirements
         and details should be verified from official sources.
       </p>
-      {regulated && (
+      {goal.disclaimer && (
         <p className="mt-1.5 flex items-start gap-1.5 text-[11.5px] leading-relaxed text-amber-800">
           <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" strokeWidth={2} />
-          Licensing requirements vary by state, institution, employer,
-          union, and governing body. Treat this as a starting map, not
-          official guidance.
+          {goal.disclaimer}
         </p>
       )}
 
@@ -38,13 +46,14 @@ export function MapConfidenceNotice({ goal, branch }: { goal: TrailMapGoal; bran
           Strengthen this map
         </span>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
-          <Link
-            href="/route-planning"
+          <button
+            type="button"
+            onClick={handleScout}
             className="flex items-center gap-1 rounded-full border border-green/40 bg-cream-card px-2.5 py-1 text-[10.5px] font-medium text-green outline-none transition hover:border-green/60 focus-visible:ring-2 focus-visible:ring-green/50"
           >
             <MapPinned className="h-3 w-3 shrink-0" strokeWidth={1.75} />
             Scout access points
-          </Link>
+          </button>
           <button
             type="button"
             onClick={() => setGuideOpen(true)}
@@ -53,15 +62,24 @@ export function MapConfidenceNotice({ goal, branch }: { goal: TrailMapGoal; bran
             <Users className="h-3 w-3 shrink-0" strokeWidth={1.75} />
             Find someone ahead
           </button>
-          <span className="flex cursor-not-allowed items-center gap-1 rounded-full border border-line/70 bg-cream-card px-2.5 py-1 text-[10.5px] font-medium text-ink-faint opacity-70">
+          <span
+            title="Coming soon — Pathoro doesn't verify official requirements yet. Use Find someone ahead in the meantime."
+            className="flex cursor-not-allowed items-center gap-1 rounded-full border border-line/70 bg-cream-card px-2.5 py-1 text-[10.5px] font-medium text-ink-faint opacity-70"
+          >
             <ShieldCheck className="h-3 w-3 shrink-0" strokeWidth={1.75} />
             Verify requirements
           </span>
-          <span className="flex cursor-not-allowed items-center gap-1 rounded-full border border-line/70 bg-cream-card px-2.5 py-1 text-[10.5px] font-medium text-ink-faint opacity-70">
+          <span
+            title="Coming soon — trail markers aren't open for generated maps yet."
+            className="flex cursor-not-allowed items-center gap-1 rounded-full border border-line/70 bg-cream-card px-2.5 py-1 text-[10.5px] font-medium text-ink-faint opacity-70"
+          >
             <FilePlus className="h-3 w-3 shrink-0" strokeWidth={1.75} />
             Add trail marker
           </span>
-          <span className="flex cursor-not-allowed items-center gap-1 rounded-full border border-line/70 bg-cream-card px-2.5 py-1 text-[10.5px] font-medium text-ink-faint opacity-70">
+          <span
+            title="Coming soon — Role Dialogue is a concept preview, not a live feature yet."
+            className="flex cursor-not-allowed items-center gap-1 rounded-full border border-line/70 bg-cream-card px-2.5 py-1 text-[10.5px] font-medium text-ink-faint opacity-70"
+          >
             <MessageCircle className="h-3 w-3 shrink-0" strokeWidth={1.75} />
             Start role dialogue
           </span>

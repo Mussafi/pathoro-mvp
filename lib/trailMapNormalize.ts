@@ -63,6 +63,9 @@ const DEFAULT_MILESTONES: TrailMilestone[] = [
   { id: "clarify", label: "Clarify the path", status: "current" },
 ];
 
+const DEFAULT_DISCLAIMER =
+  "Requirements and access points vary by location, market, institution, and role. Treat this as a starting map, not official guidance.";
+
 /** Recovers the real icon component for whatever arrives in this
  * field. The primary case: the generate API route sends an explicit
  * icon *name* string (serializeTrailMapGoalForWire) since a
@@ -155,5 +158,6 @@ export function normalizeTrailMapGoal(goal: TrailMapGoal): TrailMapGoal {
     notes,
     notesTotal: typeof goal?.notesTotal === "number" ? goal.notesTotal : notes.length,
     pathGuide: goal?.pathGuide ?? DEFAULT_PATH_GUIDE,
+    disclaimer: typeof goal?.disclaimer === "string" && goal.disclaimer.trim() ? goal.disclaimer : DEFAULT_DISCLAIMER,
   };
 }

@@ -156,18 +156,15 @@ export type TrailMapGoal = {
   /** Overrides PathGuideCard's curated GUIDE_CONTENT lookup — required
    * for generated goals, since their id isn't a known TrailMapGoalId. */
   pathGuide?: PathGuideRecommendation;
+  /** Category-specific "requirements vary by ..." line shown on generated
+   * drafts (MapConfidenceNotice) — set by generateStarterTrailMap per
+   * PathCategory so a creative-service path doesn't read like a licensing
+   * warning. Unused for template_verified goals. */
+  disclaimer?: string;
 };
 
 export function getMapConfidence(goal: TrailMapGoal): MapConfidence {
   return goal.confidence ?? "template_verified";
-}
-
-/** Derived from existing branchFactors rather than a new stored field —
- * true when any branch on this path gates on real licensing/regulation,
- * used to decide whether a generated map needs the stronger
- * licensing-specific disclaimer (see MapConfidenceNotice). */
-export function isLikelyRegulatedPath(goal: TrailMapGoal): boolean {
-  return goal.branches.some((b) => b.branchFactors.regulationBarrier >= 3);
 }
 
 /** Per-branch accent color for unselected map icons — purely visual, gives

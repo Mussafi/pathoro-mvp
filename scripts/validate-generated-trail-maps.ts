@@ -66,6 +66,7 @@ function validateGoal(goalText: string): string[] {
   if (!goal.pathTitle || !goal.pathTitle.trim()) fail(errors, "pathTitle is empty");
   if (!goal.subtitle || !goal.subtitle.trim()) fail(errors, "subtitle is empty");
   if (goal.confidence !== "generated_starter") fail(errors, `confidence should be "generated_starter", got "${goal.confidence}"`);
+  if (!goal.disclaimer || !goal.disclaimer.trim()) fail(errors, "disclaimer is empty");
 
   if (!Array.isArray(goal.milestones) || goal.milestones.length === 0) {
     fail(errors, "milestones is empty or missing");

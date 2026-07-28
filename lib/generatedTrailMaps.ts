@@ -228,6 +228,53 @@ const ARCHETYPE_FACTORS: Record<BranchArchetype, BranchFactors> = {
   },
 };
 
+/** Category-wide nudges applied on top of the shared per-archetype
+ * BranchFactors baseline, so a trade path doesn't score AI replacement
+ * risk the same way an in-house digital role does even when they share
+ * an archetype (e.g. "employed"). Values are deltas (can be negative),
+ * clamped to the valid 0-5 range per factor by applyFactorDelta. Chosen
+ * so aiRiskScore (lib/trailMapScoring.ts) lands where each category
+ * intuitively should: trades and licensed care mostly Low/Very Low;
+ * digital/knowledge work more nuanced (Low through High depending on
+ * branch); creative work Low/Medium, not uniformly Very Low. */
+const CATEGORY_FACTOR_DELTAS: Record<PathCategory, Partial<BranchFactors>> = {
+  licensed_trade: { physicalPresenceNeed: 1, automationToolFit: -2, humanTrustNeed: 1 },
+  licensed_care: { humanTrustNeed: 1, regulationBarrier: 1, physicalPresenceNeed: 1, automationToolFit: -1, upfrontCost: 1 },
+  creative_service: { humanTrustNeed: 1, relationshipLeverage: 1 },
+  local_business: { humanTrustNeed: 1, autonomyPotential: 1, upfrontCost: 1 },
+  digital_knowledge: { automationToolFit: 1, remoteDigitalWork: 1 },
+  education_public: { humanTrustNeed: 1, regulationBarrier: 1 },
+  generic: {},
+};
+
+function clampFactor(n: number): number {
+  return Math.max(0, Math.min(5, n));
+}
+
+function mergeFactorDeltas(...deltas: (Partial<BranchFactors> | undefined)[]): Partial<BranchFactors> {
+  const merged: Partial<BranchFactors> = {};
+  for (const delta of deltas) {
+    if (!delta) continue;
+    for (const key of Object.keys(delta) as (keyof BranchFactors)[]) {
+      merged[key] = (merged[key] ?? 0) + (delta[key] as number);
+    }
+  }
+  return merged;
+}
+
+/** Applies a category-level (and optional branch-level) nudge on top of
+ * an archetype's baseline BranchFactors. This is the mechanism behind
+ * Part 3 of v0.31: two branches sharing an archetype (e.g. "employed")
+ * still land at different AI-risk/cost/autonomy estimates depending on
+ * what kind of path they're on. */
+function applyFactorDelta(base: BranchFactors, delta: Partial<BranchFactors>): BranchFactors {
+  const result = { ...base };
+  for (const key of Object.keys(delta) as (keyof BranchFactors)[]) {
+    result[key] = clampFactor(base[key] + (delta[key] as number));
+  }
+  return result;
+}
+
 const ARCHETYPE_FIT: Record<BranchArchetype, TrailMapBranch["fit"]> = {
   entry: "High match",
   certification: "Worth exploring",
@@ -391,66 +438,215 @@ function archetypeWhyItFits(archetype: BranchArchetype): string {
   }
 }
 
-type BranchSpec = { archetype: BranchArchetype; title: (role: string) => string };
+type BranchSpec = {
+  archetype: BranchArchetype;
+  title: (role: string) => string;
+  /** Overrides ARCHETYPE_NODES with milestones specific to this branch
+   * (Part 2 of v0.31) — falls back to the generic archetype nodes when
+   * omitted, which is why the "generic" category below doesn't set any. */
+  nodes?: (role: string) => [string, string, string];
+  /** Branch-specific scoring nudge on top of CATEGORY_FACTOR_DELTAS, for
+   * the rare case where two branches share an archetype but shouldn't
+   * share a score (e.g. a hands-on vs. an editing-heavy creative branch). */
+  factorDelta?: Partial<BranchFactors>;
+};
 
-/** Branch titles are tailored per category rather than pulled from one
- * shared template, so a generated map "feels specific enough" (per the
- * product direction) instead of reading like the same six words with
- * the role swapped in. */
+/** Branch titles (and, since v0.31, milestones) are tailored per category
+ * rather than pulled from one shared template, so a generated map "feels
+ * specific enough" (per the product direction) instead of reading like
+ * the same six words with the role swapped in. */
 const CATEGORY_BRANCHES: Record<PathCategory, BranchSpec[]> = {
   licensed_trade: [
-    { archetype: "entry", title: (role) => `${role} Helper` },
-    { archetype: "certification", title: () => "Trade School Path" },
-    { archetype: "apprenticeship", title: () => "Apprenticeship Path" },
-    { archetype: "employed", title: (role) => `Residential ${role}` },
-    { archetype: "specialization", title: (role) => `Commercial ${role}` },
-    { archetype: "growth", title: () => "Controls / Advanced Systems Path" },
-    { archetype: "business_owner", title: (role) => `${role} Business Owner Path` },
+    {
+      archetype: "entry", title: (role) => `${role} Helper`,
+      nodes: () => ["Ride Along or Helper Role", "Learn Tools and Safety", "Earn First Field Responsibilities"],
+    },
+    {
+      archetype: "certification", title: () => "Trade School Path",
+      nodes: () => ["Compare Programs", "Complete Required Training", "Prepare for Certification"],
+    },
+    {
+      archetype: "apprenticeship", title: () => "Apprenticeship Path",
+      nodes: () => ["Find Sponsor or Program", "Complete Paid Training Hours", "Document Required Experience"],
+    },
+    {
+      archetype: "employed", title: (role) => `Residential ${role}`,
+      nodes: () => ["Apply to Residential Employers", "Learn the Residential Side of the Trade", "Build a Steady Customer Base"],
+    },
+    {
+      archetype: "specialization", title: (role) => `Commercial ${role}`,
+      nodes: () => ["Learn the Commercial Side of the Trade", "Get Cross-Trained on More Equipment", "Take on Larger Job Sites"],
+    },
+    {
+      archetype: "growth", title: () => "Controls / Advanced Systems Path",
+      nodes: () => ["Learn Controls and Automation", "Get Manufacturer Certifications", "Take on Complex Systems Work"],
+    },
+    {
+      archetype: "business_owner", title: (role) => `${role} Business Owner Path`,
+      nodes: () => ["Get Licensed to Operate", "Build a Client Base", "Handle Scheduling and Billing"],
+    },
   ],
   licensed_care: [
-    { archetype: "entry", title: (role) => `${role} Support Role` },
-    { archetype: "certification", title: () => "Certification / Licensing Path" },
-    { archetype: "employed", title: () => "Clinical Practice Path" },
-    { archetype: "specialization", title: () => "Specialization Path" },
-    { archetype: "independent", title: () => "Private Practice Path" },
-    { archetype: "growth", title: () => "Supervisory / Lead Path" },
-    { archetype: "business_owner", title: (role) => `${role} Business Owner Path` },
+    {
+      archetype: "entry", title: (role) => `${role} Support Role`,
+      nodes: () => ["Shadow or Assist in the Role", "Learn Basic Patient Care Tasks", "Build Supervised Hours"],
+    },
+    {
+      archetype: "certification", title: () => "Certification / Licensing Path",
+      nodes: () => ["Enroll in an Accredited Program", "Complete Clinical Requirements", "Pass the Licensing Exam"],
+    },
+    {
+      archetype: "employed", title: () => "Clinical Practice Path",
+      nodes: () => ["Apply to Clinical Openings", "Complete Onboarding and Orientation", "Build a Caseload"],
+    },
+    {
+      archetype: "specialization", title: () => "Specialization Path",
+      nodes: () => ["Choose a Patient Population or Setting", "Get Additional Certification", "Build Specialized Experience"],
+    },
+    {
+      archetype: "independent", title: () => "Private Practice Path",
+      nodes: () => ["Build Required Clinical Hours", "Handle Licensing for Private Practice", "Find Your First Clients"],
+    },
+    {
+      archetype: "growth", title: () => "Supervisory / Lead Path",
+      nodes: () => ["Build Several Years of Experience", "Take on Mentoring Responsibilities", "Move Into a Lead Role"],
+    },
+    {
+      archetype: "business_owner", title: (role) => `${role} Business Owner Path`,
+      nodes: () => ["Get Licensed to Operate", "Build Referral Relationships", "Manage Staff and Compliance"],
+    },
   ],
   creative_service: [
-    { archetype: "entry", title: () => "Assistant / Second Path" },
-    { archetype: "specialization", title: () => "Portfolio-Building Path" },
-    { archetype: "independent", title: (role) => `Freelance ${role}` },
-    { archetype: "employed", title: () => "Studio / Agency Path" },
-    { archetype: "growth", title: () => "Premium / Luxury Market Path" },
-    { archetype: "specialization", title: () => "Editing / Production Specialist Path" },
-    { archetype: "business_owner", title: (role) => `${role} Business Owner Path` },
+    {
+      archetype: "entry", title: () => "Assistant / Second Path",
+      nodes: (role) => [`Assist an Established ${role}`, "Learn How Real Jobs Actually Run", "Build Referral Relationships"],
+    },
+    {
+      archetype: "specialization", title: () => "Portfolio-Building Path",
+      nodes: () => ["Shoot Practice Sessions", "Build a Portfolio Website", "Collect Testimonials"],
+    },
+    {
+      archetype: "independent", title: (role) => `Freelance ${role}`,
+      nodes: () => ["Define Packages", "Book First Clients", "Build a Referral Pipeline"],
+    },
+    {
+      archetype: "employed", title: () => "Studio / Agency Path",
+      nodes: () => ["Apply to Studios or Agencies", "Learn Their Workflow and Style", "Build Your Own Client List Over Time"],
+    },
+    {
+      archetype: "growth", title: () => "Premium / Luxury Market Path",
+      nodes: () => ["Build a Standout Portfolio", "Target Higher-End Clients", "Raise Your Rates With Experience"],
+    },
+    {
+      archetype: "specialization", title: () => "Editing / Production Specialist Path",
+      nodes: () => ["Master Editing and Post-Production Tools", "Build a Specialized Portfolio", "Take on Editing-Only Work"],
+      // AI tools most directly affect editing/post-production, unlike the
+      // in-person, relationship-driven branches elsewhere in this category
+      // (Part 3: "AI can affect editing/marketing, but human presence,
+      // event trust, taste, and client relationship matter" elsewhere).
+      factorDelta: { automationToolFit: 1, remoteDigitalWork: 2, routineCognitiveWork: 1, physicalPresenceNeed: -1 },
+    },
+    {
+      archetype: "business_owner", title: (role) => `${role} Business Owner Path`,
+      nodes: () => ["Formalize Contracts and Pricing", "Build a Business Around Your Work", "Manage Bookings and Finances"],
+    },
   ],
   local_business: [
-    { archetype: "employed", title: () => "Worker / Manager Path" },
-    { archetype: "entry", title: () => "Pop-Up / Side Hustle Path" },
-    { archetype: "independent", title: () => "Mobile / Low-Overhead Path" },
-    { archetype: "business_owner", title: (role) => `Small ${role}` },
-    { archetype: "business_owner", title: () => "Franchise Path" },
-    { archetype: "specialization", title: () => "Operations / Management Path" },
-    { archetype: "growth", title: () => "Multi-Location Owner Path" },
+    {
+      archetype: "employed", title: () => "Worker / Manager Path",
+      nodes: () => ["Get Hired in the Industry", "Learn Day-to-Day Operations", "Move Into a Manager Role"],
+    },
+    {
+      archetype: "entry", title: () => "Pop-Up / Side Hustle Path",
+      nodes: () => ["Test the Idea on a Small Scale", "Get Real Customer Feedback", "Build a Repeatable Setup"],
+    },
+    {
+      archetype: "independent", title: () => "Mobile / Low-Overhead Path",
+      nodes: () => ["Choose a Low-Cost Format", "Handle Permits and Basic Licensing", "Build a Regular Customer Base"],
+    },
+    {
+      archetype: "business_owner", title: (role) => `Small ${role}`,
+      nodes: () => ["Write a Business Plan", "Secure a Location and Funding", "Open Your Doors"],
+    },
+    {
+      archetype: "business_owner", title: () => "Franchise Path",
+      nodes: () => ["Research Franchise Options", "Secure Financing", "Complete Franchisor Training"],
+    },
+    {
+      archetype: "specialization", title: () => "Operations / Management Path",
+      nodes: () => ["Learn Cost and Inventory Control", "Manage Staff and Scheduling", "Improve Margins Over Time"],
+    },
+    {
+      archetype: "growth", title: () => "Multi-Location Owner Path",
+      nodes: () => ["Systematize Your First Location", "Hire and Train Managers", "Open a Second Location"],
+    },
   ],
   digital_knowledge: [
-    { archetype: "entry", title: () => "Junior / Entry Role Path" },
-    { archetype: "specialization", title: () => "Portfolio / Project-Building Path" },
-    { archetype: "specialization", title: () => "Specialist Track" },
-    { archetype: "independent", title: () => "Freelance / Contract Path" },
-    { archetype: "employed", title: () => "In-House / Team Path" },
-    { archetype: "growth", title: () => "Research / Advanced Track" },
-    { archetype: "business_owner", title: () => "Independent Consultant Path" },
+    {
+      archetype: "entry", title: () => "Junior / Entry Role Path",
+      nodes: () => ["Apply to Junior Roles", "Complete Onboarding Projects", "Build Real Work Experience"],
+      // Junior/routine-adjacent work is the most exposed to existing
+      // AI tools — Part 3: "should be more nuanced, probably Medium/High
+      // for some branches."
+      factorDelta: { routineCognitiveWork: 1, automationToolFit: 1 },
+    },
+    {
+      archetype: "specialization", title: () => "Portfolio / Project-Building Path",
+      nodes: () => ["Build a Real Project", "Document Your Process", "Publish Your Portfolio"],
+    },
+    {
+      archetype: "specialization", title: () => "Specialist Track",
+      nodes: () => ["Choose a Specialty Area", "Go Deep on One Toolset or Method", "Build Specialized Work Samples"],
+    },
+    {
+      archetype: "independent", title: () => "Freelance / Contract Path",
+      nodes: () => ["Define Your Services", "Find Your First Contract", "Build a Referral Pipeline"],
+    },
+    {
+      archetype: "employed", title: () => "In-House / Team Path",
+      nodes: () => ["Apply to In-House Roles", "Learn the Team's Tools and Process", "Grow Within the Team"],
+    },
+    {
+      archetype: "growth", title: () => "Research / Advanced Track",
+      nodes: () => ["Build Deep Domain Expertise", "Publish or Present Your Work", "Move Into an Advanced Role"],
+      // Deep, judgment-heavy research work is the least automatable branch
+      // in this category — the low end of the same "nuanced" spread.
+      factorDelta: { routineCognitiveWork: -2, automationToolFit: -2, emotionalJudgmentNeed: 1, humanTrustNeed: 1 },
+    },
+    {
+      archetype: "business_owner", title: () => "Independent Consultant Path",
+      nodes: () => ["Build a Track Record First", "Define Your Consulting Offer", "Find Your First Clients"],
+    },
   ],
   education_public: [
-    { archetype: "entry", title: () => "Entry / Support Role Path" },
-    { archetype: "certification", title: () => "Certification / Credentialing Path" },
-    { archetype: "employed", title: () => "Frontline Practice Path" },
-    { archetype: "specialization", title: () => "Specialization Path" },
-    { archetype: "growth", title: () => "Leadership / Administration Path" },
-    { archetype: "independent", title: () => "Policy / Advocacy Path" },
-    { archetype: "oversight", title: (role) => `${role} Director Path` },
+    {
+      archetype: "entry", title: () => "Entry / Support Role Path",
+      nodes: () => ["Volunteer or Assist in the Field", "Learn the Day-to-Day Work", "Build Relevant Experience"],
+    },
+    {
+      archetype: "certification", title: () => "Certification / Credentialing Path",
+      nodes: () => ["Enroll in a Certification Program", "Complete Required Fieldwork", "Earn Your Credential"],
+    },
+    {
+      archetype: "employed", title: () => "Frontline Practice Path",
+      nodes: () => ["Apply to Frontline Roles", "Complete Onboarding", "Build a Caseload or Classroom"],
+    },
+    {
+      archetype: "specialization", title: () => "Specialization Path",
+      nodes: () => ["Choose a Focus Population or Subject", "Get Additional Training", "Build Specialized Experience"],
+    },
+    {
+      archetype: "growth", title: () => "Leadership / Administration Path",
+      nodes: () => ["Build Several Years of Experience", "Take on Leadership Responsibilities", "Move Into an Administrative Role"],
+    },
+    {
+      archetype: "independent", title: () => "Policy / Advocacy Path",
+      nodes: () => ["Build Frontline Experience First", "Learn the Policy Landscape", "Get Involved in Advocacy Work"],
+    },
+    {
+      archetype: "oversight", title: (role) => `${role} Director Path`,
+      nodes: () => ["Build Deep Experience in the Field", "Take on Program Oversight", "Move Into a Director Role"],
+    },
   ],
   generic: [
     { archetype: "entry", title: () => "Getting Started" },
@@ -460,6 +656,23 @@ const CATEGORY_BRANCHES: Record<PathCategory, BranchSpec[]> = {
     { archetype: "business_owner", title: () => "Business Owner Path" },
     { archetype: "growth", title: () => "Advanced Path" },
   ],
+};
+
+const CATEGORY_DISCLAIMERS: Record<PathCategory, string> = {
+  licensed_trade:
+    "Licensing, apprenticeship, certification, and code requirements vary by state, municipality, union, employer, and governing body. Treat this as a starting map, not official guidance.",
+  licensed_care:
+    "Licensing, certification, supervision, and education requirements vary by state, institution, employer, and governing body. Treat this as a starting map, not official guidance.",
+  creative_service:
+    "Requirements vary by market, client type, equipment needs, portfolio quality, venue expectations, and business setup. Treat this as a starting map, not official guidance.",
+  local_business:
+    "Requirements vary by location, permits, startup costs, lease terms, suppliers, insurance, and local regulations. Treat this as a starting map, not official guidance.",
+  digital_knowledge:
+    "Requirements vary by employer, portfolio strength, technical depth, network, market demand, and proof of work. Treat this as a starting map, not official guidance.",
+  education_public:
+    "Requirements vary by state, institution, certification rules, employer, and role type. Treat this as a starting map, not official guidance.",
+  generic:
+    "Requirements and access points vary by location, market, institution, and role. Treat this as a starting map, not official guidance.",
 };
 
 const LICENSED_MILESTONES: Omit<TrailMilestone, "status">[] = [
@@ -546,7 +759,11 @@ export function generateStarterTrailMap(goalText: string, context: GenerateTrail
 
   const branches: TrailMapBranch[] = branchSpecs.map((spec, i) => {
     const title = spec.title(roleTitle);
-    const [n1, n2, n3] = ARCHETYPE_NODES[spec.archetype];
+    const [n1, n2, n3] = spec.nodes ? spec.nodes(roleTitle) : ARCHETYPE_NODES[spec.archetype];
+    const branchFactors = applyFactorDelta(
+      ARCHETYPE_FACTORS[spec.archetype],
+      mergeFactorDeltas(CATEGORY_FACTOR_DELTAS[category], spec.factorDelta)
+    );
     return {
       id: `${goalSlug}-${slugify(title)}-${i}`,
       title,
@@ -560,7 +777,7 @@ export function generateStarterTrailMap(goalText: string, context: GenerateTrail
         { id: "n3", label: n3 },
       ],
       factors: ARCHETYPE_FACTORS_TEXT[spec.archetype],
-      branchFactors: ARCHETYPE_FACTORS[spec.archetype],
+      branchFactors,
       tradeoffs: ARCHETYPE_TRADEOFFS[spec.archetype],
       nextStep: archetypeNextStep(spec.archetype, roleTitle),
     };
@@ -601,5 +818,6 @@ export function generateStarterTrailMap(goalText: string, context: GenerateTrail
     notesAreExamples: true,
     confidence: "generated_starter",
     pathGuide: pathGuideForCategory(category, roleTitle),
+    disclaimer: CATEGORY_DISCLAIMERS[category],
   };
 }
