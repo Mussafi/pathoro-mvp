@@ -20,10 +20,15 @@ export function TrailMapNotesPanel({
   branch,
   notes,
   notesTotal,
+  notesAreExamples,
 }: {
   branch: TrailMapBranch;
   notes: TrailNote[];
   notesTotal: number;
+  /** True on generated starter maps — these are illustrative, not real
+   * user-submitted notes, so the panel says so rather than implying
+   * social proof Pathoro doesn't have yet. */
+  notesAreExamples?: boolean;
 }) {
   const forBranch = notes.filter((n) => n.branchId === branch.id);
   const accent = getBranchAccentClasses(branch.id);
@@ -37,10 +42,15 @@ export function TrailMapNotesPanel({
         </span>
         <span className="text-[11px] font-medium text-green">View all</span>
       </div>
+      {notesAreExamples && (
+        <span className="mt-1.5 inline-block w-fit rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-amber-700">
+          Example trail notes
+        </span>
+      )}
       <p className="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
-        Notes from people ahead of you on this exact path — hidden
-        friction, better first steps, what opened doors, or a warning
-        worth knowing. Trail notes are attached to the path — not a feed.
+        {notesAreExamples
+          ? "Illustrative examples of the kind of notes people ahead often leave — not real user-submitted notes yet. Trail notes are attached to the path — not a feed."
+          : "Notes from people ahead of you on this exact path — hidden friction, better first steps, what opened doors, or a warning worth knowing. Trail notes are attached to the path — not a feed."}
       </p>
 
       <div className="mt-3 flex flex-col gap-2.5">

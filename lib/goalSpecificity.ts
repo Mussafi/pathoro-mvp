@@ -33,7 +33,11 @@ export function classifyGoalSpecificity(goalText: string): GoalSpecificity {
  * back to a generic /trail-map link rather than guessing. */
 export function mapGoalToTrailMapGoal(goalText: string): TrailMapGoalId | null {
   const text = goalText.toLowerCase();
-  if (/therapist|counselor|counsellor|therapy/.test(text)) return "therapist";
+  // "physical therapist assistant" etc. is a distinct, lower-barrier
+  // support role, not the same path as becoming a licensed
+  // therapist/counselor — let it fall through to the generator instead
+  // of being swallowed by the curated therapist template.
+  if (/therapist|counselor|counsellor|therapy/.test(text) && !/assistant/.test(text)) return "therapist";
   if (/vegetarian|vegan|plant[\s-]?based/.test(text)) return "vegetarian";
   if (/resale|resell|ebay|flea market|arbitrage|thrift|vendor market|build wealth through selling/.test(text)) {
     return "resale";

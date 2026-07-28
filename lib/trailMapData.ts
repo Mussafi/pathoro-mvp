@@ -52,12 +52,14 @@ export type TrailMapGoalId =
   | "electrician";
 
 /** How much a Trail Map can be trusted, from a freshly-generated first
- * pass to something people ahead have actually confirmed. Only
- * `generated_starter` has real UI treatment today (see
- * MapConfidenceNotice) — the other three are the concept to build
- * toward as verification (trail markers, scouting, official sources)
- * accumulates on a path. See docs/V0.30-DYNAMIC-TRAIL-MAPS.md. */
+ * pass to something people ahead have actually confirmed.
+ * `generated_starter` (and, as the default for every curated goal,
+ * `template_verified`) have real UI treatment today — the remaining
+ * three are the concept to build toward as verification (trail
+ * markers, scouting, official sources) accumulates on a path. See
+ * docs/V0.30-DYNAMIC-TRAIL-MAPS.md. */
 export type MapConfidence =
+  | "template_verified"
   | "generated_starter"
   | "source_backed"
   | "community_strengthened"
@@ -130,8 +132,8 @@ export type TrailNote = {
 
 export type TrailMapGoal = {
   /** A plain string, not TrailMapGoalId — dynamically generated goals
-   * (lib/trailMapGenerator.ts) get a slugified id that isn't one of the
-   * fixed curated goal ids. */
+   * (lib/generatedTrailMaps.ts) get a slugified id that isn't one of
+   * the fixed curated goal ids. */
   id: string;
   label: string;
   pathTitle: string;
@@ -143,7 +145,11 @@ export type TrailMapGoal = {
   branches: TrailMapBranch[];
   notes: TrailNote[];
   notesTotal: number;
-  /** Defaults to "source_backed" (hand-authored, not official data) via
+  /** Whether these are real trail notes or illustrative examples on a
+   * generated draft — see TrailMapNotesPanel's "Example trail notes"
+   * label. */
+  notesAreExamples?: boolean;
+  /** Defaults to "template_verified" (hand-built, product-reviewed) via
    * getMapConfidence() when absent. Generated drafts always set this
    * explicitly to "generated_starter". */
   confidence?: MapConfidence;
@@ -153,7 +159,7 @@ export type TrailMapGoal = {
 };
 
 export function getMapConfidence(goal: TrailMapGoal): MapConfidence {
-  return goal.confidence ?? "source_backed";
+  return goal.confidence ?? "template_verified";
 }
 
 /** Derived from existing branchFactors rather than a new stored field —

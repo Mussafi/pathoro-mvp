@@ -1,4 +1,4 @@
-import { generateTrailMapDraft } from "@/lib/trailMapGenerator";
+import { generateStarterTrailMap } from "@/lib/generatedTrailMaps";
 
 const MIN_GOAL_LENGTH = 2;
 const MAX_GOAL_LENGTH = 120;
@@ -32,8 +32,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
-    const goal = generateTrailMapDraft({
-      goalText,
+    const goal = generateStarterTrailMap(goalText, {
       city: body.city?.trim() || undefined,
       state: body.state?.trim() || undefined,
       userContext: body.userContext?.trim() || undefined,

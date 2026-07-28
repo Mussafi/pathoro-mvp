@@ -182,7 +182,7 @@ export default function TrailMapPage() {
                 {activeGoal.subtitle}
               </p>
 
-              <MapConfidenceNotice goal={activeGoal} />
+              <MapConfidenceNotice goal={activeGoal} branch={selectedBranch} />
 
               <div className="mt-4">
                 <TrailMapBranchDiagram goal={activeGoal} selectedBranchId={branchId} onSelect={setBranchId} />
@@ -197,7 +197,12 @@ export default function TrailMapPage() {
               <TrailMapDetailSidebar branch={selectedBranch} />
               <RoleDialogueCard />
               <PathGuideCard goal={activeGoal} branch={selectedBranch} />
-              <TrailMapNotesPanel branch={selectedBranch} notes={activeGoal.notes} notesTotal={activeGoal.notesTotal} />
+              <TrailMapNotesPanel
+                branch={selectedBranch}
+                notes={activeGoal.notes}
+                notesTotal={activeGoal.notesTotal}
+                notesAreExamples={activeGoal.notesAreExamples}
+              />
             </div>
           </div>
         )}
