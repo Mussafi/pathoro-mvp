@@ -4,7 +4,15 @@ import { mapGoalToTrailMapGoal } from "@/lib/goalSpecificity";
 
 export function TrailMapRecommendationCard({ pathGoal }: { pathGoal: string }) {
   const trailMapGoal = mapGoalToTrailMapGoal(pathGoal);
-  const href = trailMapGoal ? `/trail-map?goal=${trailMapGoal}` : "/trail-map";
+  // A goal that doesn't match a curated template (e.g. "HVAC technician")
+  // still deserves to keep its own text — /trail-map's generator can
+  // build a real starter map from it. Only fall back to the bare,
+  // goal-less link if there's truly no goal text at all.
+  const href = trailMapGoal
+    ? `/trail-map?goal=${trailMapGoal}`
+    : pathGoal.trim()
+      ? `/trail-map?goal=${encodeURIComponent(pathGoal.trim())}`
+      : "/trail-map";
 
   return (
     <div className="shadow-card relative mt-4 flex flex-col overflow-hidden rounded-[26px] border border-green/50 bg-ink px-5 py-5">

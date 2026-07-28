@@ -51,7 +51,7 @@ type BranchArchetype =
 /** The 7 broad path shapes a generated map can fall into — chosen so
  * branches feel specific to the kind of path, not a single generic
  * template stretched over every goal. */
-type PathCategory =
+export type PathCategory =
   | "licensed_trade"
   | "licensed_care"
   | "creative_service"
@@ -73,7 +73,11 @@ const DIGITAL_KNOWLEDGE_PATTERN =
 const EDUCATION_PUBLIC_PATTERN =
   /school counselor|librarian|nonprofit director|\bteacher\b|professor|public administrator|policy analyst|case manager/i;
 
-function classifyCategory(goalText: string): PathCategory {
+/** Exported so lib/goalSpecificity.ts can decide whether an arbitrary
+ * (non-curated) goal is specific enough to recommend the Trail Map —
+ * "specific enough to generate a real starter map" is exactly what
+ * "generic" vs. everything else already means here. */
+export function classifyCategory(goalText: string): PathCategory {
   if (LICENSED_TRADE_PATTERN.test(goalText)) return "licensed_trade";
   if (LICENSED_CARE_PATTERN.test(goalText)) return "licensed_care";
   if (CREATIVE_SERVICE_PATTERN.test(goalText)) return "creative_service";

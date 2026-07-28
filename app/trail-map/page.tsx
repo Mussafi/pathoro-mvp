@@ -117,7 +117,10 @@ export default function TrailMapPage() {
   return (
     <div className="min-h-screen bg-cream">
       <div className="border-b border-line/70">
-        <RoutePlanningHeader mode="trail" compassHref="/route-planning" />
+        <RoutePlanningHeader
+          mode="trail"
+          compassHref={`/route-planning?goal=${encodeURIComponent(activeGoal.pathTitle)}`}
+        />
       </div>
 
       <main className="mx-auto w-full max-w-[1500px] px-6 py-6 sm:px-10">

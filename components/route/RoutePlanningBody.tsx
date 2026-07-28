@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Compass } from "lucide-react";
 import { RouteRevealMap } from "@/components/route/RouteRevealMap";
 import { BestNextRouteCard } from "@/components/route/BestNextRouteCard";
@@ -16,9 +16,23 @@ import { useLiveOpportunities } from "@/lib/useLiveOpportunities";
 import { shouldRecommendTrailMap } from "@/lib/goalSpecificity";
 
 export function RoutePlanningBody() {
-  const { answers } = useDirectionAnswers();
+  const { answers, setAnswers } = useDirectionAnswers();
   const [overrideId, setOverrideId] = useState<string | null>(null);
   const [exploreOpen, setExploreOpen] = useState(false);
+
+  // Carries a goal in from elsewhere (Trail Map's Compass toggle, an
+  // opportunity page's "View full route" CTA) via ?goal= — the same
+  // hand-off convention /trail-map already reads. Read after mount, not
+  // during render, so server and first client render stay in sync.
+  useEffect(() => {
+    const requestedGoal = new URLSearchParams(window.location.search).get("goal");
+    if (!requestedGoal) return;
+    setAnswers({ ...answers, moveToward: requestedGoal });
+    // Only ever runs once, right after mount, off the ?goal= param —
+    // deliberately not reactive to `answers`/`setAnswers` changing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const mappedRouteId = mapReachableToRouteId(answers.reachable);
   const selectedId = overrideId ?? mappedRouteId;
   const live = useLiveOpportunities();

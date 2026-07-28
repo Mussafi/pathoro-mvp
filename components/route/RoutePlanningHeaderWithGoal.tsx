@@ -10,7 +10,14 @@ import { mapGoalToTrailMapGoal } from "@/lib/goalSpecificity";
 export function RoutePlanningHeaderWithGoal() {
   const { answers } = useDirectionAnswers();
   const trailMapGoal = mapGoalToTrailMapGoal(answers.moveToward);
-  const trailHref = trailMapGoal ? `/trail-map?goal=${trailMapGoal}` : "/trail-map";
+  // Same fallback as TrailMapRecommendationCard: a non-curated goal
+  // (e.g. "HVAC technician") should still carry its own text into the
+  // Trail Map's generator rather than losing it to a bare /trail-map link.
+  const trailHref = trailMapGoal
+    ? `/trail-map?goal=${trailMapGoal}`
+    : answers.moveToward.trim()
+      ? `/trail-map?goal=${encodeURIComponent(answers.moveToward.trim())}`
+      : "/trail-map";
 
   return <RoutePlanningHeader mode="compass" trailHref={trailHref} />;
 }

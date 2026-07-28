@@ -3,30 +3,29 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, ExternalLink, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 import { TopoLines } from "@/components/TopoLines";
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
 import { TrailMarkersSection } from "@/components/route/TrailMarkersSection";
-import { RoleDialogueCard } from "@/components/trailmap/RoleDialogueCard";
-import { FindSomeoneAheadCard } from "@/components/opportunity/FindSomeoneAheadCard";
+import { OpportunityJourneySidebar } from "@/components/opportunity/OpportunityJourneySidebar";
+import { OpportunityDetailCard } from "@/components/opportunity/OpportunityDetailCard";
+import { OpportunityGuidancePanel } from "@/components/opportunity/OpportunityGuidancePanel";
 import { routes } from "@/lib/routes";
 import { routeOpportunities } from "@/lib/opportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
 import type { Opportunity } from "@/lib/opportunitySchema";
-import {
-  getNextActionSummary,
-  getWhatAccessThisCreates,
-  getWhyThisAppeared,
-} from "@/lib/opportunityNarrative";
-import { computeTrustLabel, getHiddenRequirementsNote, TRUST_LABEL_CLASS } from "@/lib/trustLabels";
+import { getRelatedGoalText } from "@/lib/opportunityNarrative";
+import { computeTrustLabel } from "@/lib/trustLabels";
+import { mapGoalToTrailMapGoal } from "@/lib/goalSpecificity";
 
 /**
  * Dynamic opportunity detail page — renders any opportunity by id/slug
  * from Supabase (falling back to seed data, then a local dev fallback),
- * not just /opportunity/plant-based-cooking-class. Content is organized
- * around the "Opportunity Dialogue" questions (v0.32): is this real, is
- * it reachable, what does it open, what's hidden, who can help, what's
- * the next move — rather than reading like a generic event listing.
+ * not just /opportunity/plant-based-cooking-class. The rich three-column
+ * layout (journey sidebar, detail card, guidance panel — v0.34 Part 5)
+ * is fully data-driven from whichever Opportunity resolves, and every
+ * cross-page link carries the opportunity's related goal (pathItSupports)
+ * so Route Planning and the Trail Map pick up the right context.
  */
 export default function OpportunityDetailPage() {
   const params = useParams<{ id: string }>();
@@ -73,6 +72,22 @@ function OpportunityDetailContent({ id }: { id: string }) {
   const route = opportunity ? routes.find((r) => r.id === opportunity.routeId) : null;
   const trustLabel = opportunity ? computeTrustLabel(opportunity) : null;
 
+  const relatedGoal = opportunity ? getRelatedGoalText(opportunity) : "";
+  const routePlanningHref = relatedGoal ? `/route-planning?goal=${encodeURIComponent(relatedGoal)}` : "/route-planning";
+  const trailMapGoalId = relatedGoal ? mapGoalToTrailMapGoal(relatedGoal) : null;
+  const trailHref = trailMapGoalId
+    ? `/trail-map?goal=${trailMapGoalId}`
+    : relatedGoal
+      ? `/trail-map?goal=${encodeURIComponent(relatedGoal)}`
+      : "/trail-map";
+  const scoutHref = `${routePlanningHref}#scout-request`;
+
+  const relatedOpenings = opportunity
+    ? routeOpportunities
+        .filter((o) => o.routeId === opportunity.routeId && o.id !== opportunity.id)
+        .slice(0, 3)
+    : [];
+
   return (
     <div className="relative min-h-screen">
       <TopoLines
@@ -81,13 +96,13 @@ function OpportunityDetailContent({ id }: { id: string }) {
         opacityRange={[0.015, 0.035]}
       />
       <div className="relative border-b border-line/70">
-        <RoutePlanningHeader />
+        <RoutePlanningHeader mode="compass" compassHref={routePlanningHref} trailHref={trailHref} />
       </div>
 
-      <main className="relative mx-auto w-full max-w-[640px] px-6 py-8 sm:px-10">
+      <main className="relative mx-auto w-full max-w-[1500px] px-6 py-6 sm:px-10">
         <Link
           href="/route-planning"
-          className="flex items-center gap-1.5 text-[13px] font-medium text-ink-soft outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-green/50"
+          className="flex w-fit items-center gap-1.5 text-[13px] font-medium text-ink-soft outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-green/50"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to route planning
@@ -97,7 +112,7 @@ function OpportunityDetailContent({ id }: { id: string }) {
           <div className="shadow-card mt-4 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-6 py-6">
             <p className="text-[13px] text-ink-faint">Loading opportunity…</p>
           </div>
-        ) : opportunity ? (
+        ) : opportunity && trustLabel ? (
           <>
             <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-line/70 bg-cream-field px-4 py-3">
               <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green" strokeWidth={1.75} />
@@ -107,132 +122,44 @@ function OpportunityDetailContent({ id }: { id: string }) {
               </p>
             </div>
 
-            <div className="shadow-card mt-4 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-6 py-6">
-              <div className="flex flex-wrap items-center gap-2">
-                {trustLabel && (
-                  <span
-                    className={`w-fit rounded-full border px-2 py-0.5 text-[10px] font-medium ${TRUST_LABEL_CLASS[trustLabel]}`}
-                  >
-                    {trustLabel}
-                  </span>
-                )}
-                {opportunity.opportunityType && (
-                  <span className="w-fit rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
-                    {opportunity.opportunityType}
-                  </span>
-                )}
-                {route && (
-                  <span className="w-fit rounded-full border border-green/40 bg-green-soft px-2 py-0.5 text-[10px] font-medium text-green">
-                    Route stop on {route.title}
-                  </span>
-                )}
-              </div>
-              <h1 className="mt-2.5 font-serif text-[24px] leading-tight text-ink">
-                {opportunity.title}
-              </h1>
-              <p className="mt-1.5 flex items-center gap-1.5 text-[12.5px] text-ink-faint">
-                <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-                {opportunity.sourceName} · {opportunity.locationLabel || "Location TBD"}
-                {opportunity.dateLabel ? ` · ${opportunity.dateLabel}` : ""}
-                {opportunity.costLabel ? ` · ${opportunity.costLabel}` : ""}
-              </p>
-
-              {opportunity.description && (
-                <p className="mt-4 text-[13.5px] leading-relaxed text-ink-soft">
-                  {opportunity.description}
-                </p>
-              )}
-
-              <div className="mt-5 flex flex-col gap-4 border-t border-line/70 pt-5">
-                <div>
-                  <span className="block text-[11px] font-semibold text-ink-faint">
-                    Is this reachable from where you are?
-                  </span>
-                  <p className="mt-0.5 text-[13px] leading-relaxed text-ink">
-                    {getWhyThisAppeared(opportunity)}
-                  </p>
-                </div>
-                <div>
-                  <span className="block text-[11px] font-semibold text-ink-faint">
-                    What path this opens
-                  </span>
-                  <p className="mt-0.5 text-[13px] leading-relaxed text-ink">
-                    {getWhatAccessThisCreates(opportunity)}
-                    {opportunity.whatItMayOpenNext ? ` It could also open: ${opportunity.whatItMayOpenNext.toLowerCase()}.` : ""}
-                  </p>
-                </div>
-                <div>
-                  <span className="block text-[11px] font-semibold text-ink-faint">
-                    What hidden requirements matter
-                  </span>
-                  <p className="mt-0.5 text-[13px] leading-relaxed text-ink">
-                    {getHiddenRequirementsNote(opportunity)}
-                  </p>
-                </div>
-                <div>
-                  <span className="block text-[11px] font-semibold text-ink-faint">
-                    What to do next
-                  </span>
-                  <p className="mt-0.5 text-[13px] leading-relaxed text-ink">
-                    {getNextActionSummary(opportunity)}
-                  </p>
-                </div>
-                <div>
-                  <span className="block text-[11px] font-semibold text-ink-faint">
-                    Source &amp; trust
-                  </span>
-                  <p className="mt-0.5 flex items-center gap-1.5 text-[13px] leading-relaxed text-ink">
-                    {opportunity.sourceName}
-                    <span
-                      className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                        opportunity.trustLevel === "High"
-                          ? "border-green/40 bg-green-soft text-green"
-                          : opportunity.trustLevel === "Medium"
-                            ? "border-line/70 text-ink-soft"
-                            : "border-line/70 text-ink-faint"
-                      }`}
-                    >
-                      {opportunity.trustLevel} trust
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              {opportunity.sourceUrl && (
-                <a
-                  href={opportunity.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-6 flex items-center justify-center gap-1.5 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
-                >
-                  Open original source
-                  <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
-                </a>
-              )}
-
-              <p className="mt-4 text-[11px] text-ink-faint">
-                {dbOpportunity
-                  ? "Saved to the database."
-                  : seedOpportunity
-                    ? "Example opportunity — illustrative, not a live database record."
-                    : "This access point isn't saved to Pathoro's database yet — it's stored locally in this browser."}
-              </p>
-            </div>
-
-            <div className="mt-4 flex flex-col gap-4">
-              <FindSomeoneAheadCard
-                opportunityId={opportunity.id}
-                opportunityTitle={opportunity.title}
-                opportunityType={opportunity.opportunityType}
+            <div className="mt-5 grid grid-cols-1 items-start gap-6 lg:grid-cols-[260px_minmax(0,1fr)_320px]">
+              <OpportunityJourneySidebar
+                relatedGoal={relatedGoal}
+                route={route}
+                trailHref={trailHref}
+                routePlanningHref={routePlanningHref}
               />
-              <RoleDialogueCard />
+
+              <div className="flex min-w-0 flex-col gap-6">
+                <OpportunityDetailCard
+                  opportunity={opportunity}
+                  route={route}
+                  trustLabel={trustLabel}
+                  relatedOpenings={relatedOpenings}
+                  scoutHref={scoutHref}
+                />
+                <TrailMarkersSection
+                  opportunityId={opportunity.id}
+                  routeId={opportunity.routeId}
+                  city={opportunity.city}
+                />
+              </div>
+
+              <OpportunityGuidancePanel
+                opportunity={opportunity}
+                route={route}
+                routePlanningHref={routePlanningHref}
+                trailHref={trailHref}
+              />
             </div>
 
-            <TrailMarkersSection
-              opportunityId={opportunity.id}
-              routeId={opportunity.routeId}
-              city={opportunity.city}
-            />
+            <p className="mt-4 text-[11px] text-ink-faint">
+              {dbOpportunity
+                ? "Saved to the database."
+                : seedOpportunity
+                  ? "Example opportunity — illustrative, not a live database record."
+                  : "This access point isn't saved to Pathoro's database yet — it's stored locally in this browser."}
+            </p>
           </>
         ) : (
           <div className="shadow-card mt-4 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-6 py-6">

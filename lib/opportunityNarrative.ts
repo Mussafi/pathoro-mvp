@@ -22,6 +22,15 @@ export type NarrativeInput = {
   sourceUrl: string | null;
 };
 
+/** The goal text to carry into /route-planning or /trail-map from an
+ * opportunity page (v0.34 "View full route" / "View Trail Map" CTAs) —
+ * pathItSupports is already exactly this ("Become vegetarian", "Become
+ * an HVAC technician", ...) for every opportunity; title is the only
+ * sane fallback for a record missing it. */
+export function getRelatedGoalText(input: Pick<NarrativeInput, "pathItSupports" | "title">): string {
+  return input.pathItSupports.trim() || input.title.trim();
+}
+
 /** Why this opportunity surfaced for this person, on this route. */
 export function getWhyThisAppeared(input: NarrativeInput): string {
   const { pathItSupports, whoItIsFor } = input;

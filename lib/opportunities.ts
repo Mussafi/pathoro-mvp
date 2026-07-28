@@ -17,7 +17,7 @@ export const routeOpportunities: Opportunity[] = [
     routeId: "real-openings",
     opportunityType: "Class / Opening",
     whoItIsFor: "Beginners curious about plant-forward cooking",
-    pathItSupports: "Change a habit / lifestyle",
+    pathItSupports: "Become vegetarian",
     whatItMayOpenNext: "A recurring cooking group or a nutrition coach intro call",
     effortLevel: "Low",
     frictionLevel: "Low",

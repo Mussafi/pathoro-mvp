@@ -1,4 +1,5 @@
 import type { TrailMapGoalId } from "@/lib/trailMapData";
+import { classifyCategory } from "@/lib/generatedTrailMaps";
 
 export type GoalSpecificity = "broad" | "concentrated";
 
@@ -25,6 +26,14 @@ const BROAD_PATTERNS =
 export function classifyGoalSpecificity(goalText: string): GoalSpecificity {
   if (CONCENTRATED_PATTERNS.test(goalText)) return "concentrated";
   if (BROAD_PATTERNS.test(goalText)) return "broad";
+  // Falls through to the same category classifier the Trail Map generator
+  // itself uses (lib/generatedTrailMaps.ts) — a goal that's specific
+  // enough to generate a real starter map (anything but "generic") is
+  // specific enough to recommend the Trail Map for, even when it isn't
+  // one of the hand-curated CONCENTRATED_PATTERNS goals (e.g. "wedding
+  // photographer"). Keeps the recommendation card and the generator
+  // agreeing about what counts as "specific."
+  if (classifyCategory(goalText) !== "generic") return "concentrated";
   return "broad";
 }
 
