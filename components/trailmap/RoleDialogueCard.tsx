@@ -36,6 +36,16 @@ const DIALOGUE_PROMPTS = [
   "What is the first move from where I am?",
 ];
 
+/** What a real Role Dialogue would let someone do — shown as inert
+ * chips, not buttons, since none of this is wired up yet. */
+const DIALOGUE_ACTIONS = [
+  "Start dialogue",
+  "Check if this is real",
+  "Ask what this role opens",
+  "Find someone in this path",
+  "Map how to become competitive",
+];
+
 export function RoleDialogueCard() {
   return (
     <div className="shadow-card relative flex flex-col overflow-hidden rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
@@ -74,16 +84,19 @@ export function RoleDialogueCard() {
         ))}
       </div>
 
-      <button
-        type="button"
-        disabled
-        className="mt-3.5 flex w-full cursor-not-allowed items-center justify-between gap-2 rounded-full border border-line/70 bg-cream-field px-4 py-2.5 text-left opacity-70"
-      >
-        <span className="text-[12.5px] font-semibold text-ink-faint">Start role dialogue</span>
+      <div className="mt-3.5 flex flex-wrap gap-1.5">
+        {DIALOGUE_ACTIONS.map((action) => (
+          <span
+            key={action}
+            className="cursor-not-allowed rounded-full border border-line/70 bg-cream-field px-2.5 py-1 text-[10.5px] font-medium text-ink-faint opacity-70"
+          >
+            {action}
+          </span>
+        ))}
         <span className="rounded-full bg-cream-card px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-ink-faint">
           Coming soon
         </span>
-      </button>
+      </div>
 
       <p className="mt-3 text-[10px] leading-snug text-ink-faint">
         A concept preview, not a live feature yet. Pathoro is not a job

@@ -2,16 +2,8 @@
 
 import { useState } from "react";
 import { Signpost } from "lucide-react";
-import type { TrailMapBranch, TrailMapGoal, TrailMapGoalId } from "@/lib/trailMapData";
+import type { GuideBadge, PathGuideRecommendation, TrailMapBranch, TrailMapGoal, TrailMapGoalId } from "@/lib/trailMapData";
 import { PathGuideRequestModal } from "@/components/trailmap/PathGuideRequestModal";
-
-/** How credible a recommended guide's expertise is for this path — shown
- * as a small badge so a user never mistakes lived experience for a
- * credential, or a credential for something it isn't. Only "Licensed
- * guide" and "Verified experience" are assigned today; the other two
- * exist so future goals (or a peer trail-marker flow) have somewhere to
- * land without inventing a new label. */
-type GuideBadge = "Licensed guide" | "Verified experience" | "Peer trail marker" | "Credential not verified";
 
 const GUIDE_BADGE_CLASS: Record<GuideBadge, string> = {
   "Licensed guide": "border-green/50 bg-green/20 text-green",
@@ -29,10 +21,13 @@ const GUIDE_BADGE_CLASS: Record<GuideBadge, string> = {
  * experience — and where a licensed domain overlaps (nutrition, finance),
  * `note` points to the right kind of professional instead of implying
  * the Path Guide can give that advice. */
-const GUIDE_CONTENT: Record<
-  TrailMapGoalId,
-  { cta: string; subtitle: string; badge: GuideBadge; note?: string }
-> = {
+const DEFAULT_GUIDE_CONTENT: PathGuideRecommendation = {
+  cta: "Talk to someone on this path",
+  subtitle: "Ask what this role actually requires day to day.",
+  badge: "Peer trail marker",
+};
+
+const GUIDE_CONTENT: Record<TrailMapGoalId, PathGuideRecommendation> = {
   therapist: {
     cta: "Talk to a licensed therapist",
     subtitle: "Ask what supervision, licensure, and real caseloads actually feel like.",
@@ -90,7 +85,7 @@ const GUIDE_CONTENT: Record<
 };
 
 export function PathGuideCard({ goal, branch }: { goal: TrailMapGoal; branch: TrailMapBranch }) {
-  const content = GUIDE_CONTENT[goal.id];
+  const content = goal.pathGuide ?? GUIDE_CONTENT[goal.id as TrailMapGoalId] ?? DEFAULT_GUIDE_CONTENT;
   const [requestOpen, setRequestOpen] = useState(false);
 
   return (

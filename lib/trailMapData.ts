@@ -51,6 +51,30 @@ export type TrailMapGoalId =
   | "plumber"
   | "electrician";
 
+/** How much a Trail Map can be trusted, from a freshly-generated first
+ * pass to something people ahead have actually confirmed. Only
+ * `generated_starter` has real UI treatment today (see
+ * MapConfidenceNotice) — the other three are the concept to build
+ * toward as verification (trail markers, scouting, official sources)
+ * accumulates on a path. See docs/V0.30-DYNAMIC-TRAIL-MAPS.md. */
+export type MapConfidence =
+  | "generated_starter"
+  | "source_backed"
+  | "community_strengthened"
+  | "verified_path";
+
+/** How credible a recommended guide's expertise is for this path — shown
+ * as a small badge so a user never mistakes lived experience for a
+ * credential, or a credential for something it isn't. */
+export type GuideBadge = "Licensed guide" | "Verified experience" | "Peer trail marker" | "Credential not verified";
+
+export type PathGuideRecommendation = {
+  cta: string;
+  subtitle: string;
+  badge: GuideBadge;
+  note?: string;
+};
+
 export type MilestoneStatus = "done" | "current" | "next" | "future";
 
 export type TrailMilestone = {
@@ -105,7 +129,10 @@ export type TrailNote = {
 };
 
 export type TrailMapGoal = {
-  id: TrailMapGoalId;
+  /** A plain string, not TrailMapGoalId — dynamically generated goals
+   * (lib/trailMapGenerator.ts) get a slugified id that isn't one of the
+   * fixed curated goal ids. */
+  id: string;
   label: string;
   pathTitle: string;
   subtitle: string;
@@ -116,7 +143,26 @@ export type TrailMapGoal = {
   branches: TrailMapBranch[];
   notes: TrailNote[];
   notesTotal: number;
+  /** Defaults to "source_backed" (hand-authored, not official data) via
+   * getMapConfidence() when absent. Generated drafts always set this
+   * explicitly to "generated_starter". */
+  confidence?: MapConfidence;
+  /** Overrides PathGuideCard's curated GUIDE_CONTENT lookup — required
+   * for generated goals, since their id isn't a known TrailMapGoalId. */
+  pathGuide?: PathGuideRecommendation;
 };
+
+export function getMapConfidence(goal: TrailMapGoal): MapConfidence {
+  return goal.confidence ?? "source_backed";
+}
+
+/** Derived from existing branchFactors rather than a new stored field —
+ * true when any branch on this path gates on real licensing/regulation,
+ * used to decide whether a generated map needs the stronger
+ * licensing-specific disclaimer (see MapConfidenceNotice). */
+export function isLikelyRegulatedPath(goal: TrailMapGoal): boolean {
+  return goal.branches.some((b) => b.branchFactors.regulationBarrier >= 3);
+}
 
 /** Per-branch accent color for unselected map icons — purely visual, gives
  * each path its own identity the way the reference map's colored category

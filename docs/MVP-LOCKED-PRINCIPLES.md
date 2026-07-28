@@ -168,7 +168,21 @@ This is the same [Opportunity Intelligence Layer](#opportunity-intelligence-laye
 
 ### Future concept: Role Dialogue / Opportunity Dialogue
 
-Not built yet. Documented here as the direction to build toward — see `docs/JOB-DIALOGUE-CONCEPT.md` for the fuller concept, including a mock "Role dialogue" card and its trust-label vocabulary. Explicitly not yet in scope: scraping job boards, a full job board of our own, accounts, applications, or employer posting.
+Not built yet. Documented here as the direction to build toward — see `docs/JOB-DIALOGUE-CONCEPT.md` for the fuller concept, including a mock "Role dialogue" card and its trust-label vocabulary, and `docs/V0.30-DYNAMIC-TRAIL-MAPS.md` for how it relates to generated Trail Map drafts. Explicitly not yet in scope: scraping job boards, a full job board of our own, accounts, applications, or employer posting.
+
+**Opportunity Dialogue** and **Role Dialogue** name the same idea at two scopes:
+
+- **Opportunity Dialogue** — the general case, for any opportunity (a class, an access point, a gateway community).
+- **Role Dialogue** — the job/role-specific case. Every Role Dialogue is an Opportunity Dialogue; not every Opportunity Dialogue is about a role.
+
+For job-like opportunities specifically, a Role Dialogue should help someone answer:
+
+- Is this opportunity real?
+- Is it reachable from where you are?
+- What path does it open?
+- What hidden requirements matter?
+- Who can help you understand it?
+- What should you do next?
 
 ### Product language
 

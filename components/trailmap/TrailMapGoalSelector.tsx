@@ -20,7 +20,7 @@ export function TrailMapGoalSelector({
           <button
             key={goal.id}
             type="button"
-            onClick={() => onSelect(goal.id)}
+            onClick={() => onSelect(goal.id as TrailMapGoalId)}
             className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
               isSelected
                 ? "border-green/40 bg-green-soft text-green"
