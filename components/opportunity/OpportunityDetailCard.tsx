@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Bookmark,
   ChevronRight,
-  ExternalLink,
   MapPin,
   ShieldCheck,
   Sparkles,
@@ -16,11 +15,13 @@ import type { Opportunity } from "@/lib/opportunitySchema";
 import type { Route } from "@/lib/routes";
 import {
   getNextActionSummary,
+  getRelatedGoalText,
   getWhatAccessThisCreates,
   getWhyThisAppeared,
   isLikelyConsumerActivity,
 } from "@/lib/opportunityNarrative";
 import { getHiddenRequirementsNote, TRUST_LABEL_CLASS, type TrustLabel } from "@/lib/trustLabels";
+import { TakeOpportunityModal } from "@/components/opportunity/TakeOpportunityModal";
 
 const EFFORT_POSITION: Record<string, number> = { Low: 18, Medium: 50, High: 82 };
 const TRUST_DOT_COUNT: Record<Opportunity["trustLevel"], number> = { Low: 2, Medium: 3, High: 5 };
@@ -100,6 +101,7 @@ export function OpportunityDetailCard({
   scoutHref: string;
 }) {
   const [saved, setSaved] = useState(false);
+  const [takeModalOpen, setTakeModalOpen] = useState(false);
   const consumerActivity = isLikelyConsumerActivity(opportunity);
   const hiddenRequirements = getHiddenRequirementsNote(opportunity);
 
@@ -262,28 +264,14 @@ export function OpportunityDetailCard({
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        {opportunity.sourceUrl ? (
-          <a
-            href={opportunity.sourceUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-center gap-1.5 rounded-full bg-green px-6 py-3 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
-          >
-            Take this opportunity
-            <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
-          </a>
-        ) : (
-          <button
-            type="button"
-            onClick={() =>
-              document.getElementById("your-next-steps")?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
-            className="flex items-center justify-center gap-1.5 rounded-full bg-green px-6 py-3 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
-          >
-            Take this opportunity
-            <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setTakeModalOpen(true)}
+          className="flex items-center justify-center gap-1.5 rounded-full bg-green px-6 py-3 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+        >
+          Take this opportunity
+          <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
+        </button>
         <button
           type="button"
           onClick={() => setSaved((s) => !s)}
@@ -300,9 +288,24 @@ export function OpportunityDetailCard({
         </Link>
       </div>
       <p className="mt-3 text-[11px] leading-snug text-ink-faint">
-        In this alpha, Pathoro helps you clarify and act on the opportunity — we&rsquo;ll help you
-        turn this into a next step. {getNextActionSummary(opportunity)}
+        In this alpha, Pathoro helps you organize the next step and reviews requests manually.{" "}
+        {getNextActionSummary(opportunity)}
       </p>
+
+      {takeModalOpen && (
+        <TakeOpportunityModal
+          opportunityId={opportunity.id}
+          opportunitySlug={opportunity.id}
+          opportunityTitle={opportunity.title}
+          goal={getRelatedGoalText(opportunity)}
+          routeId={opportunity.routeId}
+          routeTitle={route?.title ?? ""}
+          sourceUrl={opportunity.sourceUrl}
+          trustLabel={trustLabel}
+          opportunityType={opportunity.opportunityType}
+          onClose={() => setTakeModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

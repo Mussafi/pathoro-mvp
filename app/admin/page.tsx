@@ -5,6 +5,7 @@ import {
   Flag,
   Inbox,
   Map,
+  MousePointerClick,
   Route as RouteIcon,
   Search,
   Signpost,
@@ -55,6 +56,12 @@ const links: HubLink[] = [
     icon: Signpost,
     title: "Path Guide Requests",
     description: "See who's asking for a path guide, and manually match them with someone ahead.",
+  },
+  {
+    href: "/admin/opportunity-actions",
+    icon: MousePointerClick,
+    title: "Opportunity Actions",
+    description: "See who clicked \"Take this opportunity,\" and what they want to do next.",
   },
   {
     href: "/route-planning",
