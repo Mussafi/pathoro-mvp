@@ -64,7 +64,10 @@ export function ScoutRequestCard({
   }
 
   return (
-    <div className="shadow-card mt-6 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
+    <div
+      id="scout-request"
+      className="shadow-card scroll-mt-6 mt-6 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-5 py-5"
+    >
       <div className="flex items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-soft">
           <Compass className="h-4 w-4 text-green" strokeWidth={1.75} />

@@ -233,7 +233,7 @@ export const routeOpportunities: Opportunity[] = [
     hostName: "Independent wedding photographer",
     description:
       "A working wedding photographer is looking for a second shooter / assistant to learn the wedding-day flow, help with gear, and get real experience before booking solo clients.",
-    routeId: "people",
+    routeId: "real-openings",
     opportunityType: "Assistant role / Access point",
     whoItIsFor: "Photographers with basic skills looking for their first real wedding experience",
     pathItSupports: "Become a wedding photographer",

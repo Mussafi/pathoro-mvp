@@ -22,7 +22,7 @@ type BestNextRouteCardProps = {
 };
 
 const ACCESS_POINT_HEADING = {
-  reviewed: "Local access point",
+  reviewed: "Reviewed access point",
   ai: "AI-found access points",
   seed: "Example access point",
 } as const;
@@ -189,8 +189,14 @@ export function BestNextRouteCard({
       {accessPointKind === "none" && (
         <div className="mt-4 border-t border-line/70 pt-4">
           <p className="text-[12.5px] leading-relaxed text-ink-faint">
-            No reviewed access point yet for this path.
+            Pathoro has not found a reviewed access point for this path yet.
           </p>
+          <a
+            href="#scout-request"
+            className="mt-1.5 inline-block text-[12.5px] font-semibold text-green underline"
+          >
+            Ask Pathoro to scout access points.
+          </a>
         </div>
       )}
 
@@ -200,15 +206,6 @@ export function BestNextRouteCard({
           className="mt-5 flex items-center justify-center gap-2 rounded-full bg-green py-2.75 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
         >
           Take this step
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
-      )}
-      {opportunity && !detailHref && (accessPointKind === "reviewed" || accessPointKind === "seed") && (
-        <Link
-          href="/opportunity/plant-based-cooking-class"
-          className="mt-5 flex items-center justify-center gap-2 rounded-full border border-line/70 py-2.75 text-[13.5px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50 focus-visible:ring-offset-2"
-        >
-          View sample opportunity detail
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       )}

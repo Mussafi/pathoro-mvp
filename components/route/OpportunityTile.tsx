@@ -15,6 +15,7 @@ import {
   getWhyThisAppeared,
   isLikelyConsumerActivity,
 } from "@/lib/opportunityNarrative";
+import { computeTrustLabel, TRUST_LABEL_CLASS } from "@/lib/trustLabels";
 
 function getDisplayTags(opportunity: Opportunity): string[] {
   const tags: string[] = [];
@@ -47,6 +48,7 @@ export function OpportunityTile({
   const accessCreated = getWhatAccessThisCreates(opportunity);
   const nextAction = getNextActionSummary(opportunity);
   const consumerActivity = isLikelyConsumerActivity(opportunity);
+  const trustLabel = computeTrustLabel(opportunity);
   const className =
     "flex w-full flex-col rounded-2xl border border-l-[3px] border-line/70 border-l-green/50 bg-cream-field px-3.5 py-3.5 text-left transition" +
     (isClickable ? " hover:border-green/40 hover:border-l-green hover:bg-cream-card" : " hover:border-green/30 hover:bg-cream-card");
@@ -59,7 +61,7 @@ export function OpportunityTile({
         </span>
         {isClickable ? (
           <span className="shrink-0 rounded-full bg-green-soft px-2 py-0.5 text-[10px] font-semibold text-green">
-            Open
+            Open opportunity
           </span>
         ) : (
           <span className="shrink-0 rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
@@ -67,12 +69,18 @@ export function OpportunityTile({
           </span>
         )}
       </div>
-      <span className="mt-1 flex items-center gap-1 text-[10.5px] font-semibold text-green">
-        <RouteIcon className="h-2.5 w-2.5" strokeWidth={2} />
-        Route stop on {route?.title ?? "your selected route"}
-      </span>
+      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+        <span className="flex items-center gap-1 text-[10.5px] font-semibold text-green">
+          <RouteIcon className="h-2.5 w-2.5" strokeWidth={2} />
+          Route stop on {route?.title ?? "your selected route"}
+        </span>
+        <span className={`rounded-full border px-1.5 py-0.5 text-[9.5px] font-medium ${TRUST_LABEL_CLASS[trustLabel]}`}>
+          {trustLabel}
+        </span>
+      </div>
       <span className="mt-1 block text-[11px] font-medium text-ink-faint">
         {opportunity.opportunityType}
+        {opportunity.locationLabel ? ` · ${opportunity.locationLabel}` : ""}
       </span>
       <p
         className={`mt-1 text-[10.5px] font-semibold ${
@@ -116,8 +124,9 @@ export function OpportunityTile({
         ))}
       </div>
       {isMockSeed && (
-        <p className="mt-2 text-[10px] text-ink-faint/80">
-          Preview data — not yet a live, ingested opportunity
+        <p className="mt-2 text-[10px] leading-snug text-ink-faint/80">
+          Example access point — shown to demonstrate how this path can
+          connect to real opportunities.
         </p>
       )}
     </>
@@ -153,6 +162,7 @@ function OpportunityPreviewModal({
   const whyAppeared = getWhyThisAppeared(opportunity);
   const accessCreated = getWhatAccessThisCreates(opportunity);
   const consumerActivity = isLikelyConsumerActivity(opportunity);
+  const trustLabel = computeTrustLabel(opportunity);
 
   return (
     <div
@@ -177,6 +187,9 @@ function OpportunityPreviewModal({
                 }`}
               >
                 {consumerActivity ? "Consumer activity" : "Real opportunity"}
+              </span>
+              <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${TRUST_LABEL_CLASS[trustLabel]}`}>
+                {trustLabel}
               </span>
             </div>
             <h3 className="mt-2 font-serif text-[19px] leading-tight text-ink">
