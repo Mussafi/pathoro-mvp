@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Map as MapIcon, Mountain } from "lucide-react";
 import type { Opportunity } from "@/lib/opportunitySchema";
 import type { Route } from "@/lib/routes";
-import { getNextActionSummary } from "@/lib/opportunityNarrative";
+import { getImmediateStepLabel, getNextActionSummary } from "@/lib/opportunityNarrative";
 import { FindSomeoneAheadCard } from "@/components/opportunity/FindSomeoneAheadCard";
 import { RoleDialogueCard } from "@/components/trailmap/RoleDialogueCard";
 
@@ -48,7 +48,7 @@ export function OpportunityGuidancePanel({
         </div>
       )}
 
-      <div className="shadow-card rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
+      <div id="your-next-steps" className="shadow-card scroll-mt-6 rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
         <span className="text-[11px] font-semibold tracking-wide text-ink-faint">
           YOUR NEXT STEPS
         </span>
@@ -57,9 +57,14 @@ export function OpportunityGuidancePanel({
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-green text-[12px] font-semibold text-cream">
               1
             </span>
-            <span className="text-[12.5px] leading-relaxed text-ink-soft">
-              {getNextActionSummary(opportunity)}
-            </span>
+            <div>
+              <span className="block text-[12.5px] font-semibold text-ink">
+                {getImmediateStepLabel(opportunity)}
+              </span>
+              <span className="block text-[12px] leading-relaxed text-ink-soft">
+                {getNextActionSummary(opportunity)}
+              </span>
+            </div>
           </li>
           <li className="flex gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-[#e7c9a3] text-[12px] font-semibold text-ink-soft">

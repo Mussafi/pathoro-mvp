@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -23,6 +24,60 @@ import { getHiddenRequirementsNote, TRUST_LABEL_CLASS, type TrustLabel } from "@
 
 const EFFORT_POSITION: Record<string, number> = { Low: 18, Medium: 50, High: 82 };
 const TRUST_DOT_COUNT: Record<Opportunity["trustLevel"], number> = { Low: 2, Medium: 3, High: 5 };
+
+/** Real photography only exists for the one opportunity it was actually
+ * shot for. This is a small data lookup, not special-cased rendering —
+ * OpportunityImageCard below treats every id identically and falls back
+ * to an honest illustrative placeholder for everything not in this map,
+ * so adding a real photo for any future opportunity is just adding a row. */
+const OPPORTUNITY_IMAGE_BY_ID: Record<string, string> = {
+  "plant-based-cooking-class": "/images/cooking-class-hero.jpg",
+};
+
+function OpportunityImageCard({ opportunity, route }: { opportunity: Opportunity; route: Route | null | undefined }) {
+  const realImage = OPPORTUNITY_IMAGE_BY_ID[opportunity.id];
+  const RouteIcon = route?.icon;
+
+  return (
+    <div className="shadow-card mt-5 overflow-hidden rounded-2xl border border-line/70">
+      {realImage ? (
+        <div className="relative h-[220px] w-full">
+          <Image
+            src={realImage}
+            alt={opportunity.title}
+            fill
+            sizes="(min-width: 1024px) 700px, 100vw"
+            className="object-cover"
+          />
+        </div>
+      ) : (
+        <div className="flex h-[220px] w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-green-soft to-cream-field">
+          {RouteIcon && <RouteIcon className="h-9 w-9 text-green" strokeWidth={1.5} />}
+          <span className="px-6 text-center text-[11px] leading-relaxed text-ink-faint">
+            Illustrative only — not a photo of this specific opportunity
+          </span>
+        </div>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-cream-card px-4 py-3">
+        <div className="flex items-start gap-2">
+          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-faint" strokeWidth={1.75} />
+          <span>
+            <span className="block text-[12.5px] font-semibold text-ink">
+              {opportunity.locationLabel || "Location TBD"}
+            </span>
+            {opportunity.hostName && (
+              <span className="block text-[11.5px] text-ink-faint">{opportunity.hostName}</span>
+            )}
+          </span>
+        </div>
+        <span>
+          <span className="block text-right text-[11px] text-ink-faint">Source</span>
+          <span className="block text-[12px] font-medium text-ink">{opportunity.sourceName}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
 
 /**
  * Center column of the rich opportunity detail layout (v0.34 Part 5) —
@@ -75,17 +130,7 @@ export function OpportunityDetailCard({
         </span>
       </div>
 
-      <div className="mt-2.5 flex flex-wrap items-start justify-between gap-3">
-        <h1 className="font-serif text-[25px] leading-tight text-ink">{opportunity.title}</h1>
-        <button
-          type="button"
-          onClick={() => setSaved((s) => !s)}
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-line/70 px-3 py-1.5 text-[12px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50"
-        >
-          {saved ? "Saved" : "Save for later"}
-          <Bookmark className={`h-3.5 w-3.5 ${saved ? "fill-ink text-ink" : ""}`} strokeWidth={1.75} />
-        </button>
-      </div>
+      <h1 className="mt-2.5 font-serif text-[25px] leading-tight text-ink">{opportunity.title}</h1>
       <p className="mt-1.5 flex items-center gap-1.5 text-[12.5px] text-ink-faint">
         <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
         {opportunity.sourceName} · {opportunity.locationLabel || "Location TBD"}
@@ -95,6 +140,8 @@ export function OpportunityDetailCard({
       {opportunity.description && (
         <p className="mt-4 text-[13.5px] leading-relaxed text-ink-soft">{opportunity.description}</p>
       )}
+
+      <OpportunityImageCard opportunity={opportunity} route={route} />
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-5">
@@ -214,27 +261,48 @@ export function OpportunityDetailCard({
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        {opportunity.sourceUrl && (
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        {opportunity.sourceUrl ? (
           <a
             href={opportunity.sourceUrl}
             target="_blank"
             rel="noreferrer"
             className="flex items-center justify-center gap-1.5 rounded-full bg-green px-6 py-3 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
           >
-            Open original source
+            Take this opportunity
             <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
           </a>
+        ) : (
+          <button
+            type="button"
+            onClick={() =>
+              document.getElementById("your-next-steps")?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            className="flex items-center justify-center gap-1.5 rounded-full bg-green px-6 py-3 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+          >
+            Take this opportunity
+            <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
         )}
+        <button
+          type="button"
+          onClick={() => setSaved((s) => !s)}
+          className="flex items-center justify-center gap-1.5 rounded-full border border-line/70 px-5 py-3 text-[13.5px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50"
+        >
+          {saved ? "Saved" : "Save for later"}
+          <Bookmark className={`h-3.5 w-3.5 ${saved ? "fill-ink text-ink" : ""}`} strokeWidth={1.75} />
+        </button>
         <Link
           href={scoutHref}
-          className="flex items-center justify-center gap-2 rounded-full border border-line/70 px-6 py-3 text-[13.5px] font-medium text-ink outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50"
+          className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
         >
           Scout similar access points
-          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
-      <p className="mt-3 text-[11px] leading-snug text-ink-faint">{getNextActionSummary(opportunity)}</p>
+      <p className="mt-3 text-[11px] leading-snug text-ink-faint">
+        In this alpha, Pathoro helps you clarify and act on the opportunity — we&rsquo;ll help you
+        turn this into a next step. {getNextActionSummary(opportunity)}
+      </p>
     </div>
   );
 }

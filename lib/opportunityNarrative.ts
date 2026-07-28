@@ -72,6 +72,25 @@ export function getNextActionSummary(input: NarrativeInput): string {
   return "Reach out to take the next step.";
 }
 
+/**
+ * A short label for "Your next steps" step 1, derived from
+ * opportunityType — not hardcoded per opportunity id, so it reads right
+ * for any opportunity of that type rather than only the three named
+ * examples (v0.35 Part 4). Falls through to a generic label for any
+ * type this doesn't recognize.
+ */
+export function getImmediateStepLabel(input: Pick<NarrativeInput, "opportunityType">): string {
+  const type = input.opportunityType.toLowerCase();
+  if (type.includes("info session")) return "Check info session details";
+  if (type.includes("assistant") || type.includes("role")) return "Review assistant opportunity";
+  if (type.includes("class") || type.includes("opening")) return "View class options";
+  if (type.includes("group") || type.includes("community")) return "View group details";
+  if (type.includes("person") || type.includes("conversation")) return "Learn more about this connection";
+  if (type.includes("planning") || type.includes("requirement")) return "Review requirements";
+  if (type.includes("trial")) return "Preview this trial";
+  return "Review this opportunity";
+}
+
 const CONSUMER_ACTIVITY_TERMS = /\b(class|workshop|lesson|session|course|ticket|screening)\b/i;
 const ACCESS_TERMS =
   /\b(mentor|apprentice|grant|market|vendor|program|sourcing|supplier|business|network|community|founder|coworking|trade|export|import|resale|arbitrage)\b/i;
