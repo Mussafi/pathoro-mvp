@@ -16,6 +16,21 @@ import { TrailMapLegend } from "@/components/trailmap/TrailMapLegend";
 import { trailMapGoals, getTrailMapGoal, type TrailMapGoalId } from "@/lib/trailMapData";
 import { mapGoalToTrailMapGoal } from "@/lib/goalSpecificity";
 
+/** Only the original, broadest-appeal goals show as chips — the row stays
+ * short and elegant rather than growing with every new goal added.
+ * Newer/more specific goals (skilled trades, etc.) stay fully working via
+ * direct ?goal= links and the search box, without cluttering this row. */
+const EXAMPLE_CHIP_GOAL_IDS: TrailMapGoalId[] = [
+  "therapist",
+  "vegetarian",
+  "resale",
+  "nurse",
+  "lawyer",
+  "doctor",
+  "engineer",
+  "school-admin",
+];
+
 export default function TrailMapPage() {
   const [goalId, setGoalId] = useState<TrailMapGoalId>(trailMapGoals[0].id);
   const [unmatchedGoal, setUnmatchedGoal] = useState<string | null>(null);
@@ -73,7 +88,7 @@ export default function TrailMapPage() {
 
         <div className="mt-4">
           <TrailMapGoalSelector
-            goals={trailMapGoals}
+            goals={trailMapGoals.filter((g) => EXAMPLE_CHIP_GOAL_IDS.includes(g.id))}
             selectedGoalId={unmatchedGoal ? null : goalId}
             onSelect={handleSelectGoal}
           />

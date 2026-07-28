@@ -49,6 +49,8 @@ export function mapGoalToTrailMapGoal(goalText: string): TrailMapGoalId | null {
     return "engineer";
   }
   if (/school administrator|principal|education administrator/.test(text)) return "school-admin";
+  if (/plumber|plumbing/.test(text)) return "plumber";
+  if (/electrician|electrical apprentice|electrical trade/.test(text)) return "electrician";
   return null;
 }
 

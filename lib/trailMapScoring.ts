@@ -81,6 +81,11 @@ export type TrailMapComputedScores = {
   relationshipLeverageLabel: ScoreLabel;
   opportunityLeverageScore: number;
   opportunityLeverageLabel: ScoreLabel;
+  /** Directly from physicalPresenceNeed — how hands-on/physically demanding
+   * the day-to-day work is. Not favorable/unfavorable either way (unlike
+   * the reversed dimensions), so it's shown as a plain profile fact. */
+  physicalIntensityScore: number;
+  physicalIntensityLabel: ScoreLabel;
 };
 
 export const SCORING_DISCLAIMER =
@@ -138,6 +143,7 @@ export function computeBranchScores(f: BranchFactors): TrailMapComputedScores {
   const timeFrictionScore = scale(f.timeToCredential);
   const relationshipLeverageScore = scale(f.relationshipLeverage);
   const opportunityLeverageScore = scale(f.opportunityLeverage);
+  const physicalIntensityScore = scale(f.physicalPresenceNeed);
 
   return {
     aiRiskScore,
@@ -158,6 +164,8 @@ export function computeBranchScores(f: BranchFactors): TrailMapComputedScores {
     relationshipLeverageLabel: scoreToLabel(relationshipLeverageScore),
     opportunityLeverageScore,
     opportunityLeverageLabel: scoreToLabel(opportunityLeverageScore),
+    physicalIntensityScore,
+    physicalIntensityLabel: scoreToLabel(physicalIntensityScore),
   };
 }
 

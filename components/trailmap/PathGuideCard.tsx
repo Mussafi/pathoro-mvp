@@ -77,6 +77,16 @@ const GUIDE_CONTENT: Record<
     badge: "Verified experience",
     note: "For financial or tax advice, look for a licensed financial professional.",
   },
+  plumber: {
+    cta: "Talk to a licensed plumber",
+    subtitle: "Ask what apprenticeship, licensing, tools, and day-to-day work actually require.",
+    badge: "Licensed guide",
+  },
+  electrician: {
+    cta: "Talk to a licensed electrician",
+    subtitle: "Ask what apprenticeship, licensing, safety, and real job sites actually feel like.",
+    badge: "Licensed guide",
+  },
 };
 
 export function PathGuideCard({ goal, branch }: { goal: TrailMapGoal; branch: TrailMapBranch }) {

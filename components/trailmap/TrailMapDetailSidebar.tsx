@@ -7,6 +7,7 @@ import {
   Clock,
   Compass,
   DollarSign,
+  Dumbbell,
   GraduationCap,
   HelpCircle,
   Info,
@@ -89,6 +90,7 @@ export function TrailMapDetailSidebar({ branch }: { branch: TrailMapBranch }) {
             onToggle={() => toggleWhy("incomePotential")}
           />
           <ProfileRow icon={Compass} label="Autonomy" value={scores.autonomyLabel} />
+          <ProfileRow icon={Dumbbell} label="Physical intensity" value={scores.physicalIntensityLabel} />
           <ProfileRow icon={Brain} label="Emotional intensity" value={scores.emotionalIntensityLabel} />
           <ScoreRow
             icon={Info}

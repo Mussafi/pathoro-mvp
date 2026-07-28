@@ -11,6 +11,7 @@ function getNoteTag(body: string): string | null {
   if (lower.startsWith("hidden friction")) return "Hidden friction";
   if (lower.startsWith("better first step")) return "Better first step";
   if (lower.includes("opened doors")) return "What opened doors";
+  if (lower.startsWith("what this required")) return "What this required";
   if (lower.startsWith("ask about") || lower.startsWith("ask ")) return "What this required";
   return null;
 }
