@@ -195,6 +195,22 @@ export async function getScoutCandidatesForRequests(
   return grouped;
 }
 
+/**
+ * Looks up a single candidate by id — used by the public candidate
+ * detail page (/opportunity/candidate/[id]) and its GET API route. No
+ * token/admin-gate: a candidate row only ever contains scouted public
+ * web content (title/url/snippet) plus an opaque scout_request_id, never
+ * a requester's contact info, so it's safe to read by id the same way a
+ * seed/reviewed opportunity's id is.
+ */
+export async function getScoutCandidateById(id: string): Promise<ScoutCandidateRecord | null> {
+  if (!isSupabaseAdminConfigured() || !supabaseAdmin) return null;
+
+  const { data, error } = await supabaseAdmin.from(TABLE).select("*").eq("id", id).maybeSingle();
+  if (error || !data) return null;
+  return rowToScoutCandidateRecord(data);
+}
+
 /** Updates one candidate's status (sent to ingestion, dismissed, promoted). Admin-only. */
 export async function updateScoutCandidateStatus(
   id: string,

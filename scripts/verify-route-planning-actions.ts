@@ -28,6 +28,7 @@
  */
 import { defaultDirectionAnswers } from "../lib/direction";
 import { resolveBestNextRouteMatch } from "../lib/bestNextRouteMatch";
+import type { ScoutCandidateRecord } from "../lib/scoutCandidatesDb";
 
 const REAL_OPENINGS = "real-openings";
 const IRRELEVANT_DEFAULT = "Plant-Based Cooking Class";
@@ -115,9 +116,54 @@ for (const { label, goal, routeId, expectedTitle, mustNotBeTitle } of CASES) {
   }
 }
 
+// v0.38 "Surface real opportunity results" — a real, source-backed AI
+// candidate must outrank the demo seed for the same goal, never the
+// other way around. "Become vegetarian" normally resolves to the
+// Plant-Based Cooking Class seed; supplying a fake AI candidate for it
+// must make the candidate win instead.
+const FAKE_CANDIDATE: ScoutCandidateRecord = {
+  id: "scout-cand-test-1",
+  scoutRequestId: "scout-req-test-1",
+  title: "Real Vegetarian Cooking Meetup",
+  url: "https://example.com/real-meetup",
+  sourceName: "Example Real Source",
+  sourceType: "eventbrite",
+  snippet: "A real, source-backed meetup.",
+  likelyRouteId: REAL_OPENINGS,
+  opportunityType: "Meetup",
+  category: "class_or_workshop",
+  confidence: "high",
+  pathoroFit: "strong_opportunity",
+  whyThisMayFit: "Matches the vegetarian goal directly.",
+  leverageHint: "",
+  suggestedNextStep: "",
+  canonicalSourceLikely: true,
+  status: "candidate",
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+const priorityCheck = resolveBestNextRouteMatch({
+  reviewed: [],
+  live: [],
+  aiCandidates: [FAKE_CANDIDATE],
+  selectedRouteId: REAL_OPENINGS,
+  moveToward: "Become vegetarian",
+  location: defaultDirectionAnswers.location,
+});
+
+if (priorityCheck.accessPointKind !== "ai" || priorityCheck.bestCandidate?.id !== FAKE_CANDIDATE.id) {
+  console.error(
+    `FAIL  ai-candidate-outranks-seed  expected the real AI candidate to win over the Plant-Based Cooking Class seed but got accessPointKind="${priorityCheck.accessPointKind}" opportunity="${priorityCheck.opportunity?.title}"`
+  );
+  failed = true;
+} else {
+  console.log(`OK    ai-candidate-outranks-seed  ->  real candidate "${priorityCheck.bestCandidate.title}" beat the example seed`);
+}
+
 if (failed) {
-  console.error("\nFAILED — Best Next Route would show an irrelevant opportunity or dead-end for a known goal.");
+  console.error("\nFAILED — Best Next Route would show an irrelevant opportunity, dead-end for a known goal, or prioritize an example over a real result.");
   process.exit(1);
 } else {
-  console.log("\nAll Best Next Route relevance checks passed.");
+  console.log("\nAll Best Next Route relevance and priority checks passed.");
 }

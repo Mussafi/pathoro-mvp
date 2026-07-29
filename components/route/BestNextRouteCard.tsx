@@ -8,7 +8,7 @@ import { getOpportunityDetailHref } from "@/lib/opportunitySchema";
 import { resolveBestNextRouteMatch } from "@/lib/bestNextRouteMatch";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
 import { useLiveOpportunities } from "@/lib/useLiveOpportunities";
-import { useLatestScoutCandidates } from "@/lib/useLatestScoutCandidates";
+import { useAutoScoutOpportunity } from "@/lib/useAutoScoutOpportunity";
 import type { DirectionAnswers } from "@/lib/direction";
 import { OpportunityTile } from "@/components/route/OpportunityTile";
 import { ScoutCandidateCard } from "@/components/ScoutCandidateCard";
@@ -39,22 +39,58 @@ export function BestNextRouteCard({
   const { reviewed } = useReviewedOpportunities();
   const live = useLiveOpportunities();
 
-  const { candidates: aiCandidates } = useLatestScoutCandidates({
+  // Cheap probe (empty aiCandidates) purely to learn whether a reviewed/
+  // live Supabase opportunity already exists for this route, before
+  // deciding whether it's worth spending a real Tavily call — a real
+  // DB-backed opportunity always outranks a live search, so there's no
+  // reason to auto-scout once one is already found. Reuses
+  // resolveBestNextRouteMatch itself rather than re-implementing the
+  // reviewed-opportunity filter here.
+  const reviewedProbe = resolveBestNextRouteMatch({
+    reviewed,
+    live,
+    aiCandidates: [],
+    selectedRouteId,
+    moveToward: answers.moveToward,
+    location: answers.location,
+  });
+  const hasReviewedOpportunity = reviewedProbe.accessPointKind === "reviewed";
+
+  // Held false until just after mount, then flipped once — waits out
+  // RoutePlanningBody's own mount effect that overrides answers.moveToward
+  // from ?goal= (both fire in the same passive-effect flush and their
+  // setState calls batch into one follow-up render), so the very first
+  // render's stale default goal (defaultDirectionAnswers.moveToward) can
+  // never itself trigger a real Tavily call before the true goal is known.
+  const [readyToScout, setReadyToScout] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReadyToScout(true);
+  }, []);
+
+  // v0.38 "Surface real opportunity results": before ever falling back to
+  // an example seed, silently check for (or run) a real Tavily scout for
+  // this exact city/route/goal, so a real source-backed candidate always
+  // outranks a demo seed when one can be found.
+  const autoScout = useAutoScoutOpportunity({
+    enabled: readyToScout && !hasReviewedOpportunity,
     city: answers.location,
     routeId: selectedRouteId,
     pathGoal: answers.moveToward,
   });
+  const isScouting = autoScout.status === "checking" || autoScout.status === "scouting";
 
   // Priority: reviewed/live Supabase opportunities first, then AI-found
-  // scout candidates for this exact path, then relevant seed/mock data,
-  // then a forced fallback for a short list of known example goals (v0.36
-  // "Force route planning opportunity action"), then nothing. Shared with
-  // scripts/verify-route-planning-actions.ts so a regression in this
-  // logic fails a script run, not just a user's screen.
+  // scout candidates for this exact path (now populated by the auto-scout
+  // above, not just a prior user-initiated request), then relevant seed/
+  // mock data, then a forced fallback for a short list of known example
+  // goals (v0.36 "Force route planning opportunity action"), then
+  // nothing. Shared with scripts/verify-route-planning-actions.ts so a
+  // regression in this logic fails a script run, not just a user's screen.
   const { accessPointKind, opportunity, bestCandidate, moreCount, debug: matchDebug } = resolveBestNextRouteMatch({
     reviewed,
     live,
-    aiCandidates,
+    aiCandidates: autoScout.candidates,
     selectedRouteId,
     moveToward: answers.moveToward,
     location: answers.location,
@@ -73,20 +109,35 @@ export function BestNextRouteCard({
   // primary action when nothing has been found at all. The scout branch
   // stays unconditional (the final `else`) so the block can never render
   // nothing.
-  const showsMatchedOpportunity = Boolean(opportunity) && (accessPointKind === "reviewed" || accessPointKind === "seed");
-  const showsAiCandidate = accessPointKind === "ai" && Boolean(bestCandidate);
+  // While an auto-scout is in flight and there's no reviewed opportunity
+  // to show instead, hold off on rendering the seed/empty state — jumping
+  // straight to an example (or "nothing found") and then swapping to a
+  // real result a second later would read as a flicker/bug, not a real
+  // pipeline doing real work. See v0.38 PART 9.
+  const showLoading = isScouting && accessPointKind !== "reviewed";
+  const showsMatchedOpportunity =
+    !showLoading && Boolean(opportunity) && (accessPointKind === "reviewed" || accessPointKind === "seed");
+  const showsAiCandidate = !showLoading && accessPointKind === "ai" && Boolean(bestCandidate);
   const hasOpportunity = showsMatchedOpportunity || showsAiCandidate;
-  const nextActionType: "opportunity" | "ai" | "scout" = showsMatchedOpportunity
-    ? "opportunity"
-    : showsAiCandidate
-      ? "ai"
-      : "scout";
-  const sectionTitle = hasOpportunity ? "Your next opportunity" : "Scout the opportunity landscape";
-  const reasonChosen = showsMatchedOpportunity
-    ? `matched ${accessPointKind} opportunity "${opportunity?.title}" for routeId="${selectedRouteId}"`
-    : showsAiCandidate
-      ? `matched unreviewed scout candidate "${bestCandidate?.title}" for routeId="${selectedRouteId}"`
-      : `no reviewed/live/seed/forced-fallback opportunity and no scout candidate for goal="${answers.moveToward}" on routeId="${selectedRouteId}"`;
+  const nextActionType: "opportunity" | "ai" | "scout" | "scouting" = showLoading
+    ? "scouting"
+    : showsMatchedOpportunity
+      ? "opportunity"
+      : showsAiCandidate
+        ? "ai"
+        : "scout";
+  const sectionTitle = showLoading
+    ? "Scouting the opportunity landscape…"
+    : hasOpportunity
+      ? "Your next opportunity"
+      : "Scout the opportunity landscape";
+  const reasonChosen = showLoading
+    ? `auto-scout in progress (status="${autoScout.status}") for goal="${answers.moveToward}" on routeId="${selectedRouteId}"`
+    : showsMatchedOpportunity
+      ? `matched ${accessPointKind} opportunity "${opportunity?.title}" for routeId="${selectedRouteId}"`
+      : showsAiCandidate
+        ? `matched unreviewed scout candidate "${bestCandidate?.title}" for routeId="${selectedRouteId}"`
+        : `no reviewed/live/seed/forced-fallback opportunity and no scout candidate (auto-scout status="${autoScout.status}") for goal="${answers.moveToward}" on routeId="${selectedRouteId}"`;
 
   // ?debugRoute=1 (or NODE_ENV=development) shows a small panel with the
   // exact matching decision this render made — added after a user report
@@ -155,6 +206,7 @@ export function BestNextRouteCard({
               : "none"}
           </p>
           <p>forced-fallback id checked: {matchDebug.forcedFallbackId ?? "(no fallback match)"}</p>
+          <p>auto-scout status: {autoScout.status} ({autoScout.candidates.length} candidate(s))</p>
           <p>matchedOpportunity: {opportunity ? `"${opportunity.title}" (${opportunity.id}, ${accessPointKind})` : "null"}</p>
           <p>opportunity href: {detailHref ?? "null"}</p>
           <p>nextAction type: {nextActionType}</p>
@@ -193,7 +245,20 @@ export function BestNextRouteCard({
       <div className="mt-4 border-t border-line/70 pt-4">
         <span className="block text-[13px] font-semibold text-ink">{sectionTitle}</span>
 
-        {showsMatchedOpportunity && opportunity ? (
+        {showLoading ? (
+          <div className="mt-2.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-4">
+            <div className="flex items-center gap-2">
+              <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-green/30 border-t-green" />
+              <span className="text-[13.5px] font-semibold text-ink">
+                Scouting the opportunity landscape…
+              </span>
+            </div>
+            <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
+              Pathoro is checking real sources for classes, programs, openings, and access points
+              that fit this route.
+            </p>
+          </div>
+        ) : showsMatchedOpportunity && opportunity ? (
           <div className="mt-2.5">
             <p className="mb-2 text-[12px] leading-relaxed text-ink-soft">
               Pathoro found an access point that fits this route.
@@ -201,6 +266,11 @@ export function BestNextRouteCard({
             <span className="mb-2 block text-[11px] font-medium text-ink-faint">
               {ACCESS_POINT_HEADING[accessPointKind as "reviewed" | "seed"]}
             </span>
+            {accessPointKind === "seed" && (
+              <p className="mb-2 text-[11px] leading-snug text-ink-faint">
+                Example shown until Pathoro scouts a real source for this path.
+              </p>
+            )}
             <OpportunityTile opportunity={opportunity} location={answers.location} />
             {moreCount > 0 && (
               <p className="mt-2 text-[11px] text-ink-faint">
@@ -253,19 +323,37 @@ export function BestNextRouteCard({
         ) : showsAiCandidate && bestCandidate ? (
           <div className="mt-2.5">
             <p className="mb-2 text-[12px] leading-relaxed text-ink-soft">
-              Pathoro found an access point that fits this route.
+              Pathoro found a real source that may fit this route. Review details before relying
+              on it.
             </p>
             <span className="mb-2 block text-[11px] font-medium text-ink-faint">
               {ACCESS_POINT_HEADING.ai}
             </span>
             <ScoutCandidateCard candidate={bestCandidate} />
-            <div className="mt-3">
-              <a
-                href="#scout-request"
-                className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
-              >
-                Scout similar access points
-              </a>
+            <div className="shadow-card mt-3.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-3.5">
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href={`/opportunity/candidate/${bestCandidate.id}`}
+                  className="flex items-center justify-center gap-1.5 rounded-full bg-green px-5 py-2.75 text-[13.5px] font-semibold text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+                >
+                  Check this opportunity
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                <a
+                  href={bestCandidate.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
+                >
+                  View source
+                </a>
+                <a
+                  href="#scout-request"
+                  className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
+                >
+                  Scout more like this
+                </a>
+              </div>
             </div>
           </div>
         ) : (
