@@ -6,12 +6,21 @@ import { mergeReviewedOnly, getRelevantSeedOpportunities, filterForRoute } from 
 export type AccessPointKind = "reviewed" | "ai" | "seed" | "none";
 
 /**
- * Safety-net matches for goals whose seed opportunity must surface even
- * if the normal route/keyword matching pipeline below fails for any
- * reason (routeId drift, a relevanceKeywords edit, a stale deploy) — see
- * v0.36 "Force route planning opportunity action". Checked only after
- * reviewed, AI-candidate, and normal seed matching have all come up
- * empty, so a real reviewed opportunity always still wins.
+ * Explicit relevance mapping for goals whose seed opportunity must
+ * surface even if the normal route/keyword matching pipeline below fails
+ * for any reason (routeId drift, a relevanceKeywords edit, a stale
+ * deploy) — see v0.36 "Force route planning opportunity action". Checked
+ * only after reviewed, AI-candidate, and normal seed matching have all
+ * come up empty, so a real reviewed opportunity always still wins.
+ *
+ * This is intentionally the ONLY fallback layer — see "Prevent
+ * irrelevant opportunity fallback". An earlier route-scoped hard default
+ * (any unmatched Real Openings goal → Plant-Based Cooking Class) was
+ * removed because it showed the cooking class for goals like "licensed
+ * therapist" that have nothing to do with it. Relevance to the goal is
+ * the only thing allowed to put an opportunity in front of a user — if a
+ * goal has no matching entry here (and no relevanceKeywords match via
+ * getRelevantSeedOpportunities), the card must fall through to Scout.
  *
  * Order matters: matchers are checked top to bottom and the first hit
  * wins, so keywords broad enough to appear across goals ("class" alone,
@@ -38,32 +47,16 @@ const FORCED_SEED_MATCHERS: { keywords: string[]; id: string }[] = [
     keywords: ["wedding photographer", "wedding photography", "wedding", "photography", "photographer"],
     id: "wedding-photographer-assistant-opportunity",
   },
+  {
+    keywords: ["therapist", "licensed therapist", "counseling", "counselor", "mental health", "therapy"],
+    id: "therapist-program-info-session",
+  },
 ];
 
 export function getForcedSeedOpportunity(goal: string): Opportunity | undefined {
   const g = goal.toLowerCase();
   const match = FORCED_SEED_MATCHERS.find((m) => m.keywords.some((k) => g.includes(k)));
   return match ? routeOpportunities.find((o) => o.id === match.id) : undefined;
-}
-
-/**
- * Last-resort, route-scoped default — see "Use opportunity fallback for
- * real openings route". `currentGoal` can be wrong or stale for reasons
- * that have nothing to do with matching logic (e.g. RoutePlanningBody's
- * ?goal= hand-off permanently persists whatever goal was last in the
- * URL into localStorage, so a single visit to an unmatched goal leaves
- * every later plain `/route-planning` visit looking unmatched too).
- * Real Openings Route promises a concrete access point, so it gets a
- * hard default instead of ever falling through to Scout — every other
- * route keeps the existing "fall through to Scout" behavior.
- */
-const ROUTE_DEFAULT_OPPORTUNITY: Record<string, string> = {
-  "real-openings": "plant-based-cooking-class",
-};
-
-export function getRouteFallbackOpportunity(selectedRouteId: string): Opportunity | undefined {
-  const defaultId = ROUTE_DEFAULT_OPPORTUNITY[selectedRouteId];
-  return defaultId ? routeOpportunities.find((o) => o.id === defaultId) : undefined;
 }
 
 export type BestNextRouteMatch = {
@@ -79,7 +72,6 @@ export type BestNextRouteMatch = {
     seedCandidates: { id: string; title: string }[];
     aiCandidateCount: number;
     forcedFallbackId: string | null;
-    routeFallbackId: string | null;
   };
 };
 
@@ -119,11 +111,7 @@ export function resolveBestNextRouteMatch(input: {
     !reviewedOpportunity && !bestCandidate && !seedForRoute[0]
       ? getForcedSeedOpportunity(input.moveToward)
       : undefined;
-  const routeFallback =
-    !reviewedOpportunity && !bestCandidate && !seedForRoute[0] && !forcedFallback
-      ? getRouteFallbackOpportunity(input.selectedRouteId)
-      : undefined;
-  const seedOpportunity = seedForRoute[0] ?? forcedFallback ?? routeFallback;
+  const seedOpportunity = seedForRoute[0] ?? forcedFallback;
 
   const accessPointKind: AccessPointKind = reviewedOpportunity
     ? "reviewed"
@@ -146,7 +134,6 @@ export function resolveBestNextRouteMatch(input: {
       seedCandidates: seedForRoute.map((o) => ({ id: o.id, title: o.title })),
       aiCandidateCount: input.aiCandidates.length,
       forcedFallbackId: forcedFallback?.id ?? null,
-      routeFallbackId: routeFallback?.id ?? null,
     },
   };
 }

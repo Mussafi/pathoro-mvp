@@ -155,7 +155,6 @@ export function BestNextRouteCard({
               : "none"}
           </p>
           <p>forced-fallback id checked: {matchDebug.forcedFallbackId ?? "(no fallback match)"}</p>
-          <p>route-fallback id checked: {matchDebug.routeFallbackId ?? "(no route default for this routeId)"}</p>
           <p>matchedOpportunity: {opportunity ? `"${opportunity.title}" (${opportunity.id}, ${accessPointKind})` : "null"}</p>
           <p>opportunity href: {detailHref ?? "null"}</p>
           <p>nextAction type: {nextActionType}</p>
