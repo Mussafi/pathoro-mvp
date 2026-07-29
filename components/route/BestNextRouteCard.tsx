@@ -66,6 +66,19 @@ export function BestNextRouteCard({
 
   const personalSentence = `You said “${answers.reachable}” would make this more reachable, so Pathoro opened ${selected.title} first.`;
 
+  // Every accessPointKind maps to exactly one of these three render
+  // branches below, and the third (scout) branch is unconditional — so
+  // "Your next step" always renders *something* actionable, never an
+  // empty gap. nextActionType is surfaced in the debug panel so a "still
+  // broken" report can say which branch actually rendered.
+  const showsMatchedOpportunity = Boolean(opportunity) && (accessPointKind === "reviewed" || accessPointKind === "seed");
+  const showsAiCandidate = accessPointKind === "ai" && Boolean(bestCandidate);
+  const nextActionType: "opportunity" | "ai" | "scout" = showsMatchedOpportunity
+    ? "opportunity"
+    : showsAiCandidate
+      ? "ai"
+      : "scout";
+
   // ?debugRoute=1 (or NODE_ENV=development) shows a small panel with the
   // exact matching decision this render made — added after a user report
   // that the live app kept showing the empty state while every local
@@ -115,7 +128,7 @@ export function BestNextRouteCard({
           <p>commit: {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "(not set — not a Vercel build, or env not exposed)"}</p>
           <p>url goal param: {debug.goalParam ?? "(none)"}</p>
           <p>raw localStorage moveToward: {debug.rawStoredMoveToward ?? "(none stored — using default)"}</p>
-          <p>activeGoal passed to BestNextRouteCard: {answers.moveToward || "(empty)"}</p>
+          <p>currentGoal (activeGoal passed to BestNextRouteCard): {answers.moveToward || "(empty)"}</p>
           <p>reachable answer: {answers.reachable || "(empty)"}</p>
           <p>selectedRouteId: {selectedRouteId}</p>
           <p>selectedRoute title: {selected.title}</p>
@@ -135,14 +148,8 @@ export function BestNextRouteCard({
           <p>forced-fallback id checked: {matchDebug.forcedFallbackId ?? "(no fallback match)"}</p>
           <p>matchedOpportunity: {opportunity ? `"${opportunity.title}" (${opportunity.id}, ${accessPointKind})` : "null"}</p>
           <p>opportunity href: {detailHref ?? "null"}</p>
-          {accessPointKind === "none" && (
-            <p>
-              why empty state: no reviewed/live opportunity for routeId=&quot;{selectedRouteId}&quot;; no AI
-              scout candidate; no seed match in {matchDebug.seedCandidates.length}{" "}
-              candidates for routeId=&quot;{selectedRouteId}&quot;; no forced-fallback keyword match for
-              goal=&quot;{answers.moveToward}&quot;
-            </p>
-          )}
+          <p>nextAction type: {nextActionType}</p>
+          <p>top action block rendered: yes ({nextActionType})</p>
         </div>
       )}
 
@@ -166,6 +173,94 @@ export function BestNextRouteCard({
           </div>
         </div>
       )}
+
+      {/* REQUIRED action block — always renders one of three branches
+          below, right after "Suggested from your answers" and before
+          "Why this route" / "Route steps", so the CTA is never pushed
+          below route context the user has to scroll past first. */}
+      <div className="mt-4 border-t border-line/70 pt-4">
+        <span className="block text-[13px] font-semibold text-ink">Your next step</span>
+
+        {showsMatchedOpportunity && opportunity ? (
+          <div className="mt-2.5">
+            <span className="mb-2 block text-[11px] font-medium text-ink-faint">
+              {ACCESS_POINT_HEADING[accessPointKind as "reviewed" | "seed"]}
+            </span>
+            <OpportunityTile opportunity={opportunity} location={answers.location} />
+            {moreCount > 0 && (
+              <p className="mt-2 text-[11px] text-ink-faint">
+                +{moreCount} more local {moreCount === 1 ? "opportunity" : "opportunities"} for this route
+              </p>
+            )}
+            {previewMarkers.length > 0 && (
+              <div className="mt-2.5 flex flex-col gap-1.5">
+                {previewMarkers.map((marker) => (
+                  <div
+                    key={marker.id}
+                    className="rounded-2xl border border-line/70 bg-cream-field px-3 py-2"
+                  >
+                    <span className="text-[9.5px] font-semibold uppercase tracking-wide text-green">
+                      Trail marker · {MARKER_TYPE_LABELS[marker.markerType]}
+                    </span>
+                    <p className="mt-0.5 text-[11.5px] leading-snug text-ink-soft">
+                      {marker.body}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {detailHref && (
+              <div className="shadow-card mt-3.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-3.5">
+                <div className="mt-2.5 flex flex-wrap items-center gap-3">
+                  <Link
+                    href={`${detailHref}?openTake=1`}
+                    className="flex items-center justify-center gap-1.5 rounded-full bg-green px-5 py-2.75 text-[13.5px] font-semibold text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+                  >
+                    Take this opportunity
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                  <Link
+                    href={detailHref}
+                    className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
+                  >
+                    View details
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : showsAiCandidate && bestCandidate ? (
+          <div className="mt-2.5">
+            <span className="mb-2 block text-[11px] font-medium text-ink-faint">
+              {ACCESS_POINT_HEADING.ai}
+            </span>
+            <ScoutCandidateCard candidate={bestCandidate} />
+          </div>
+        ) : (
+          <div className="mt-2.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-4">
+            <div className="flex items-center gap-2">
+              <Compass className="h-4 w-4 text-green" strokeWidth={1.75} />
+              <span className="text-[13.5px] font-semibold text-ink">
+                Pathoro can scout access points for this path.
+              </span>
+            </div>
+            <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
+              No reviewed opportunity is available yet. Pathoro can look for real classes,
+              events, openings, programs, people, and local access points that fit this route.
+            </p>
+            <a
+              href="#scout-request"
+              className="mt-3 flex items-center justify-center gap-2 rounded-full bg-green px-5 py-2.5 text-[13px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+            >
+              Scout access points
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+            <p className="mt-2 text-[11px] leading-snug text-ink-faint">
+              This is how this path becomes more concrete.
+            </p>
+          </div>
+        )}
+      </div>
 
       <p className="mt-3 text-[12.5px] leading-relaxed text-ink-soft">
         {selected.description}
@@ -196,95 +291,6 @@ export function BestNextRouteCard({
           ))}
         </ol>
       </div>
-
-      {opportunity && (accessPointKind === "reviewed" || accessPointKind === "seed") && (
-        <div className="mt-4 border-t border-line/70 pt-4">
-          <span className="mb-2 block text-[13px] font-semibold text-ink">
-            {ACCESS_POINT_HEADING[accessPointKind]}
-          </span>
-          <OpportunityTile opportunity={opportunity} location={answers.location} />
-          {moreCount > 0 && (
-            <p className="mt-2 text-[11px] text-ink-faint">
-              +{moreCount} more local {moreCount === 1 ? "opportunity" : "opportunities"} for this route
-            </p>
-          )}
-          {previewMarkers.length > 0 && (
-            <div className="mt-2.5 flex flex-col gap-1.5">
-              {previewMarkers.map((marker) => (
-                <div
-                  key={marker.id}
-                  className="rounded-2xl border border-line/70 bg-cream-field px-3 py-2"
-                >
-                  <span className="text-[9.5px] font-semibold uppercase tracking-wide text-green">
-                    Trail marker · {MARKER_TYPE_LABELS[marker.markerType]}
-                  </span>
-                  <p className="mt-0.5 text-[11.5px] leading-snug text-ink-soft">
-                    {marker.body}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-          {detailHref && (
-            <div className="shadow-card mt-3.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-3.5">
-              <span className="block text-[13px] font-semibold text-ink">
-                Ready to take this opportunity?
-              </span>
-              <div className="mt-2.5 flex flex-wrap items-center gap-3">
-                <Link
-                  href={`${detailHref}?openTake=1`}
-                  className="flex items-center justify-center gap-1.5 rounded-full bg-green px-5 py-2.75 text-[13.5px] font-semibold text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
-                >
-                  Take this opportunity
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-                <Link
-                  href={detailHref}
-                  className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
-                >
-                  View details
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {accessPointKind === "ai" && bestCandidate && (
-        <div className="mt-4 border-t border-line/70 pt-4">
-          <span className="mb-2 block text-[13px] font-semibold text-ink">
-            {ACCESS_POINT_HEADING.ai}
-          </span>
-          <ScoutCandidateCard candidate={bestCandidate} />
-        </div>
-      )}
-
-      {accessPointKind === "none" && (
-        <div className="mt-4 border-t border-line/70 pt-4">
-          <div className="rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-4">
-            <div className="flex items-center gap-2">
-              <Compass className="h-4 w-4 text-green" strokeWidth={1.75} />
-              <span className="text-[13.5px] font-semibold text-ink">
-                Pathoro can scout access points for this path.
-              </span>
-            </div>
-            <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
-              No reviewed opportunity is available yet. Ask Pathoro to look for real classes,
-              events, openings, people, programs, or local access points.
-            </p>
-            <a
-              href="#scout-request"
-              className="mt-3 flex items-center justify-center gap-2 rounded-full bg-green px-5 py-2.5 text-[13px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
-            >
-              Scout access points
-              <ArrowRight className="h-3.5 w-3.5" />
-            </a>
-            <p className="mt-2 text-[11px] leading-snug text-ink-faint">
-              This is how this path becomes more concrete.
-            </p>
-          </div>
-        </div>
-      )}
 
       <button
         type="button"

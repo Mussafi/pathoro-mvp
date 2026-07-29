@@ -21,7 +21,16 @@ export type AccessPointKind = "reviewed" | "ai" | "seed" | "none";
  */
 const FORCED_SEED_MATCHERS: { keywords: string[]; id: string }[] = [
   {
-    keywords: ["vegetarian", "plant-based", "plant based", "vegan", "plant-forward"],
+    keywords: [
+      "vegetarian",
+      "plant-based",
+      "plant based",
+      "vegan",
+      "plant-forward",
+      "habit",
+      "lifestyle",
+      "cooking",
+    ],
     id: "plant-based-cooking-class",
   },
   { keywords: ["hvac"], id: "hvac-apprenticeship-info-session" },

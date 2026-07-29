@@ -29,6 +29,12 @@ const CASES: { goal: string; expectedTitle: string | null }[] = [
   { goal: "HVAC technician", expectedTitle: "HVAC Apprenticeship Info Session" },
   { goal: "wedding photographer", expectedTitle: "Wedding Photographer Assistant Opportunity" },
   { goal: "rare obscure path", expectedTitle: null },
+  // No goal at all (empty moveToward) must still resolve to the scout
+  // fallback, never nothing — this is the code-level guarantee behind
+  // "the card must still render the scout action block" even when
+  // currentGoal is empty, independent of whatever default goal text the
+  // app's onboarding form happens to ship with.
+  { goal: "", expectedTitle: null },
 ];
 
 const selectedRouteId = mapReachableToRouteId(defaultDirectionAnswers.reachable);
