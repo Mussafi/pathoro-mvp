@@ -35,7 +35,7 @@ const FORCED_SEED_MATCHERS: { keywords: string[]; id: string }[] = [
   },
   { keywords: ["hvac"], id: "hvac-apprenticeship-info-session" },
   {
-    keywords: ["wedding photographer", "wedding photography", "photography", "photographer"],
+    keywords: ["wedding photographer", "wedding photography", "wedding", "photography", "photographer"],
     id: "wedding-photographer-assistant-opportunity",
   },
 ];

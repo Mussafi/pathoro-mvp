@@ -24,7 +24,7 @@ type BestNextRouteCardProps = {
 
 const ACCESS_POINT_HEADING = {
   reviewed: "Reviewed access point",
-  ai: "AI-found access points",
+  ai: "Unreviewed scout candidate",
   seed: "Example access point",
 } as const;
 
@@ -66,18 +66,27 @@ export function BestNextRouteCard({
 
   const personalSentence = `You said “${answers.reachable}” would make this more reachable, so Pathoro opened ${selected.title} first.`;
 
-  // Every accessPointKind maps to exactly one of these three render
-  // branches below, and the third (scout) branch is unconditional — so
-  // "Your next step" always renders *something* actionable, never an
-  // empty gap. nextActionType is surfaced in the debug panel so a "still
-  // broken" report can say which branch actually rendered.
+  // Product rule (v0.36 "Prioritize opportunity action over scout"):
+  // whenever Pathoro has found *any* opportunity — reviewed, example, or
+  // an unreviewed scout candidate — that's the primary next step and
+  // scout only appears as a secondary link. Scout only becomes the
+  // primary action when nothing has been found at all. The scout branch
+  // stays unconditional (the final `else`) so the block can never render
+  // nothing.
   const showsMatchedOpportunity = Boolean(opportunity) && (accessPointKind === "reviewed" || accessPointKind === "seed");
   const showsAiCandidate = accessPointKind === "ai" && Boolean(bestCandidate);
+  const hasOpportunity = showsMatchedOpportunity || showsAiCandidate;
   const nextActionType: "opportunity" | "ai" | "scout" = showsMatchedOpportunity
     ? "opportunity"
     : showsAiCandidate
       ? "ai"
       : "scout";
+  const sectionTitle = hasOpportunity ? "Your next opportunity" : "Scout the opportunity landscape";
+  const reasonChosen = showsMatchedOpportunity
+    ? `matched ${accessPointKind} opportunity "${opportunity?.title}" for routeId="${selectedRouteId}"`
+    : showsAiCandidate
+      ? `matched unreviewed scout candidate "${bestCandidate?.title}" for routeId="${selectedRouteId}"`
+      : `no reviewed/live/seed/forced-fallback opportunity and no scout candidate for goal="${answers.moveToward}" on routeId="${selectedRouteId}"`;
 
   // ?debugRoute=1 (or NODE_ENV=development) shows a small panel with the
   // exact matching decision this render made — added after a user report
@@ -149,7 +158,7 @@ export function BestNextRouteCard({
           <p>matchedOpportunity: {opportunity ? `"${opportunity.title}" (${opportunity.id}, ${accessPointKind})` : "null"}</p>
           <p>opportunity href: {detailHref ?? "null"}</p>
           <p>nextAction type: {nextActionType}</p>
-          <p>top action block rendered: yes ({nextActionType})</p>
+          <p>reason chosen: {reasonChosen}</p>
         </div>
       )}
 
@@ -177,12 +186,18 @@ export function BestNextRouteCard({
       {/* REQUIRED action block — always renders one of three branches
           below, right after "Suggested from your answers" and before
           "Why this route" / "Route steps", so the CTA is never pushed
-          below route context the user has to scroll past first. */}
+          below route context the user has to scroll past first. An
+          opportunity (reviewed, example, or unreviewed scout candidate)
+          is always primary; scout is only primary once nothing has been
+          found. */}
       <div className="mt-4 border-t border-line/70 pt-4">
-        <span className="block text-[13px] font-semibold text-ink">Your next step</span>
+        <span className="block text-[13px] font-semibold text-ink">{sectionTitle}</span>
 
         {showsMatchedOpportunity && opportunity ? (
           <div className="mt-2.5">
+            <p className="mb-2 text-[12px] leading-relaxed text-ink-soft">
+              Pathoro found an access point that fits this route.
+            </p>
             <span className="mb-2 block text-[11px] font-medium text-ink-faint">
               {ACCESS_POINT_HEADING[accessPointKind as "reviewed" | "seed"]}
             </span>
@@ -211,7 +226,7 @@ export function BestNextRouteCard({
             )}
             {detailHref && (
               <div className="shadow-card mt-3.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-3.5">
-                <div className="mt-2.5 flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <Link
                     href={`${detailHref}?openTake=1`}
                     className="flex items-center justify-center gap-1.5 rounded-full bg-green px-5 py-2.75 text-[13.5px] font-semibold text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
@@ -225,28 +240,45 @@ export function BestNextRouteCard({
                   >
                     View details
                   </Link>
+                  <a
+                    href="#scout-request"
+                    className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
+                  >
+                    Scout similar access points
+                  </a>
                 </div>
               </div>
             )}
           </div>
         ) : showsAiCandidate && bestCandidate ? (
           <div className="mt-2.5">
+            <p className="mb-2 text-[12px] leading-relaxed text-ink-soft">
+              Pathoro found an access point that fits this route.
+            </p>
             <span className="mb-2 block text-[11px] font-medium text-ink-faint">
               {ACCESS_POINT_HEADING.ai}
             </span>
             <ScoutCandidateCard candidate={bestCandidate} />
+            <div className="mt-3">
+              <a
+                href="#scout-request"
+                className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
+              >
+                Scout similar access points
+              </a>
+            </div>
           </div>
         ) : (
           <div className="mt-2.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-4">
             <div className="flex items-center gap-2">
               <Compass className="h-4 w-4 text-green" strokeWidth={1.75} />
               <span className="text-[13.5px] font-semibold text-ink">
-                Pathoro can scout access points for this path.
+                Pathoro has not found a concrete access point yet.
               </span>
             </div>
             <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
-              No reviewed opportunity is available yet. Pathoro can look for real classes,
-              events, openings, programs, people, and local access points that fit this route.
+              Ask Pathoro to look for real classes, events, openings, programs, people, and local
+              access points that fit this route.
             </p>
             <a
               href="#scout-request"
