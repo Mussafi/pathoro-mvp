@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Compass, Heart, Lock, Sparkles, Star } from "lucide-react";
 import { routes } from "@/lib/routes";
 import { getOpportunityDetailHref } from "@/lib/opportunitySchema";
-import { mergeReviewedOnly, getRelevantSeedOpportunities, filterForRoute } from "@/lib/reviewedOpportunities";
+import { resolveBestNextRouteMatch } from "@/lib/bestNextRouteMatch";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
 import { useLiveOpportunities } from "@/lib/useLiveOpportunities";
 import { useLatestScoutCandidates } from "@/lib/useLatestScoutCandidates";
@@ -38,50 +39,54 @@ export function BestNextRouteCard({
   const { reviewed } = useReviewedOpportunities();
   const live = useLiveOpportunities();
 
-  // Priority: reviewed/live Supabase opportunities first, then AI-found
-  // scout candidates for this exact path, then relevant seed/mock data,
-  // then nothing — see "Hide irrelevant seed opportunities" in the v0.18
-  // task notes. A vegetarian cooking class should never stand in as the
-  // access point for "build wealth."
-  const reviewedForRoute = filterForRoute(
-    mergeReviewedOnly(reviewed, live),
-    selectedRouteId,
-    answers.location
-  );
-  const reviewedOpportunity = reviewedForRoute[0];
-  const moreReviewedCount = Math.max(reviewedForRoute.length - 1, 0);
-
   const { candidates: aiCandidates } = useLatestScoutCandidates({
     city: answers.location,
     routeId: selectedRouteId,
     pathGoal: answers.moveToward,
   });
-  const bestCandidate = !reviewedOpportunity
-    ? aiCandidates.find((c) => c.status !== "dismissed")
-    : undefined;
 
-  const seedForRoute =
-    !reviewedOpportunity && !bestCandidate
-      ? filterForRoute(getRelevantSeedOpportunities(answers.moveToward), selectedRouteId, answers.location)
-      : [];
-  const seedOpportunity = seedForRoute[0];
-  const moreSeedCount = Math.max(seedForRoute.length - 1, 0);
+  // Priority: reviewed/live Supabase opportunities first, then AI-found
+  // scout candidates for this exact path, then relevant seed/mock data,
+  // then a forced fallback for a short list of known example goals (v0.36
+  // "Force route planning opportunity action"), then nothing. Shared with
+  // scripts/verify-route-planning-actions.ts so a regression in this
+  // logic fails a script run, not just a user's screen.
+  const { accessPointKind, opportunity, bestCandidate, moreCount } = resolveBestNextRouteMatch({
+    reviewed,
+    live,
+    aiCandidates,
+    selectedRouteId,
+    moveToward: answers.moveToward,
+    location: answers.location,
+  });
 
-  const accessPointKind: keyof typeof ACCESS_POINT_HEADING | "none" = reviewedOpportunity
-    ? "reviewed"
-    : bestCandidate
-      ? "ai"
-      : seedOpportunity
-        ? "seed"
-        : "none";
-
-  const opportunity = accessPointKind === "reviewed" ? reviewedOpportunity : seedOpportunity;
-  const moreCount = accessPointKind === "reviewed" ? moreReviewedCount : moreSeedCount;
   const detailHref = opportunity ? getOpportunityDetailHref(opportunity) : undefined;
   const { markers: trailMarkers } = useTrailMarkers({ opportunityId: opportunity?.id });
   const previewMarkers = trailMarkers.slice(0, 2);
 
   const personalSentence = `You said “${answers.reachable}” would make this more reachable, so Pathoro opened ${selected.title} first.`;
+
+  // ?debugRoute=1 (or NODE_ENV=development) shows a small panel with the
+  // exact matching decision this render made — added after a user report
+  // that the live app kept showing the empty state while every local
+  // check passed, to make it possible to check whether a "still broken"
+  // report is a code bug or a stale deployment. Read post-mount (not via
+  // a lazy useState initializer) so the static-prerendered HTML always
+  // matches the client's first render and this never risks a hydration
+  // mismatch in the card under scrutiny — same pattern already used for
+  // reading ?goal= in RoutePlanningBody.tsx.
+  const [debug, setDebug] = useState<{ show: boolean; goalParam: string | null }>({
+    show: process.env.NODE_ENV === "development",
+    goalParam: null,
+  });
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDebug({
+      show: process.env.NODE_ENV === "development" || params.get("debugRoute") === "1",
+      goalParam: params.get("goal"),
+    });
+  }, []);
 
   return (
     <div
@@ -94,6 +99,24 @@ export function BestNextRouteCard({
         </span>
         <span className="text-[15px] font-semibold text-ink">Best next route</span>
       </div>
+
+      {debug.show && (
+        <div className="mt-3 rounded-2xl border border-amber-400/60 bg-amber-50 px-3.5 py-3 font-mono text-[10.5px] leading-relaxed text-amber-900">
+          <p className="font-semibold">DEBUG — Best Next Route (?debugRoute=1)</p>
+          <p>commit: {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "(not set — not a Vercel build, or env not exposed)"}</p>
+          <p>url goal param: {debug.goalParam ?? "(none)"}</p>
+          <p>activeGoal / moveToward: {answers.moveToward || "(empty)"}</p>
+          <p>selectedRouteId: {selectedRouteId}</p>
+          <p>matchedOpportunity: {opportunity ? `"${opportunity.title}" (${accessPointKind})` : "null"}</p>
+          <p>opportunity href: {detailHref ?? "null"}</p>
+          {accessPointKind === "none" && (
+            <p>
+              why empty state: no reviewed/live opportunity for routeId=&quot;{selectedRouteId}&quot;; no AI
+              scout candidate; no seed or forced-fallback match for goal=&quot;{answers.moveToward}&quot;
+            </p>
+          )}
+        </div>
+      )}
 
       <h3 className="mt-3 text-[17px] font-semibold text-ink">{selected.title}</h3>
 
@@ -175,20 +198,25 @@ export function BestNextRouteCard({
             </div>
           )}
           {detailHref && (
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Link
-                href={`${detailHref}?openTake=1`}
-                className="flex items-center justify-center gap-1.5 rounded-full bg-green px-5 py-2.5 text-[13px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
-              >
-                Take this opportunity
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-              <Link
-                href={detailHref}
-                className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
-              >
-                View details
-              </Link>
+            <div className="shadow-card mt-3.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-3.5">
+              <span className="block text-[13px] font-semibold text-ink">
+                Ready to take this opportunity?
+              </span>
+              <div className="mt-2.5 flex flex-wrap items-center gap-3">
+                <Link
+                  href={`${detailHref}?openTake=1`}
+                  className="flex items-center justify-center gap-1.5 rounded-full bg-green px-5 py-2.75 text-[13.5px] font-semibold text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+                >
+                  Take this opportunity
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+                <Link
+                  href={detailHref}
+                  className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
+                >
+                  View details
+                </Link>
+              </div>
             </div>
           )}
         </div>

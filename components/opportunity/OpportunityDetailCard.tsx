@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -101,15 +101,20 @@ export function OpportunityDetailCard({
   scoutHref: string;
 }) {
   const [saved, setSaved] = useState(false);
+  const [takeModalOpen, setTakeModalOpen] = useState(false);
   // Lets an external "Take this opportunity" link (e.g. Best Next Route's
   // access-point card) land here with the action already focused, instead
   // of just linking to the page and leaving the user to find the button.
-  // Lazy-initialized (not an effect) so there's no flash of the closed
-  // modal before it opens — window is undefined during SSR, so this
-  // always reads false there and picks up the real value on first client render.
-  const [takeModalOpen, setTakeModalOpen] = useState(
-    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("openTake") === "1"
-  );
+  // Read post-mount, same as ?goal= in RoutePlanningBody.tsx, so a direct
+  // page load's server HTML (no window) always matches the client's
+  // first render — a lazy useState initializer would open the modal one
+  // render earlier than hydration expects and risk a mismatch.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("openTake") === "1") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTakeModalOpen(true);
+    }
+  }, []);
   const consumerActivity = isLikelyConsumerActivity(opportunity);
   const hiddenRequirements = getHiddenRequirementsNote(opportunity);
 
