@@ -14,7 +14,7 @@ export const defaultDirectionAnswers: DirectionAnswers = {
   moveToward: "Become vegetarian",
   makeRoomFor: "Better health / longevity",
   startingFrom: "I eat meat most days and don't know what to cook",
-  reachable: "A class, group, or real local opening",
+  reachable: "A class, event, or opening",
   tryFirst: "Attend one beginner-friendly plant-based cooking class",
   location: "Austin, TX",
 };

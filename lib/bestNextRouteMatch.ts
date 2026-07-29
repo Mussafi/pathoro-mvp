@@ -12,11 +12,23 @@ export type AccessPointKind = "reviewed" | "ai" | "seed" | "none";
  * v0.36 "Force route planning opportunity action". Checked only after
  * reviewed, AI-candidate, and normal seed matching have all come up
  * empty, so a real reviewed opportunity always still wins.
+ *
+ * Order matters: matchers are checked top to bottom and the first hit
+ * wins, so keywords broad enough to appear across goals ("class" alone,
+ * "cooking") stay out of this list entirely — a bare "class" here would
+ * make e.g. "HVAC class" resolve to the vegetarian matcher just because
+ * it's listed first, which defeats the point of a *reliable* fallback.
  */
 const FORCED_SEED_MATCHERS: { keywords: string[]; id: string }[] = [
-  { keywords: ["vegetarian", "plant-based", "plant based"], id: "plant-based-cooking-class" },
+  {
+    keywords: ["vegetarian", "plant-based", "plant based", "vegan", "plant-forward"],
+    id: "plant-based-cooking-class",
+  },
   { keywords: ["hvac"], id: "hvac-apprenticeship-info-session" },
-  { keywords: ["wedding photographer", "photography"], id: "wedding-photographer-assistant-opportunity" },
+  {
+    keywords: ["wedding photographer", "wedding photography", "photography", "photographer"],
+    id: "wedding-photographer-assistant-opportunity",
+  },
 ];
 
 export function getForcedSeedOpportunity(goal: string): Opportunity | undefined {
@@ -30,6 +42,15 @@ export type BestNextRouteMatch = {
   opportunity: Opportunity | undefined;
   bestCandidate: ScoutCandidateRecord | undefined;
   moreCount: number;
+  /** Every candidate this render actually considered, for the
+   * ?debugRoute=1 panel — lets a "still broken" report be checked
+   * against what the matcher saw rather than guessed at. */
+  debug: {
+    reviewedCandidates: { id: string; title: string }[];
+    seedCandidates: { id: string; title: string }[];
+    aiCandidateCount: number;
+    forcedFallbackId: string | null;
+  };
 };
 
 /**
@@ -64,9 +85,11 @@ export function resolveBestNextRouteMatch(input: {
       ? filterForRoute(getRelevantSeedOpportunities(input.moveToward), input.selectedRouteId, input.location)
       : [];
   const moreSeedCount = Math.max(seedForRoute.length - 1, 0);
-  const seedOpportunity =
-    seedForRoute[0] ??
-    (!reviewedOpportunity && !bestCandidate ? getForcedSeedOpportunity(input.moveToward) : undefined);
+  const forcedFallback =
+    !reviewedOpportunity && !bestCandidate && !seedForRoute[0]
+      ? getForcedSeedOpportunity(input.moveToward)
+      : undefined;
+  const seedOpportunity = seedForRoute[0] ?? forcedFallback;
 
   const accessPointKind: AccessPointKind = reviewedOpportunity
     ? "reviewed"
@@ -79,5 +102,16 @@ export function resolveBestNextRouteMatch(input: {
   const opportunity = accessPointKind === "reviewed" ? reviewedOpportunity : seedOpportunity;
   const moreCount = accessPointKind === "reviewed" ? moreReviewedCount : moreSeedCount;
 
-  return { accessPointKind, opportunity, bestCandidate, moreCount };
+  return {
+    accessPointKind,
+    opportunity,
+    bestCandidate,
+    moreCount,
+    debug: {
+      reviewedCandidates: reviewedForRoute.map((o) => ({ id: o.id, title: o.title })),
+      seedCandidates: seedForRoute.map((o) => ({ id: o.id, title: o.title })),
+      aiCandidateCount: input.aiCandidates.length,
+      forcedFallbackId: forcedFallback?.id ?? null,
+    },
+  };
 }

@@ -51,7 +51,7 @@ export function BestNextRouteCard({
   // "Force route planning opportunity action"), then nothing. Shared with
   // scripts/verify-route-planning-actions.ts so a regression in this
   // logic fails a script run, not just a user's screen.
-  const { accessPointKind, opportunity, bestCandidate, moreCount } = resolveBestNextRouteMatch({
+  const { accessPointKind, opportunity, bestCandidate, moreCount, debug: matchDebug } = resolveBestNextRouteMatch({
     reviewed,
     live,
     aiCandidates,
@@ -75,16 +75,25 @@ export function BestNextRouteCard({
   // matches the client's first render and this never risks a hydration
   // mismatch in the card under scrutiny — same pattern already used for
   // reading ?goal= in RoutePlanningBody.tsx.
-  const [debug, setDebug] = useState<{ show: boolean; goalParam: string | null }>({
+  const [debug, setDebug] = useState<{ show: boolean; goalParam: string | null; rawStoredMoveToward: string | null }>({
     show: process.env.NODE_ENV === "development",
     goalParam: null,
+    rawStoredMoveToward: null,
   });
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    let rawStoredMoveToward: string | null = null;
+    try {
+      const raw = window.localStorage.getItem("pathoro:direction-answers");
+      rawStoredMoveToward = raw ? (JSON.parse(raw).moveToward ?? null) : null;
+    } catch {
+      rawStoredMoveToward = null;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDebug({
       show: process.env.NODE_ENV === "development" || params.get("debugRoute") === "1",
       goalParam: params.get("goal"),
+      rawStoredMoveToward,
     });
   }, []);
 
@@ -105,14 +114,33 @@ export function BestNextRouteCard({
           <p className="font-semibold">DEBUG — Best Next Route (?debugRoute=1)</p>
           <p>commit: {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "(not set — not a Vercel build, or env not exposed)"}</p>
           <p>url goal param: {debug.goalParam ?? "(none)"}</p>
-          <p>activeGoal / moveToward: {answers.moveToward || "(empty)"}</p>
+          <p>raw localStorage moveToward: {debug.rawStoredMoveToward ?? "(none stored — using default)"}</p>
+          <p>activeGoal passed to BestNextRouteCard: {answers.moveToward || "(empty)"}</p>
+          <p>reachable answer: {answers.reachable || "(empty)"}</p>
           <p>selectedRouteId: {selectedRouteId}</p>
-          <p>matchedOpportunity: {opportunity ? `"${opportunity.title}" (${accessPointKind})` : "null"}</p>
+          <p>selectedRoute title: {selected.title}</p>
+          <p>
+            reviewed candidates considered ({matchDebug.reviewedCandidates.length}):{" "}
+            {matchDebug.reviewedCandidates.length > 0
+              ? matchDebug.reviewedCandidates.map((c) => `"${c.title}" (${c.id})`).join(", ")
+              : "none"}
+          </p>
+          <p>ai candidates considered: {matchDebug.aiCandidateCount}</p>
+          <p>
+            seed candidates considered ({matchDebug.seedCandidates.length}):{" "}
+            {matchDebug.seedCandidates.length > 0
+              ? matchDebug.seedCandidates.map((c) => `"${c.title}" (${c.id})`).join(", ")
+              : "none"}
+          </p>
+          <p>forced-fallback id checked: {matchDebug.forcedFallbackId ?? "(no fallback match)"}</p>
+          <p>matchedOpportunity: {opportunity ? `"${opportunity.title}" (${opportunity.id}, ${accessPointKind})` : "null"}</p>
           <p>opportunity href: {detailHref ?? "null"}</p>
           {accessPointKind === "none" && (
             <p>
               why empty state: no reviewed/live opportunity for routeId=&quot;{selectedRouteId}&quot;; no AI
-              scout candidate; no seed or forced-fallback match for goal=&quot;{answers.moveToward}&quot;
+              scout candidate; no seed match in {matchDebug.seedCandidates.length}{" "}
+              candidates for routeId=&quot;{selectedRouteId}&quot;; no forced-fallback keyword match for
+              goal=&quot;{answers.moveToward}&quot;
             </p>
           )}
         </div>
