@@ -9,44 +9,46 @@
  * before it ever reaches a user, not just a screenshot check.
  *
  * Scope note: this validates the matching DECISION (which opportunity,
- * or none, a goal resolves to for a fresh visitor), not the rendered
- * DOM/HTML — there's no headless browser in this project to check actual
- * button text against a running server. Whether "Take this opportunity"
- * literally appears on screen for these URLs was verified separately,
- * by hand, in a real browser against a production build (see the v0.36
- * "Force route planning opportunity action" commit message for what was
- * checked). What this script guarantees is that BestNextRouteCard can
- * never silently fall into the "no opportunity" render branch for these
- * four goals without this script failing first.
+ * or none, a goal/route resolves to), not the rendered DOM/HTML — there's
+ * no headless browser in this project to check actual button text against
+ * a running server. Whether "Take this opportunity" literally appears on
+ * screen for these URLs was verified separately, by hand, in a real
+ * browser against a production build. What this script guarantees is that
+ * BestNextRouteCard can never silently fall into the "no opportunity"
+ * render branch for these cases without this script failing first.
  *
  * Exits non-zero (and prints every failure) so this can run in CI.
  */
-import { defaultDirectionAnswers, mapReachableToRouteId } from "../lib/direction";
+import { defaultDirectionAnswers } from "../lib/direction";
 import { resolveBestNextRouteMatch } from "../lib/bestNextRouteMatch";
 
-const CASES: { goal: string; expectedTitle: string | null }[] = [
-  { goal: "Become vegetarian", expectedTitle: "Plant-Based Cooking Class" },
-  { goal: "HVAC technician", expectedTitle: "HVAC Apprenticeship Info Session" },
-  { goal: "wedding photographer", expectedTitle: "Wedding Photographer Assistant Opportunity" },
-  { goal: "rare obscure path", expectedTitle: null },
-  // No goal at all (empty moveToward) must still resolve to the scout
-  // fallback, never nothing — this is the code-level guarantee behind
-  // "the card must still render the scout action block" even when
-  // currentGoal is empty, independent of whatever default goal text the
-  // app's onboarding form happens to ship with.
-  { goal: "", expectedTitle: null },
-];
+const REAL_OPENINGS = "real-openings";
 
-const selectedRouteId = mapReachableToRouteId(defaultDirectionAnswers.reachable);
+const CASES: { label: string; goal: string; routeId: string; expectedTitle: string | null }[] = [
+  { label: "vegetarian on Real Openings", goal: "Become vegetarian", routeId: REAL_OPENINGS, expectedTitle: "Plant-Based Cooking Class" },
+  { label: "HVAC on Real Openings", goal: "HVAC technician", routeId: REAL_OPENINGS, expectedTitle: "HVAC Apprenticeship Info Session" },
+  { label: "wedding photographer on Real Openings", goal: "wedding photographer", routeId: REAL_OPENINGS, expectedTitle: "Wedding Photographer Assistant Opportunity" },
+  // Real Openings Route promises a concrete access point regardless of
+  // whether currentGoal happens to match a known keyword — see "Use
+  // opportunity fallback for real openings route". An obscure/unmatched
+  // goal, or no goal at all (the plain /route-planning case), must still
+  // resolve to the route's default opportunity, never to Scout.
+  { label: "obscure goal on Real Openings", goal: "rare obscure path", routeId: REAL_OPENINGS, expectedTitle: "Plant-Based Cooking Class" },
+  { label: "empty goal on Real Openings (plain /route-planning)", goal: "", routeId: REAL_OPENINGS, expectedTitle: "Plant-Based Cooking Class" },
+  // Control: the route-level default is scoped to Real Openings only —
+  // an unmatched goal on any other route must still fall through to the
+  // Scout empty state, proving this fallback didn't leak everywhere.
+  { label: "obscure goal on Community Route (control, no fallback)", goal: "rare obscure path", routeId: "community", expectedTitle: null },
+];
 
 let failed = false;
 
-for (const { goal, expectedTitle } of CASES) {
+for (const { label, goal, routeId, expectedTitle } of CASES) {
   const { accessPointKind, opportunity } = resolveBestNextRouteMatch({
     reviewed: [],
     live: [],
     aiCandidates: [],
-    selectedRouteId,
+    selectedRouteId: routeId,
     moveToward: goal,
     location: defaultDirectionAnswers.location,
   });
@@ -54,27 +56,27 @@ for (const { goal, expectedTitle } of CASES) {
   if (expectedTitle === null) {
     if (accessPointKind !== "none" || opportunity) {
       console.error(
-        `FAIL  goal="${goal}"  expected the "Scout access points" empty state but got "${opportunity?.title}" (${accessPointKind})`
+        `FAIL  ${label}  goal="${goal}" routeId="${routeId}"  expected the "Scout access points" empty state but got "${opportunity?.title}" (${accessPointKind})`
       );
       failed = true;
     } else {
-      console.log(`OK    goal="${goal}"  ->  "Scout access points" (no fake match)`);
+      console.log(`OK    ${label}  ->  "Scout access points" (no fake match)`);
     }
     continue;
   }
 
   if (!opportunity || opportunity.title !== expectedTitle) {
     console.error(
-      `FAIL  goal="${goal}"  expected "Take this opportunity" -> "${expectedTitle}" but got "${opportunity?.title ?? "null"}" (${accessPointKind})`
+      `FAIL  ${label}  goal="${goal}" routeId="${routeId}"  expected "Take this opportunity" -> "${expectedTitle}" but got "${opportunity?.title ?? "null"}" (${accessPointKind})`
     );
     failed = true;
   } else {
-    console.log(`OK    goal="${goal}"  ->  "Take this opportunity" -> "${opportunity.title}"`);
+    console.log(`OK    ${label}  ->  "Take this opportunity" -> "${opportunity.title}"`);
   }
 }
 
 if (failed) {
-  console.error("\nFAILED — Best Next Route would dead-end for a known goal.");
+  console.error("\nFAILED — Best Next Route would dead-end for a known goal/route.");
   process.exit(1);
 } else {
   console.log("\nAll Best Next Route action-state checks passed.");

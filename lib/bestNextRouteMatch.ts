@@ -46,6 +46,26 @@ export function getForcedSeedOpportunity(goal: string): Opportunity | undefined 
   return match ? routeOpportunities.find((o) => o.id === match.id) : undefined;
 }
 
+/**
+ * Last-resort, route-scoped default — see "Use opportunity fallback for
+ * real openings route". `currentGoal` can be wrong or stale for reasons
+ * that have nothing to do with matching logic (e.g. RoutePlanningBody's
+ * ?goal= hand-off permanently persists whatever goal was last in the
+ * URL into localStorage, so a single visit to an unmatched goal leaves
+ * every later plain `/route-planning` visit looking unmatched too).
+ * Real Openings Route promises a concrete access point, so it gets a
+ * hard default instead of ever falling through to Scout — every other
+ * route keeps the existing "fall through to Scout" behavior.
+ */
+const ROUTE_DEFAULT_OPPORTUNITY: Record<string, string> = {
+  "real-openings": "plant-based-cooking-class",
+};
+
+export function getRouteFallbackOpportunity(selectedRouteId: string): Opportunity | undefined {
+  const defaultId = ROUTE_DEFAULT_OPPORTUNITY[selectedRouteId];
+  return defaultId ? routeOpportunities.find((o) => o.id === defaultId) : undefined;
+}
+
 export type BestNextRouteMatch = {
   accessPointKind: AccessPointKind;
   opportunity: Opportunity | undefined;
@@ -59,6 +79,7 @@ export type BestNextRouteMatch = {
     seedCandidates: { id: string; title: string }[];
     aiCandidateCount: number;
     forcedFallbackId: string | null;
+    routeFallbackId: string | null;
   };
 };
 
@@ -98,7 +119,11 @@ export function resolveBestNextRouteMatch(input: {
     !reviewedOpportunity && !bestCandidate && !seedForRoute[0]
       ? getForcedSeedOpportunity(input.moveToward)
       : undefined;
-  const seedOpportunity = seedForRoute[0] ?? forcedFallback;
+  const routeFallback =
+    !reviewedOpportunity && !bestCandidate && !seedForRoute[0] && !forcedFallback
+      ? getRouteFallbackOpportunity(input.selectedRouteId)
+      : undefined;
+  const seedOpportunity = seedForRoute[0] ?? forcedFallback ?? routeFallback;
 
   const accessPointKind: AccessPointKind = reviewedOpportunity
     ? "reviewed"
@@ -121,6 +146,7 @@ export function resolveBestNextRouteMatch(input: {
       seedCandidates: seedForRoute.map((o) => ({ id: o.id, title: o.title })),
       aiCandidateCount: input.aiCandidates.length,
       forcedFallbackId: forcedFallback?.id ?? null,
+      routeFallbackId: routeFallback?.id ?? null,
     },
   };
 }
