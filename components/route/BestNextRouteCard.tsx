@@ -329,7 +329,7 @@ export function BestNextRouteCard({
             <span className="mb-2 block text-[11px] font-medium text-ink-faint">
               {ACCESS_POINT_HEADING.ai}
             </span>
-            <ScoutCandidateCard candidate={bestCandidate} />
+            <ScoutCandidateCard candidate={bestCandidate} goal={answers.moveToward} />
             <div className="shadow-card mt-3.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-3.5">
               <div className="flex flex-wrap items-center gap-3">
                 <Link

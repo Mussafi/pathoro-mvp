@@ -7,6 +7,7 @@ import {
   shortenSnippet,
   type PathoroFit,
 } from "@/lib/scoutFit";
+import { GOAL_FIT_BADGE_CLASS, GOAL_FIT_COPY, GOAL_FIT_LABELS, computeGoalFit } from "@/lib/goalFitLabel";
 import type { ScoutCandidateRecord } from "@/lib/scoutCandidatesDb";
 
 /**
@@ -14,15 +15,26 @@ import type { ScoutCandidateRecord } from "@/lib/scoutCandidatesDb";
  * on route-planning's "AI-found access points" section, so both surfaces
  * downplay weak results and format the fit narrative identically.
  */
-export function ScoutCandidateCard({ candidate }: { candidate: ScoutCandidateRecord }) {
+export function ScoutCandidateCard({ candidate, goal }: { candidate: ScoutCandidateRecord; goal?: string }) {
   const fit = (candidate.pathoroFit as PathoroFit) || "maybe_useful";
   const showNarrative = fit === "strong_opportunity" || fit === "maybe_useful";
+  // Goal fit (direct/related/adjacent/weak — see lib/goalFitLabel.ts) is a
+  // second, independent axis from PathoroFit: a candidate can be a
+  // perfectly specific, actionable page and still be the wrong thing for
+  // this exact goal (see "Fix opportunity action landing and submission"
+  // PART 5). Only shown when a goal is actually known.
+  const goalFit = goal ? computeGoalFit(candidate, goal) : null;
 
   return (
     <div className={`rounded-2xl border px-3.5 py-3 ${FIT_CARD_CLASS[fit] ?? FIT_CARD_CLASS.maybe_useful}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <span className="text-[13px] font-semibold text-ink">{candidate.title}</span>
         <span className="flex shrink-0 flex-wrap justify-end gap-1.5">
+          {goalFit && (
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${GOAL_FIT_BADGE_CLASS[goalFit]}`}>
+              {GOAL_FIT_LABELS[goalFit]}
+            </span>
+          )}
           <span
             className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${FIT_BADGE_CLASS[fit] ?? FIT_BADGE_CLASS.maybe_useful}`}
           >
@@ -36,6 +48,12 @@ export function ScoutCandidateCard({ candidate }: { candidate: ScoutCandidateRec
       <p className="mt-1 text-[11px] text-ink-faint">{candidate.sourceName}</p>
       {candidate.snippet && (
         <p className="mt-1.5 text-[12px] leading-snug text-ink-soft">{shortenSnippet(candidate.snippet)}</p>
+      )}
+      {goalFit && (goalFit === "adjacent" || goalFit === "weak") && (
+        <p className="mt-1.5 text-[11px] leading-snug text-ink-faint">
+          <span className="font-semibold text-ink-soft">{GOAL_FIT_LABELS[goalFit]} — </span>
+          {GOAL_FIT_COPY[goalFit]}
+        </p>
       )}
       {showNarrative && (
         <>

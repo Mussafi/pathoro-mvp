@@ -243,7 +243,7 @@ function ScoutRequestResultContent({ id }: { id: string }) {
                       <Star className="h-3 w-3 fill-green text-green" />
                       Best current lead
                     </span>
-                    <ScoutCandidateCard candidate={state.candidates[0]} />
+                    <ScoutCandidateCard candidate={state.candidates[0]} goal={state.request.pathGoal} />
                   </div>
                   {state.candidates.length > 1 && (
                     <div className="flex flex-col gap-2.5">
@@ -251,7 +251,7 @@ function ScoutRequestResultContent({ id }: { id: string }) {
                         Other AI-found candidates
                       </span>
                       {state.candidates.slice(1).map((candidate) => (
-                        <ScoutCandidateCard key={candidate.id} candidate={candidate} />
+                        <ScoutCandidateCard key={candidate.id} candidate={candidate} goal={state.request.pathGoal} />
                       ))}
                     </div>
                   )}

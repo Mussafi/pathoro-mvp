@@ -10,6 +10,7 @@ import { TakeOpportunityModal } from "@/components/opportunity/TakeOpportunityMo
 import { FindSomeoneAheadCard } from "@/components/opportunity/FindSomeoneAheadCard";
 import { routes } from "@/lib/routes";
 import { TRUST_LABEL_CLASS, CANDIDATE_TRUST_LABEL } from "@/lib/trustLabels";
+import { GOAL_FIT_BADGE_CLASS, GOAL_FIT_COPY, GOAL_FIT_LABELS, computeGoalFit } from "@/lib/goalFitLabel";
 import type { ScoutCandidateRecord } from "@/lib/scoutCandidatesDb";
 
 /**
@@ -36,6 +37,13 @@ function CandidateDetailContent({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [takeOpen, setTakeOpen] = useState(searchParams.get("openTake") === "1");
 
+  // See the matching comment in app/opportunity/[id]/page.tsx — same fix,
+  // same reason: don't inherit whatever scroll offset the previous page
+  // (usually Best Next Route, well down the page) was at.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/scout-candidates/${id}`)
@@ -58,6 +66,7 @@ function CandidateDetailContent({ id }: { id: string }) {
   const scoutHref = data?.ok
     ? `/route-planning?goal=${encodeURIComponent(data.pathGoal)}#scout-request`
     : "/route-planning#scout-request";
+  const goalFit = data?.ok && data.pathGoal ? computeGoalFit(data.candidate, data.pathGoal) : null;
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-cream">
@@ -101,12 +110,23 @@ function CandidateDetailContent({ id }: { id: string }) {
                   >
                     {CANDIDATE_TRUST_LABEL}
                   </span>
+                  {goalFit && (
+                    <span className={`rounded-full px-2.5 py-0.5 text-[10.5px] font-medium ${GOAL_FIT_BADGE_CLASS[goalFit]}`}>
+                      {GOAL_FIT_LABELS[goalFit]}
+                    </span>
+                  )}
                   {data.candidate.opportunityType && (
                     <span className="rounded-full border border-line/70 px-2.5 py-0.5 text-[10.5px] font-medium text-ink-faint">
                       {data.candidate.opportunityType}
                     </span>
                   )}
                 </div>
+                {goalFit && (goalFit === "adjacent" || goalFit === "weak") && (
+                  <p className="mt-2 text-[11.5px] leading-relaxed text-ink-faint">
+                    <span className="font-semibold text-ink-soft">{GOAL_FIT_LABELS[goalFit]} — </span>
+                    {GOAL_FIT_COPY[goalFit]}
+                  </p>
+                )}
 
                 <h1 className="mt-3 font-serif text-[22px] leading-tight text-ink">
                   {data.candidate.title}

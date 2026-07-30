@@ -110,7 +110,7 @@ export function TakeOpportunityModal({
             </h3>
             {status !== "sent" && (
               <p className="mt-1 text-[12px] text-ink-faint">
-                Pathoro will help you turn this into a next step.
+                Pathoro will help you start this next step.
               </p>
             )}
           </div>
@@ -165,7 +165,7 @@ export function TakeOpportunityModal({
               )}
             </div>
 
-            {sourceUrl && (
+            {sourceUrl ? (
               <a
                 href={sourceUrl}
                 target="_blank"
@@ -175,7 +175,23 @@ export function TakeOpportunityModal({
                 Open original source
                 <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
               </a>
+            ) : (
+              <p className="mt-3 rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.5 text-[11.5px] leading-relaxed text-ink-soft">
+                There&rsquo;s no outside source for this one yet. Pathoro can help you scout or
+                verify the next step.
+              </p>
             )}
+
+            {/* Alpha honesty note (v0.39 "Fix opportunity action landing and
+                submission") — this modal only ever writes a Pathoro-side
+                request, never an outside signup, so it must never read as
+                "you're now registered." */}
+            <p className="mt-3 text-[10.5px] leading-relaxed text-ink-faint">
+              If this opportunity has an outside source, you may still need to sign up or apply
+              there yourself. Pathoro saves your next-step request so you can verify it, act on
+              it, or get help from someone ahead — it doesn&rsquo;t sign you up or contact the
+              outside organization for you.
+            </p>
 
             <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3.5">
               <fieldset>

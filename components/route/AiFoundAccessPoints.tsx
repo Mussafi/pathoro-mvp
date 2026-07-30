@@ -40,7 +40,7 @@ export function AiFoundAccessPoints({
       </p>
       <div className="mt-3 flex flex-col gap-2.5">
         {visible.map((candidate) => (
-          <ScoutCandidateCard key={candidate.id} candidate={candidate} />
+          <ScoutCandidateCard key={candidate.id} candidate={candidate} goal={pathGoal} />
         ))}
       </div>
     </div>

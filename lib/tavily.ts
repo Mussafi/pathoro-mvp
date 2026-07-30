@@ -6,6 +6,7 @@ import {
   type OpportunitySourceType,
 } from "@/lib/opportunitySchema";
 import { PATHORO_FIT_RANK, type PathoroFit } from "@/lib/scoutFit";
+import { computeGoalFit, GOAL_FIT_RANK } from "@/lib/goalFitLabel";
 
 const TAVILY_SEARCH_URL = "https://api.tavily.com/search";
 const FETCH_TIMEOUT_MS = 8000;
@@ -335,6 +336,33 @@ function pickRotatedHints(pool: string[], startIndex: number, count: number): st
  *   always on rather than keyword-triggered. See "Gateway Communities" in
  *   the same doc.
  */
+/**
+ * Goal-specific query boosts for goals where the generic route hint pool
+ * ("beginner class", "public workshop", …) is too vague to reliably
+ * surface a *direct* access point — see "Fix opportunity action landing
+ * and submission" PART 6. Matched by keyword against pathGoal; a match
+ * APPENDS its queries on top of the generic route-mode queries below
+ * rather than replacing them, so an unmatched goal still gets the exact
+ * same coverage it always has.
+ */
+const GOAL_SPECIFIC_QUERY_BOOSTS: { pattern: RegExp; queries: string[] }[] = [
+  {
+    pattern: /\b(licensed therapist|therapist|counselor|counseling|lpc|lcsw|lmft|clinical mental health)\b/i,
+    queries: [
+      "counseling graduate program open house",
+      "clinical mental health counseling info session",
+      "therapist licensure workshop",
+      "supervised clinical hours info session",
+      "psychology OR counseling program admissions event",
+    ],
+  },
+];
+
+function goalSpecificQueries(pathGoal: string, location: string): string[] {
+  const boost = GOAL_SPECIFIC_QUERY_BOOSTS.find((b) => b.pattern.test(pathGoal));
+  return boost ? boost.queries.map((q) => `${q} ${location}`) : [];
+}
+
 export function generateSearchQueries(params: {
   city: string;
   state?: string;
@@ -382,6 +410,10 @@ export function generateSearchQueries(params: {
         `${params.pathGoal} ${gatewayHintB} ${location}`
       );
     }
+  }
+
+  if (mode === "route") {
+    queries.push(...goalSpecificQueries(params.pathGoal, location));
   }
 
   if (params.keywords?.trim()) {
@@ -713,7 +745,17 @@ export async function scoutOpportunities(params: {
     }
   });
 
+  // Goal fit (direct vs. adjacent/weak — see lib/goalFitLabel.ts) ranks
+  // above PathoroFit's page-quality tiers: a direct-but-lower-confidence
+  // candidate should still beat a highly-specific page for the wrong
+  // thing (e.g. a nursing volunteer listing for a "licensed therapist"
+  // goal). Only once fit-to-goal ties does page quality/confidence
+  // decide the order — so an adjacent result can still win when nothing
+  // more direct was found at all.
   candidates.sort((a, b) => {
+    const goalFitDiff =
+      GOAL_FIT_RANK[computeGoalFit(b, params.pathGoal)] - GOAL_FIT_RANK[computeGoalFit(a, params.pathGoal)];
+    if (goalFitDiff !== 0) return goalFitDiff;
     const fitDiff = PATHORO_FIT_RANK[b.pathoroFit] - PATHORO_FIT_RANK[a.pathoroFit];
     if (fitDiff !== 0) return fitDiff;
     const confidenceRank: Record<ScoutConfidence, number> = { high: 2, medium: 1, low: 0 };
