@@ -336,14 +336,14 @@ export function BestNextRouteCard({
               <div className="shadow-card mt-3.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-3.5">
                 <div className="flex flex-wrap items-center gap-3">
                   <Link
-                    href={`${detailHref}?openTake=1`}
+                    href={`${detailHref}?openTake=1#opportunity-content`}
                     className="flex items-center justify-center gap-1.5 rounded-full bg-green px-5 py-2.75 text-[13.5px] font-semibold text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
                   >
                     Take this opportunity
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                   <Link
-                    href={detailHref}
+                    href={`${detailHref}#opportunity-content`}
                     className="text-[12.5px] font-medium text-ink-soft underline-offset-2 outline-none transition hover:text-ink hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
                   >
                     View details
@@ -371,7 +371,7 @@ export function BestNextRouteCard({
             <div className="shadow-card mt-3.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-3.5">
               <div className="flex flex-wrap items-center gap-3">
                 <Link
-                  href={`/opportunity/candidate/${bestCandidate.id}`}
+                  href={`/opportunity/candidate/${bestCandidate.id}#opportunity-content`}
                   className="flex items-center justify-center gap-1.5 rounded-full bg-green px-5 py-2.75 text-[13.5px] font-semibold text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
                 >
                   Check this opportunity

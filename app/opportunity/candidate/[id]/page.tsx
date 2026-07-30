@@ -12,7 +12,7 @@ import { routes } from "@/lib/routes";
 import { TRUST_LABEL_CLASS, CANDIDATE_TRUST_LABEL } from "@/lib/trustLabels";
 import { GOAL_FIT_BADGE_CLASS, GOAL_FIT_COPY, GOAL_FIT_LABELS, computeGoalFit } from "@/lib/goalFitLabel";
 import type { ScoutCandidateRecord } from "@/lib/scoutCandidatesDb";
-import { useScrollTopOnMount } from "@/lib/useScrollTopOnMount";
+import { useScrollToOpportunityContent } from "@/lib/useScrollToOpportunityContent";
 
 /**
  * Detail page for a not-yet-promoted scout candidate — the "Take this
@@ -38,9 +38,9 @@ function CandidateDetailContent({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [takeOpen, setTakeOpen] = useState(searchParams.get("openTake") === "1");
 
-  // See lib/useScrollTopOnMount.ts / the matching comment in
+  // See lib/useScrollToOpportunityContent.ts / the matching comment in
   // app/opportunity/[id]/page.tsx.
-  useScrollTopOnMount();
+  useScrollToOpportunityContent(loading);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,7 +68,11 @@ function CandidateDetailContent({ id }: { id: string }) {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-cream">
-      <TopoLines />
+      <TopoLines
+        className="pointer-events-none absolute inset-0 h-full w-full text-ink"
+        count={20}
+        opacityRange={[0.015, 0.035]}
+      />
       <div className="relative">
         <RoutePlanningHeader />
         <main className="mx-auto max-w-[720px] px-6 pb-16 sm:px-10">
@@ -79,6 +83,8 @@ function CandidateDetailContent({ id }: { id: string }) {
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to route planning
           </Link>
+
+          <div id="opportunity-content" />
 
           {loading && (
             <p className="mt-8 text-[13px] text-ink-faint">Loading this candidate…</p>

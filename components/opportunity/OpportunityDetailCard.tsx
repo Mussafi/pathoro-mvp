@@ -253,7 +253,7 @@ export function OpportunityDetailCard({
               {relatedOpenings.map((item) => (
                 <li key={item.id} className="flex items-center justify-between gap-2">
                   <Link
-                    href={`/opportunity/${item.id}`}
+                    href={`/opportunity/${item.id}#opportunity-content`}
                     className="text-[12.5px] text-ink underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-green/50"
                   >
                     {item.title}

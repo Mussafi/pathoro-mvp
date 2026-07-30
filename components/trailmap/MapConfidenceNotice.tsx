@@ -96,7 +96,7 @@ export function MapConfidenceNotice({ goal, branch }: { goal: TrailMapGoal; bran
             Illustrative only — not scouted for your area yet.
           </p>
           <Link
-            href={`/opportunity/${goal.exampleOpportunity.slug}`}
+            href={`/opportunity/${goal.exampleOpportunity.slug}#opportunity-content`}
             className="mt-1.5 flex w-fit items-center gap-1 rounded-full border border-line/70 bg-cream-card px-2.5 py-1 text-[10.5px] font-medium text-ink-soft outline-none transition hover:border-ink-faint/40 focus-visible:ring-2 focus-visible:ring-green/50"
           >
             {goal.exampleOpportunity.title}

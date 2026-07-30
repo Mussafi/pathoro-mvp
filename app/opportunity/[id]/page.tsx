@@ -17,7 +17,7 @@ import type { Opportunity } from "@/lib/opportunitySchema";
 import { getRelatedGoalText } from "@/lib/opportunityNarrative";
 import { computeTrustLabel } from "@/lib/trustLabels";
 import { mapGoalToTrailMapGoal } from "@/lib/goalSpecificity";
-import { useScrollTopOnMount } from "@/lib/useScrollTopOnMount";
+import { useScrollToOpportunityContent } from "@/lib/useScrollToOpportunityContent";
 
 /**
  * Dynamic opportunity detail page — renders any opportunity by id/slug
@@ -41,11 +41,13 @@ function OpportunityDetailContent({ id }: { id: string }) {
   const [dbOpportunity, setDbOpportunity] = useState<Opportunity | null>(null);
   const [dbLoading, setDbLoading] = useState(true);
 
-  // See lib/useScrollTopOnMount.ts — landing here mid-scroll (e.g. from a
-  // Link deep in Best Next Route's action block) could otherwise leave
-  // the browser stranded partway down a smooth-scroll animation instead
-  // of at the top.
-  useScrollTopOnMount();
+  // See lib/useScrollToOpportunityContent.ts — landing here mid-scroll
+  // (e.g. from a Link deep in Best Next Route's action block) could
+  // otherwise leave the browser stranded partway down a smooth-scroll
+  // animation instead of at the top. Re-runs once dbLoading flips false,
+  // since the fetched opportunity replaces a much shorter loading state
+  // and can otherwise leave the reset fighting a pre-data layout.
+  useScrollToOpportunityContent(dbLoading);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,6 +116,8 @@ function OpportunityDetailContent({ id }: { id: string }) {
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to route planning
         </Link>
+
+        <div id="opportunity-content" />
 
         {stillResolving ? (
           <div className="shadow-card mt-4 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-6 py-6">

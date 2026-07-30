@@ -135,7 +135,7 @@ export function OpportunityTile({
   return (
     <>
       {isClickable ? (
-        <Link href={detailHref!} className={className}>
+        <Link href={`${detailHref}#opportunity-content`} className={className}>
           {content}
         </Link>
       ) : (
@@ -261,7 +261,7 @@ function OpportunityPreviewModal({
           )}
           {detailHref ? (
             <Link
-              href={detailHref}
+              href={`${detailHref}#opportunity-content`}
               className="flex w-full items-center justify-center rounded-full bg-green py-2.5 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
             >
               View detail page
