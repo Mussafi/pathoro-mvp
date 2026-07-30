@@ -1,10 +1,14 @@
 import { BadgeCheck, Heart, MapPin } from "lucide-react";
 import { getBranchAccentClasses, type TrailMapBranch, type TrailNote } from "@/lib/trailMapData";
+import { TrailMarkerCard } from "@/components/route/TrailMarkersSection";
+import { AddTrailMarkerButton } from "@/components/community/AddTrailMarkerButton";
+import { useTrailMarkers } from "@/lib/useTrailMarkers";
 
 /** Detects the note's flavor from its own leading phrase so each note can
  * carry a small tag — "hidden friction," "better first step," "opened
  * doors" — the same shorthand people ahead actually use, not a generic
- * comment label. */
+ * comment label. Only used for the static example notes below — real
+ * markers already carry a real marker_type, rendered via TrailMarkerCard. */
 function getNoteTag(body: string): string | null {
   const lower = body.toLowerCase();
   if (lower.startsWith("warning")) return "Warning from someone ahead";
@@ -17,11 +21,16 @@ function getNoteTag(body: string): string | null {
 }
 
 export function TrailMapNotesPanel({
+  goal,
   branch,
   notes,
   notesTotal,
   notesAreExamples,
 }: {
+  /** Trail map goal id (TrailMapGoal.id) — the community-layer `goal`
+   * filter used together with branch.id to find real trail markers for
+   * this exact branch (v0.40 PART 7). */
+  goal: string;
   branch: TrailMapBranch;
   notes: TrailNote[];
   notesTotal: number;
@@ -32,29 +41,48 @@ export function TrailMapNotesPanel({
 }) {
   const forBranch = notes.filter((n) => n.branchId === branch.id);
   const accent = getBranchAccentClasses(branch.id);
+  const { markers: realMarkers, loading, refresh } = useTrailMarkers({ goal, branchId: branch.id });
+
+  // Real approved markers always come first. Static examples only fill in
+  // when there's nothing real yet — once at least one real marker exists,
+  // examples stop showing (v0.40 PART 7).
+  const showExamples = realMarkers.length === 0;
 
   return (
     <div className="shadow-card flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-[13px] font-semibold text-ink">
           <MapPin className="h-4 w-4 text-green" strokeWidth={1.75} />
-          Trail notes ({notesTotal})
+          Trail notes ({realMarkers.length > 0 ? realMarkers.length : notesTotal})
         </span>
-        <span className="text-[11px] font-medium text-green">View all</span>
+        <AddTrailMarkerButton
+          context={{ contextType: "branch", goal, branchId: branch.id, trailGoal: goal }}
+          label={realMarkers.length === 0 ? "Leave the first real trail marker" : "Leave a trail marker"}
+          className="text-[11px] font-medium text-green outline-none transition hover:underline"
+          onSubmitted={refresh}
+        />
       </div>
-      {notesAreExamples && (
+      {showExamples && (
         <span className="mt-1.5 inline-block w-fit rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-amber-700">
           Example trail notes
         </span>
       )}
       <p className="mt-1.5 text-[11px] leading-relaxed text-ink-faint">
-        {notesAreExamples
-          ? "Illustrative examples of the kind of notes people ahead often leave — not real user-submitted notes yet. Trail notes are attached to the path — not a feed."
+        {showExamples
+          ? notesAreExamples
+            ? "Illustrative examples of the kind of notes people ahead often leave — not real user-submitted notes yet. Trail notes are attached to the path — not a feed."
+            : "No real trail markers here yet, so these are illustrative examples of the kind of notes people ahead often leave. Trail notes are attached to the path — not a feed."
           : "Notes from people ahead of you on this exact path — hidden friction, better first steps, what opened doors, or a warning worth knowing. Trail notes are attached to the path — not a feed."}
       </p>
 
       <div className="mt-3 flex flex-col gap-2.5">
-        {forBranch.length === 0 ? (
+        {loading ? (
+          <p className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-3 text-[12px] leading-relaxed text-ink-faint">
+            Loading trail markers…
+          </p>
+        ) : realMarkers.length > 0 ? (
+          realMarkers.map((marker) => <TrailMarkerCard key={marker.id} marker={marker} />)
+        ) : forBranch.length === 0 ? (
           <p className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-3 text-[12px] leading-relaxed text-ink-faint">
             No trail markers on this path yet. Be the first to leave one once
             you&rsquo;ve walked it.

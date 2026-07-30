@@ -10,6 +10,7 @@ import { TrailMarkersSection } from "@/components/route/TrailMarkersSection";
 import { OpportunityJourneySidebar } from "@/components/opportunity/OpportunityJourneySidebar";
 import { OpportunityDetailCard } from "@/components/opportunity/OpportunityDetailCard";
 import { OpportunityGuidancePanel } from "@/components/opportunity/OpportunityGuidancePanel";
+import { CommunityChecksSection } from "@/components/opportunity/CommunityChecksSection";
 import { routes } from "@/lib/routes";
 import { routeOpportunities } from "@/lib/opportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
@@ -150,9 +151,16 @@ function OpportunityDetailContent({ id }: { id: string }) {
                   scoutHref={scoutHref}
                 />
                 <TrailMarkersSection
+                  contextType="opportunity"
                   opportunityId={opportunity.id}
                   routeId={opportunity.routeId}
-                  city={opportunity.city}
+                  goal={relatedGoal}
+                />
+                <CommunityChecksSection
+                  contextType="opportunity"
+                  opportunityId={opportunity.id}
+                  routeId={opportunity.routeId}
+                  goal={relatedGoal}
                 />
               </div>
 

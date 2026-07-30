@@ -206,6 +206,7 @@ export default function TrailMapPage() {
               <RoleDialogueCard />
               <PathGuideCard goal={activeGoal} branch={selectedBranch} />
               <TrailMapNotesPanel
+                goal={activeGoal.id}
                 branch={selectedBranch}
                 notes={activeGoal.notes}
                 notesTotal={activeGoal.notesTotal}

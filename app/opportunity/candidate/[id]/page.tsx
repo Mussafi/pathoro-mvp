@@ -8,6 +8,8 @@ import { TopoLines } from "@/components/TopoLines";
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
 import { TakeOpportunityModal } from "@/components/opportunity/TakeOpportunityModal";
 import { FindSomeoneAheadCard } from "@/components/opportunity/FindSomeoneAheadCard";
+import { TrailMarkersSection } from "@/components/route/TrailMarkersSection";
+import { CommunityChecksSection } from "@/components/opportunity/CommunityChecksSection";
 import { routes } from "@/lib/routes";
 import { TRUST_LABEL_CLASS, CANDIDATE_TRUST_LABEL } from "@/lib/trustLabels";
 import { GOAL_FIT_BADGE_CLASS, GOAL_FIT_COPY, GOAL_FIT_LABELS, computeGoalFit } from "@/lib/goalFitLabel";
@@ -192,6 +194,19 @@ function CandidateDetailContent({ id }: { id: string }) {
                 opportunityId={data.candidate.id}
                 opportunityTitle={data.candidate.title}
                 opportunityType={data.candidate.opportunityType}
+              />
+
+              <TrailMarkersSection
+                contextType="candidate_opportunity"
+                candidateId={data.candidate.id}
+                routeId={data.routeId}
+                goal={data.pathGoal}
+              />
+              <CommunityChecksSection
+                contextType="candidate_opportunity"
+                candidateId={data.candidate.id}
+                routeId={data.routeId}
+                goal={data.pathGoal}
               />
             </div>
           )}

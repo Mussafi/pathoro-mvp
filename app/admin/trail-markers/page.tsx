@@ -2,20 +2,41 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MARKER_TYPE_LABELS, type TrailMarker } from "@/lib/trailMarkerSchema";
+import {
+  CONTEXT_TYPE_LABELS,
+  CREDIBILITY_TYPE_LABELS,
+  MARKER_TYPE_LABELS,
+  type TrailMarker,
+} from "@/lib/trailMarkerSchema";
+
+type ViewMode = "pending" | "all";
+
+function MarkerContextLine({ marker }: { marker: TrailMarker }) {
+  const parts: string[] = [`Context: ${CONTEXT_TYPE_LABELS[marker.contextType]}`];
+  if (marker.goal) parts.push(`Goal: ${marker.goal}`);
+  if (marker.routeId) parts.push(`Route: ${marker.routeId}`);
+  if (marker.branchId) parts.push(`Branch: ${marker.branchId}`);
+  if (marker.milestoneId) parts.push(`Milestone: ${marker.milestoneId}`);
+  if (marker.opportunityId) parts.push(`Opportunity: ${marker.opportunityId}`);
+  if (marker.candidateId) parts.push(`Candidate: ${marker.candidateId}`);
+  return <p className="text-[11.5px] text-ink-faint">{parts.join(" · ")}</p>;
+}
 
 export default function TrailMarkersAdminPage() {
   const [adminToken, setAdminToken] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("pending");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [markers, setMarkers] = useState<TrailMarker[] | null>(null);
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const [notesDraft, setNotesDraft] = useState<Record<string, string>>({});
 
-  async function handleLoad() {
+  async function handleLoad(mode: ViewMode = viewMode) {
+    setViewMode(mode);
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/trail-markers?status=needs_review", {
+      const res = await fetch(`/api/trail-markers?status=${mode}`, {
         headers: { "x-admin-token": adminToken },
       });
       const data = await res.json();
@@ -28,6 +49,11 @@ export default function TrailMarkersAdminPage() {
         return;
       }
       setMarkers(data.markers);
+      setNotesDraft(
+        Object.fromEntries(
+          (data.markers as TrailMarker[]).map((m) => [m.id, m.moderationNotes ?? ""])
+        )
+      );
     } catch {
       setError("Something went wrong reaching Pathoro. Please try again.");
     } finally {
@@ -35,14 +61,14 @@ export default function TrailMarkersAdminPage() {
     }
   }
 
-  async function handleReview(id: string, status: "live" | "rejected") {
+  async function patchMarker(id: string, body: Record<string, string>) {
     setActioningId(id);
     setError(null);
     try {
       const res = await fetch(`/api/trail-markers/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "x-admin-token": adminToken },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!data.ok) {
@@ -53,7 +79,13 @@ export default function TrailMarkersAdminPage() {
         );
         return;
       }
-      setMarkers((prev) => (prev ? prev.filter((m) => m.id !== id) : prev));
+      if (viewMode === "pending" && body.status && body.status !== "pending") {
+        setMarkers((prev) => (prev ? prev.filter((m) => m.id !== id) : prev));
+      } else {
+        setMarkers((prev) =>
+          prev ? prev.map((m) => (m.id === id ? (data.marker as TrailMarker) : m)) : prev
+        );
+      }
     } catch {
       setError("Something went wrong reaching Pathoro. Please try again.");
     } finally {
@@ -63,11 +95,11 @@ export default function TrailMarkersAdminPage() {
 
   return (
     <div className="min-h-screen bg-cream px-6 py-10 sm:px-10">
-      <div className="mx-auto max-w-[720px]">
+      <div className="mx-auto max-w-[760px]">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line/70 bg-cream-field px-4 py-3 text-[12px] text-ink-faint">
           <span>
             Internal prototype — not linked publicly. Review trail markers
-            before they appear on any opportunity or route.
+            before they appear on any trail map, opportunity, or route.
           </span>
           <span className="flex shrink-0 items-center gap-3">
             <Link href="/admin" className="text-[12px] font-semibold text-green underline">
@@ -85,7 +117,11 @@ export default function TrailMarkersAdminPage() {
         <div className="mt-3 rounded-2xl border border-green/40 bg-green-soft/15 px-4 py-3 text-[11.5px] leading-relaxed text-ink-soft">
           Trail markers are signs from people who&rsquo;ve walked this path
           already — not comments. Approve markers that add real path
-          knowledge; reject anything vague, off-topic, or unhelpful.
+          knowledge; reject anything vague, off-topic, or unhelpful. A
+          submitter writing a credential in their own words (e.g. &ldquo;licensed
+          therapist&rdquo;) does not make it verified — set credibility to
+          Licensed guide or Verified experience yourself only once you&rsquo;re
+          confident it&rsquo;s true.
         </div>
 
         <h1 className="mt-6 font-serif text-[26px] leading-tight text-ink">
@@ -110,14 +146,24 @@ export default function TrailMarkersAdminPage() {
               environment variables.
             </span>
           </label>
-          <button
-            type="button"
-            onClick={handleLoad}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 rounded-full bg-green py-2.5 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? "Loading…" : "Load markers needing review"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => handleLoad("pending")}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 rounded-full bg-green px-4 py-2.5 text-[13.5px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading && viewMode === "pending" ? "Loading…" : "Load markers needing review"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLoad("all")}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 rounded-full border border-line/70 px-4 py-2.5 text-[13.5px] font-medium text-ink-soft outline-none transition hover:border-ink-faint/40 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading && viewMode === "all" ? "Loading…" : "Load all markers"}
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -128,7 +174,7 @@ export default function TrailMarkersAdminPage() {
 
         {markers && markers.length === 0 && (
           <p className="mt-6 text-[13px] text-ink-faint">
-            Nothing needs review right now.
+            {viewMode === "pending" ? "Nothing needs review right now." : "No trail markers yet."}
           </p>
         )}
 
@@ -140,27 +186,50 @@ export default function TrailMarkersAdminPage() {
                 className="shadow-card flex flex-col gap-2 rounded-[26px] border border-line/70 bg-cream-card px-5 py-4"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="rounded-full border border-green/40 bg-green-soft/60 px-2 py-0.5 text-[10px] font-semibold text-green">
-                    {MARKER_TYPE_LABELS[marker.markerType]}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full border border-green/40 bg-green-soft/60 px-2 py-0.5 text-[10px] font-semibold text-green">
+                      {MARKER_TYPE_LABELS[marker.markerType]}
+                    </span>
+                    <span className="rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
+                      {marker.status}
+                    </span>
+                    <span className="rounded-full border border-line/70 px-2 py-0.5 text-[10px] font-medium text-ink-faint">
+                      {CREDIBILITY_TYPE_LABELS[marker.credibilityType]}
+                    </span>
+                  </div>
                   <span className="text-[11px] text-ink-faint">
                     {new Date(marker.createdAt).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-[11.5px] text-ink-faint">
-                  {marker.opportunityId && <>Opportunity: {marker.opportunityId}</>}
-                  {marker.opportunityId && marker.routeId ? " · " : ""}
-                  {marker.routeId && <>Route: {marker.routeId}</>}
-                </p>
+                <MarkerContextLine marker={marker} />
                 <p className="text-[13px] leading-relaxed text-ink">{marker.body}</p>
                 <p className="text-[11.5px] text-ink-faint">
-                  {marker.displayName || "Anonymous"}
-                  {marker.city ? ` · ${marker.city}` : ""}
+                  {marker.authorName || "Anonymous"}
+                  {marker.authorRole ? ` · ${marker.authorRole}` : ""}
+                  {marker.experienceLabel ? ` · ${marker.experienceLabel}` : ""}
                 </p>
-                <div className="mt-1 flex flex-wrap items-center gap-3">
+                {marker.contactEmail && (
+                  <p className="text-[11.5px] text-ink-faint">
+                    Submitter email: <span className="text-ink">{marker.contactEmail}</span>
+                  </p>
+                )}
+
+                <label className="mt-1 block rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.25">
+                  <span className="block text-[10.5px] text-ink-faint">Moderation notes (admin-only)</span>
+                  <textarea
+                    value={notesDraft[marker.id] ?? ""}
+                    onChange={(e) =>
+                      setNotesDraft((prev) => ({ ...prev, [marker.id]: e.target.value }))
+                    }
+                    rows={2}
+                    className="mt-0.5 w-full resize-none bg-transparent text-[12.5px] text-ink outline-none"
+                  />
+                </label>
+
+                <div className="mt-1 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => handleReview(marker.id, "live")}
+                    onClick={() => patchMarker(marker.id, { status: "approved" })}
                     disabled={actioningId === marker.id}
                     className="rounded-full border border-green/40 bg-green-soft px-3 py-1.5 text-[12px] font-medium text-green outline-none transition hover:bg-green-soft/70 focus-visible:ring-2 focus-visible:ring-green/50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
@@ -168,11 +237,46 @@ export default function TrailMarkersAdminPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleReview(marker.id, "rejected")}
+                    onClick={() => patchMarker(marker.id, { status: "rejected" })}
                     disabled={actioningId === marker.id}
                     className="rounded-full border border-line/70 px-3 py-1.5 text-[12px] font-medium text-ink-faint outline-none transition hover:border-ink-faint/40 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     Reject
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => patchMarker(marker.id, { status: "archived" })}
+                    disabled={actioningId === marker.id}
+                    className="rounded-full border border-line/70 px-3 py-1.5 text-[12px] font-medium text-ink-faint outline-none transition hover:border-ink-faint/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Archive
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      patchMarker(marker.id, { moderationNotes: notesDraft[marker.id] ?? "" })
+                    }
+                    disabled={actioningId === marker.id}
+                    className="rounded-full border border-line/70 px-3 py-1.5 text-[12px] font-medium text-ink-soft outline-none transition hover:border-ink-faint/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Save notes
+                  </button>
+                  <span className="mx-1 text-[11px] text-ink-faint">Credibility:</span>
+                  <button
+                    type="button"
+                    onClick={() => patchMarker(marker.id, { credibilityType: "verified_experience" })}
+                    disabled={actioningId === marker.id}
+                    className="rounded-full border border-line/70 px-3 py-1.5 text-[12px] font-medium text-ink-soft outline-none transition hover:border-ink-faint/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Verified experience
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => patchMarker(marker.id, { credibilityType: "licensed_guide" })}
+                    disabled={actioningId === marker.id}
+                    className="rounded-full border border-line/70 px-3 py-1.5 text-[12px] font-medium text-ink-soft outline-none transition hover:border-ink-faint/40 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Licensed guide
                   </button>
                 </div>
               </div>
