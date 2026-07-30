@@ -17,6 +17,7 @@ import type { Opportunity } from "@/lib/opportunitySchema";
 import { getRelatedGoalText } from "@/lib/opportunityNarrative";
 import { computeTrustLabel } from "@/lib/trustLabels";
 import { mapGoalToTrailMapGoal } from "@/lib/goalSpecificity";
+import { useScrollTopOnMount } from "@/lib/useScrollTopOnMount";
 
 /**
  * Dynamic opportunity detail page — renders any opportunity by id/slug
@@ -40,15 +41,11 @@ function OpportunityDetailContent({ id }: { id: string }) {
   const [dbOpportunity, setDbOpportunity] = useState<Opportunity | null>(null);
   const [dbLoading, setDbLoading] = useState(true);
 
-  // Landing here mid-scroll (e.g. from a Link deep in Best Next Route's
-  // action block) could otherwise leave the browser at whatever scroll
-  // offset the previous page had — the content here starts short while
-  // still loading, so that offset can land past the fold. Force top on
-  // every mount, independent of Link's own (unreliable in practice here)
-  // scroll-restoration behavior.
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
-  }, []);
+  // See lib/useScrollTopOnMount.ts — landing here mid-scroll (e.g. from a
+  // Link deep in Best Next Route's action block) could otherwise leave
+  // the browser stranded partway down a smooth-scroll animation instead
+  // of at the top.
+  useScrollTopOnMount();
 
   useEffect(() => {
     let cancelled = false;

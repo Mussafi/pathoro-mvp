@@ -12,6 +12,7 @@ import { routes } from "@/lib/routes";
 import { TRUST_LABEL_CLASS, CANDIDATE_TRUST_LABEL } from "@/lib/trustLabels";
 import { GOAL_FIT_BADGE_CLASS, GOAL_FIT_COPY, GOAL_FIT_LABELS, computeGoalFit } from "@/lib/goalFitLabel";
 import type { ScoutCandidateRecord } from "@/lib/scoutCandidatesDb";
+import { useScrollTopOnMount } from "@/lib/useScrollTopOnMount";
 
 /**
  * Detail page for a not-yet-promoted scout candidate — the "Take this
@@ -37,12 +38,9 @@ function CandidateDetailContent({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [takeOpen, setTakeOpen] = useState(searchParams.get("openTake") === "1");
 
-  // See the matching comment in app/opportunity/[id]/page.tsx — same fix,
-  // same reason: don't inherit whatever scroll offset the previous page
-  // (usually Best Next Route, well down the page) was at.
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
-  }, []);
+  // See lib/useScrollTopOnMount.ts / the matching comment in
+  // app/opportunity/[id]/page.tsx.
+  useScrollTopOnMount();
 
   useEffect(() => {
     let cancelled = false;
