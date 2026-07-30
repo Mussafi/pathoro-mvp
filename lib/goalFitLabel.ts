@@ -97,6 +97,20 @@ const CURATED_GOAL_FIT: CuratedGoalFit[] = [
     adjacent: ["electrician", "plumb", "general contractor", "construction"],
   },
   {
+    goalKeywords: ["electrician", "electrical"],
+    direct: [
+      "electrician",
+      "electrical apprentice",
+      "electrician apprentice",
+      "apprenticeship",
+      "pre-apprenticeship",
+      "ibew",
+      "electrical helper",
+      "electrical trade school",
+    ],
+    adjacent: ["plumb", "hvac", "general contractor", "construction", "handyman"],
+  },
+  {
     goalKeywords: ["wedding photographer", "photographer", "photography"],
     direct: ["wedding photo", "photographer", "photography", "second shooter"],
     adjacent: ["videograph", "event planning", "florist", "wedding venue", "wedding planner"],

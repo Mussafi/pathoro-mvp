@@ -16,10 +16,12 @@ export function AiFoundAccessPoints({
   city,
   routeId,
   pathGoal,
+  startingFrom,
 }: {
   city: string;
   routeId: string;
   pathGoal: string;
+  startingFrom?: string;
 }) {
   const { candidates } = useLatestScoutCandidates({ city, routeId, pathGoal });
   const visible = candidates.filter((c) => c.status !== "dismissed").slice(0, MAX_SHOWN);
@@ -40,7 +42,7 @@ export function AiFoundAccessPoints({
       </p>
       <div className="mt-3 flex flex-col gap-2.5">
         {visible.map((candidate) => (
-          <ScoutCandidateCard key={candidate.id} candidate={candidate} goal={pathGoal} />
+          <ScoutCandidateCard key={candidate.id} candidate={candidate} goal={pathGoal} startingFrom={startingFrom} />
         ))}
       </div>
     </div>

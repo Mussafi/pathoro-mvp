@@ -39,9 +39,10 @@ export function useAutoScoutOpportunity(params: {
   state?: string;
   routeId: string;
   pathGoal: string;
+  startingFrom?: string;
 }): AutoScoutState {
   const [state, setState] = useState<AutoScoutState>(IDLE);
-  const { enabled, city, state: stateAbbr, routeId, pathGoal } = params;
+  const { enabled, city, state: stateAbbr, routeId, pathGoal, startingFrom } = params;
 
   useEffect(() => {
     if (!enabled || !city.trim() || !routeId.trim() || !pathGoal.trim()) {
@@ -98,6 +99,7 @@ export function useAutoScoutOpportunity(params: {
             state: stateAbbr,
             routeId,
             pathGoal,
+            startingFrom,
             requestedFromPage: "/route-planning (auto-scout)",
           }),
         });
@@ -134,7 +136,7 @@ export function useAutoScoutOpportunity(params: {
     return () => {
       cancelled = true;
     };
-  }, [enabled, city, stateAbbr, routeId, pathGoal]);
+  }, [enabled, city, stateAbbr, routeId, pathGoal, startingFrom]);
 
   return state;
 }

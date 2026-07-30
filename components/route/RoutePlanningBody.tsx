@@ -79,6 +79,7 @@ export function RoutePlanningBody() {
         city={answers.location}
         routeId={selectedId}
         pathGoal={answers.moveToward}
+        startingFrom={answers.startingFrom}
       />
       {!hasLiveDbMatch && (
         <ScoutRequestCard

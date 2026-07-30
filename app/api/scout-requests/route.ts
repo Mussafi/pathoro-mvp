@@ -58,6 +58,7 @@ export async function POST(request: Request): Promise<Response> {
     pathGoal?: string;
     userContext?: string;
     requestedFromPage?: string;
+    startingFrom?: string;
   };
 
   if (!body.city?.trim() || !body.routeId?.trim() || !body.pathGoal?.trim()) {
@@ -98,7 +99,14 @@ export async function POST(request: Request): Promise<Response> {
   if (isTavilyConfigured()) {
     try {
       const scoutMode = inferScoutMode(pathGoal);
-      const { candidates } = await scoutOpportunities({ city, state, pathGoal, routeId, scoutMode });
+      const { candidates } = await scoutOpportunities({
+        city,
+        state,
+        pathGoal,
+        routeId,
+        scoutMode,
+        startingFrom: body.startingFrom?.trim(),
+      });
       await saveScoutCandidates(id, candidates);
     } catch (err) {
       console.error(`Automatic scout failed for request ${id}:`, err);

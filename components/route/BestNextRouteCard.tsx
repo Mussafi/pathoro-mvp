@@ -2,13 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Compass, Heart, Lock, Sparkles, Star } from "lucide-react";
+import { ArrowRight, Compass, Heart, Lock, Sparkles, Star, TriangleAlert } from "lucide-react";
 import { routes } from "@/lib/routes";
 import { getOpportunityDetailHref } from "@/lib/opportunitySchema";
 import { resolveBestNextRouteMatch } from "@/lib/bestNextRouteMatch";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
 import { useLiveOpportunities } from "@/lib/useLiveOpportunities";
 import { useAutoScoutOpportunity } from "@/lib/useAutoScoutOpportunity";
+import { computeGoalFit } from "@/lib/goalFitLabel";
+import {
+  computePrerequisiteSignal,
+  computeStartingPointFit,
+  isPrerequisiteMismatch,
+  mapStartingFromToExperienceLevel,
+} from "@/lib/startingPointFit";
 import type { DirectionAnswers } from "@/lib/direction";
 import { OpportunityTile } from "@/components/route/OpportunityTile";
 import { ScoutCandidateCard } from "@/components/ScoutCandidateCard";
@@ -77,6 +84,7 @@ export function BestNextRouteCard({
     city: answers.location,
     routeId: selectedRouteId,
     pathGoal: answers.moveToward,
+    startingFrom: answers.startingFrom,
   });
   const isScouting = autoScout.status === "checking" || autoScout.status === "scouting";
 
@@ -102,6 +110,27 @@ export function BestNextRouteCard({
 
   const personalSentence = `You said “${answers.reachable}” would make this more reachable, so Pathoro opened ${selected.title} first.`;
 
+  // v0.39 "Rank opportunities by starting point fit": relevance to the
+  // goal isn't enough — a volunteer electrician role requiring 3 years
+  // of experience can be a perfectly direct goal match and still be the
+  // wrong first opportunity for someone who's "curious but unsure."
+  // resolveBestNextRouteMatch/scoutOpportunities already rank a
+  // reachable candidate above an advanced one server-side (so this
+  // mismatch should be rare for a freshly-scouted result), but this is
+  // the last-line check on whatever ended up as `bestCandidate` — e.g.
+  // a cached result from before this feature existed, or the only
+  // candidate Tavily found at all.
+  const bestCandidateGoalFit = bestCandidate ? computeGoalFit(bestCandidate, answers.moveToward) : null;
+  const bestCandidateStartingFit =
+    bestCandidate && bestCandidateGoalFit
+      ? computeStartingPointFit(
+          computePrerequisiteSignal(`${bestCandidate.title} ${bestCandidate.snippet}`),
+          mapStartingFromToExperienceLevel(answers.startingFrom),
+          bestCandidateGoalFit
+        )
+      : null;
+  const hasPrerequisiteMismatch = bestCandidateStartingFit ? isPrerequisiteMismatch(bestCandidateStartingFit) : false;
+
   // Product rule (v0.36 "Prioritize opportunity action over scout"):
   // whenever Pathoro has found *any* opportunity — reviewed, example, or
   // an unreviewed scout candidate — that's the primary next step and
@@ -117,15 +146,20 @@ export function BestNextRouteCard({
   const showLoading = isScouting && accessPointKind !== "reviewed";
   const showsMatchedOpportunity =
     !showLoading && Boolean(opportunity) && (accessPointKind === "reviewed" || accessPointKind === "seed");
-  const showsAiCandidate = !showLoading && accessPointKind === "ai" && Boolean(bestCandidate);
+  const showsAiCandidate =
+    !showLoading && accessPointKind === "ai" && Boolean(bestCandidate) && !hasPrerequisiteMismatch;
+  const showsPrerequisiteMismatch =
+    !showLoading && accessPointKind === "ai" && Boolean(bestCandidate) && hasPrerequisiteMismatch;
   const hasOpportunity = showsMatchedOpportunity || showsAiCandidate;
-  const nextActionType: "opportunity" | "ai" | "scout" | "scouting" = showLoading
+  const nextActionType: "opportunity" | "ai" | "scout" | "scouting" | "mismatch" = showLoading
     ? "scouting"
     : showsMatchedOpportunity
       ? "opportunity"
       : showsAiCandidate
         ? "ai"
-        : "scout";
+        : showsPrerequisiteMismatch
+          ? "mismatch"
+          : "scout";
   const sectionTitle = showLoading
     ? "Scouting the opportunity landscape…"
     : hasOpportunity
@@ -137,7 +171,9 @@ export function BestNextRouteCard({
       ? `matched ${accessPointKind} opportunity "${opportunity?.title}" for routeId="${selectedRouteId}"`
       : showsAiCandidate
         ? `matched unreviewed scout candidate "${bestCandidate?.title}" for routeId="${selectedRouteId}"`
-        : `no reviewed/live/seed/forced-fallback opportunity and no scout candidate (auto-scout status="${autoScout.status}") for goal="${answers.moveToward}" on routeId="${selectedRouteId}"`;
+        : showsPrerequisiteMismatch
+          ? `best candidate "${bestCandidate?.title}" gated out — startingPointFit="${bestCandidateStartingFit}" for startingFrom="${answers.startingFrom}"`
+          : `no reviewed/live/seed/forced-fallback opportunity and no scout candidate (auto-scout status="${autoScout.status}") for goal="${answers.moveToward}" on routeId="${selectedRouteId}"`;
 
   // ?debugRoute=1 (or NODE_ENV=development) shows a small panel with the
   // exact matching decision this render made — added after a user report
@@ -190,6 +226,8 @@ export function BestNextRouteCard({
           <p>raw localStorage moveToward: {debug.rawStoredMoveToward ?? "(none stored — using default)"}</p>
           <p>currentGoal (activeGoal passed to BestNextRouteCard): {answers.moveToward || "(empty)"}</p>
           <p>reachable answer: {answers.reachable || "(empty)"}</p>
+          <p>startingFrom answer: {answers.startingFrom || "(empty)"}</p>
+          <p>bestCandidate startingPointFit: {bestCandidateStartingFit ?? "(no candidate)"}</p>
           <p>selectedRouteId: {selectedRouteId}</p>
           <p>selectedRoute title: {selected.title}</p>
           <p>
@@ -329,7 +367,7 @@ export function BestNextRouteCard({
             <span className="mb-2 block text-[11px] font-medium text-ink-faint">
               {ACCESS_POINT_HEADING.ai}
             </span>
-            <ScoutCandidateCard candidate={bestCandidate} goal={answers.moveToward} />
+            <ScoutCandidateCard candidate={bestCandidate} goal={answers.moveToward} startingFrom={answers.startingFrom} />
             <div className="shadow-card mt-3.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-3.5">
               <div className="flex flex-wrap items-center gap-3">
                 <Link
@@ -355,6 +393,31 @@ export function BestNextRouteCard({
                 </a>
               </div>
             </div>
+          </div>
+        ) : showsPrerequisiteMismatch && bestCandidate ? (
+          <div className="mt-2.5">
+            <div className="flex items-start gap-2 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-3.5 text-amber-800">
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
+              <div>
+                <span className="block text-[13px] font-semibold">
+                  This may be too advanced from your current starting point.
+                </span>
+                <p className="mt-1 text-[11.5px] leading-relaxed">
+                  The best real source Pathoro found for this goal looks like it expects prior
+                  experience or credentials.
+                </p>
+              </div>
+            </div>
+            <div className="mt-2.5">
+              <ScoutCandidateCard candidate={bestCandidate} goal={answers.moveToward} startingFrom={answers.startingFrom} />
+            </div>
+            <a
+              href="#scout-request"
+              className="mt-3.5 flex items-center justify-center gap-2 rounded-full bg-green px-5 py-2.5 text-[13px] font-medium text-cream shadow-sm outline-none transition hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-green/50"
+            >
+              Scout beginner access points
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
           </div>
         ) : (
           <div className="mt-2.5 rounded-2xl border border-green/40 bg-green-soft/25 px-4 py-4">

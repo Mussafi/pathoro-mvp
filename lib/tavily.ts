@@ -7,6 +7,13 @@ import {
 } from "@/lib/opportunitySchema";
 import { PATHORO_FIT_RANK, type PathoroFit } from "@/lib/scoutFit";
 import { computeGoalFit, GOAL_FIT_RANK } from "@/lib/goalFitLabel";
+import {
+  computePrerequisiteSignal,
+  computeStartingPointFit,
+  mapStartingFromToExperienceLevel,
+  STARTING_POINT_FIT_RANK,
+  type ExperienceLevel,
+} from "@/lib/startingPointFit";
 
 const TAVILY_SEARCH_URL = "https://api.tavily.com/search";
 const FETCH_TIMEOUT_MS = 8000;
@@ -322,21 +329,6 @@ function pickRotatedHints(pool: string[], startIndex: number, count: number): st
 }
 
 /**
- * Builds the search query set for whichever scout mode was selected — see
- * the three scout modes in docs/V0.11-AI-OPPORTUNITY-SCOUT.md:
- * - "route": route-type-biased + canonical-source-biased, with a light,
- *   rotated dose of higher-agency queries and an auto-detected gateway
- *   bonus. The original v0.11 behavior.
- * - "hidden": every query drawn from the hidden-opportunity hint pool
- *   (flea markets, resale, grants, apprenticeships, supplier directories,
- *   etc.) — no class/workshop phrasing. See "the modern opportunity
- *   problem is not just finding events" in docs/MVP-LOCKED-PRINCIPLES.md.
- * - "gateway": every query drawn from the gateway community hint pool
- *   (chambers of commerce, cultural associations, trade meetups, etc.),
- *   always on rather than keyword-triggered. See "Gateway Communities" in
- *   the same doc.
- */
-/**
  * Goal-specific query boosts for goals where the generic route hint pool
  * ("beginner class", "public workshop", …) is too vague to reliably
  * surface a *direct* access point — see "Fix opportunity action landing
@@ -358,11 +350,58 @@ const GOAL_SPECIFIC_QUERY_BOOSTS: { pattern: RegExp; queries: string[] }[] = [
   },
 ];
 
+/**
+ * Starting-position-aware query boosts — see "Rank opportunities by
+ * starting point fit" PART 5. Only applied when the user says they're
+ * new to this ("curious but unsure", "no experience", etc. — see
+ * lib/startingPointFit.ts's mapStartingFromToExperienceLevel); someone
+ * further along still gets the plain goal-specific/generic queries,
+ * since a job posting or an experience-gated role is exactly what
+ * they're looking for. Deliberately does NOT lead with "jobs" or
+ * "journeyman"/"master" query terms, which is what was surfacing
+ * experience-gated roles as the top (and often only) result before.
+ */
+const BEGINNER_QUERY_BOOSTS: { pattern: RegExp; queries: string[] }[] = [
+  {
+    pattern: /\belectrician\b|\belectrical\b/i,
+    queries: [
+      "electrician apprenticeship info session",
+      "electrician pre-apprenticeship",
+      "IBEW apprenticeship",
+      "electrical helper no experience",
+      "electrician trade school open house",
+      "electrical apprenticeship application",
+      "workforce training electrician",
+    ],
+  },
+];
+
 function goalSpecificQueries(pathGoal: string, location: string): string[] {
   const boost = GOAL_SPECIFIC_QUERY_BOOSTS.find((b) => b.pattern.test(pathGoal));
   return boost ? boost.queries.map((q) => `${q} ${location}`) : [];
 }
 
+function beginnerQueries(pathGoal: string, location: string, experienceLevel: ExperienceLevel): string[] {
+  if (experienceLevel !== "new") return [];
+  const boost = BEGINNER_QUERY_BOOSTS.find((b) => b.pattern.test(pathGoal));
+  return boost ? boost.queries.map((q) => `${q} ${location}`) : [];
+}
+
+/**
+ * Builds the search query set for whichever scout mode was selected — see
+ * the three scout modes in docs/V0.11-AI-OPPORTUNITY-SCOUT.md:
+ * - "route": route-type-biased + canonical-source-biased, with a light,
+ *   rotated dose of higher-agency queries and an auto-detected gateway
+ *   bonus. The original v0.11 behavior.
+ * - "hidden": every query drawn from the hidden-opportunity hint pool
+ *   (flea markets, resale, grants, apprenticeships, supplier directories,
+ *   etc.) — no class/workshop phrasing. See "the modern opportunity
+ *   problem is not just finding events" in docs/MVP-LOCKED-PRINCIPLES.md.
+ * - "gateway": every query drawn from the gateway community hint pool
+ *   (chambers of commerce, cultural associations, trade meetups, etc.),
+ *   always on rather than keyword-triggered. See "Gateway Communities" in
+ *   the same doc.
+ */
 export function generateSearchQueries(params: {
   city: string;
   state?: string;
@@ -370,6 +409,7 @@ export function generateSearchQueries(params: {
   routeId: string;
   keywords?: string;
   scoutMode?: ScoutMode;
+  startingFrom?: string;
 }): string[] {
   const location = params.state ? `${params.city}, ${params.state}` : params.city;
   const routeKeys = Object.keys(ROUTE_QUERY_HINTS);
@@ -414,6 +454,8 @@ export function generateSearchQueries(params: {
 
   if (mode === "route") {
     queries.push(...goalSpecificQueries(params.pathGoal, location));
+    const experienceLevel = mapStartingFromToExperienceLevel(params.startingFrom ?? "");
+    queries.push(...beginnerQueries(params.pathGoal, location, experienceLevel));
   }
 
   if (params.keywords?.trim()) {
@@ -711,6 +753,7 @@ export async function scoutOpportunities(params: {
   routeId: string;
   keywords?: string;
   scoutMode?: ScoutMode;
+  startingFrom?: string;
 }): Promise<{ candidates: ScoutCandidate[]; queriesUsed: string[] }> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) {
@@ -745,17 +788,34 @@ export async function scoutOpportunities(params: {
     }
   });
 
-  // Goal fit (direct vs. adjacent/weak — see lib/goalFitLabel.ts) ranks
-  // above PathoroFit's page-quality tiers: a direct-but-lower-confidence
-  // candidate should still beat a highly-specific page for the wrong
-  // thing (e.g. a nursing volunteer listing for a "licensed therapist"
-  // goal). Only once fit-to-goal ties does page quality/confidence
-  // decide the order — so an adjacent result can still win when nothing
-  // more direct was found at all.
+  // Ranking priority (see "Rank opportunities by starting point fit"
+  // PART 4/6):
+  //   1. Goal fit (direct vs. adjacent/weak — lib/goalFitLabel.ts) — a
+  //      direct-but-lower-confidence candidate still beats a highly
+  //      specific page for the wrong thing (e.g. a nursing volunteer
+  //      listing for a "licensed therapist" goal).
+  //   2. Starting-point fit (lib/startingPointFit.ts) — among
+  //      equally-goal-relevant candidates, one reachable from where the
+  //      user actually is beats one that requires years of experience
+  //      they don't have yet (the volunteer-electrician-needs-3-years
+  //      case this feature exists to fix).
+  //   3. PathoroFit page quality, then raw confidence, as before.
+  const experienceLevel = mapStartingFromToExperienceLevel(params.startingFrom ?? "");
+  const rankOf = (candidate: ScoutCandidate) => {
+    const goalFit = computeGoalFit(candidate, params.pathGoal);
+    const prerequisiteSignal = computePrerequisiteSignal(`${candidate.title} ${candidate.snippet}`);
+    const startingPointFit = computeStartingPointFit(prerequisiteSignal, experienceLevel, goalFit);
+    return { goalFit, startingPointFit };
+  };
+
   candidates.sort((a, b) => {
-    const goalFitDiff =
-      GOAL_FIT_RANK[computeGoalFit(b, params.pathGoal)] - GOAL_FIT_RANK[computeGoalFit(a, params.pathGoal)];
+    const rankA = rankOf(a);
+    const rankB = rankOf(b);
+    const goalFitDiff = GOAL_FIT_RANK[rankB.goalFit] - GOAL_FIT_RANK[rankA.goalFit];
     if (goalFitDiff !== 0) return goalFitDiff;
+    const startingFitDiff =
+      STARTING_POINT_FIT_RANK[rankB.startingPointFit] - STARTING_POINT_FIT_RANK[rankA.startingPointFit];
+    if (startingFitDiff !== 0) return startingFitDiff;
     const fitDiff = PATHORO_FIT_RANK[b.pathoroFit] - PATHORO_FIT_RANK[a.pathoroFit];
     if (fitDiff !== 0) return fitDiff;
     const confidenceRank: Record<ScoutConfidence, number> = { high: 2, medium: 1, low: 0 };
