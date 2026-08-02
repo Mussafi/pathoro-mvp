@@ -2,7 +2,8 @@
 
 import { Flag } from "lucide-react";
 import {
-  CREDIBILITY_TYPE_LABELS,
+  getCredibilityBadgeLabel,
+  isPathoroStarterNote,
   MARKER_TYPE_LABELS,
   type TrailMarker,
 } from "@/lib/trailMarkerSchema";
@@ -11,14 +12,21 @@ import { AddTrailMarkerButton } from "@/components/community/AddTrailMarkerButto
 
 export function TrailMarkerCard({ marker }: { marker: TrailMarker }) {
   const context = marker.experienceLabel || marker.authorRole;
+  const isStarterNote = isPathoroStarterNote(marker);
   return (
     <div className="rounded-2xl border border-line/70 bg-cream-field px-3.5 py-2.5">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="rounded-full border border-green/30 bg-green-soft/60 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-green">
           {MARKER_TYPE_LABELS[marker.markerType]}
         </span>
-        <span className="rounded-full border border-line/70 px-2 py-0.5 text-[9.5px] font-medium text-ink-faint">
-          {CREDIBILITY_TYPE_LABELS[marker.credibilityType]}
+        <span
+          className={
+            isStarterNote
+              ? "rounded-full border border-green/40 bg-green-soft/40 px-2 py-0.5 text-[9.5px] font-medium text-green"
+              : "rounded-full border border-line/70 px-2 py-0.5 text-[9.5px] font-medium text-ink-faint"
+          }
+        >
+          {getCredibilityBadgeLabel(marker)}
         </span>
       </div>
       <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink">{marker.body}</p>

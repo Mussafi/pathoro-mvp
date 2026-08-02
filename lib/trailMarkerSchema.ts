@@ -186,3 +186,32 @@ export const TRAIL_MARKER_AUTHOR_NAME_MAX_LENGTH = 80;
 export function createTrailMarkerId(): string {
   return `trail-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
+
+// v0.41 "Seed High-Quality Starter Trail Markers" — Pathoro-authored
+// editorial notes, never a real submitter. No schema change: these are
+// plain trail_markers rows distinguished only by author_name/author_role,
+// exactly per the product rule to never fake a community identity (see
+// docs/MVP-LOCKED-PRINCIPLES.md#trail-markers-not-comments).
+export const PATHORO_STARTER_AUTHOR_NAME = "Pathoro";
+export const PATHORO_STARTER_AUTHOR_ROLE = "Starter trail note";
+
+/** True only for Pathoro's own seeded editorial notes — requires both
+ * fields to match exactly, so a real submitter typing similar words into
+ * their own name/role fields doesn't accidentally (or deliberately) get
+ * mistaken for one. */
+export function isPathoroStarterNote(marker: Pick<TrailMarker, "authorName" | "authorRole">): boolean {
+  return (
+    marker.authorName === PATHORO_STARTER_AUTHOR_NAME &&
+    marker.authorRole === PATHORO_STARTER_AUTHOR_ROLE
+  );
+}
+
+/** What the credibility badge should say — "Starter note" for Pathoro's
+ * own seeded markers (never "Credential not verified", which would read
+ * as if a real person's claim just hadn't been checked yet), the normal
+ * credibility label for everything else. */
+export function getCredibilityBadgeLabel(
+  marker: Pick<TrailMarker, "authorName" | "authorRole" | "credibilityType">
+): string {
+  return isPathoroStarterNote(marker) ? "Starter note" : CREDIBILITY_TYPE_LABELS[marker.credibilityType];
+}
