@@ -88,6 +88,10 @@ export function TrailMarkersSection({
             ? "Pathoro starter notes appear first during alpha, not a comment section. Real signs from people who've walked this path will join and replace them over time."
             : "Signs from people who've walked this path — not a comment section."}
       </p>
+      <p className="mt-1 text-[10.5px] leading-snug text-ink-faint/80">
+        Submitted markers are reviewed before they appear here. Approved markers are community
+        context, not guaranteed facts.
+      </p>
 
       <div className="mt-4 flex flex-col gap-2.5 border-t border-line/70 pt-4">
         {loading ? (

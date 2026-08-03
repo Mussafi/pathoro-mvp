@@ -9,9 +9,11 @@ export function SiteFooter() {
   return (
     <footer className="relative mx-auto mt-10 w-full max-w-[1500px] border-t border-line/70 px-6 py-6 sm:px-10">
       <p className="max-w-[640px] text-[11.5px] leading-relaxed text-ink-faint">
-        Pathoro is in public alpha. It helps you map possible next steps,
-        source-backed access points, and trail notes. Review sources before
-        acting.
+        Pathoro is in public alpha. It helps you explore possible paths,
+        source-backed access points, and starter/community notes. It does
+        not provide professional, legal, medical, financial, educational,
+        employment, or licensing advice. Verify official requirements and
+        sources before acting.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11.5px] text-ink-faint">
         <Link href="/about" className="outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-green/50">

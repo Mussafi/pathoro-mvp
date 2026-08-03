@@ -1,3 +1,4 @@
+import { isAuthorizedAdminRequest } from "@/lib/adminAuth";
 import {
   ROUTE_OPPORTUNITY_TYPE_LABELS,
   suggestRouteIdFromText,
@@ -206,6 +207,13 @@ function buildDraft(params: {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  if (!isAuthorizedAdminRequest(request)) {
+    return Response.json(
+      { ok: false, error: "Missing or invalid admin token." } satisfies IngestionResponse,
+      { status: 401 }
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();

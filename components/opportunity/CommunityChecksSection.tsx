@@ -55,6 +55,10 @@ export function CommunityChecksSection({
           onSubmitted={refresh}
         />
       </div>
+      <p className="mt-1.5 text-[10.5px] leading-snug text-ink-faint/80">
+        Submitted checks are reviewed before they appear here. Approved checks are community
+        context, not guaranteed facts.
+      </p>
       <ul className="mt-2 flex flex-wrap gap-1.5">
         {PROMPTS.map((prompt) => (
           <li

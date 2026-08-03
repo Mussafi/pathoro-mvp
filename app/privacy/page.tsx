@@ -11,11 +11,13 @@ export default function PrivacyPage() {
       <p>
         <span className="font-semibold text-ink">What Pathoro stores.</span>{" "}
         Your goal, location, and a few onboarding answers are kept in your
-        browser (not sent anywhere) so the app remembers your place. If you
+        browser (not sent anywhere) so the app remembers your place. A scout
+        request saves your goal, city, and route — no email or name. If you
         submit a trail marker, a &ldquo;take this opportunity&rdquo; request,
-        a Path Guide request, a scout request, or feedback, Pathoro saves
-        what you typed — including an email address only if you chose to
-        provide one — so a real person can review or follow up on it.
+        a Path Guide request, or feedback, Pathoro saves what you typed —
+        including an email address only where that field exists and only if
+        you chose to fill it in — so a real person can review or follow up
+        on it.
       </p>
       <p>
         <span className="font-semibold text-ink">Who can see it.</span>{" "}
@@ -37,6 +39,17 @@ export default function PrivacyPage() {
         <a href="/contact" className="font-medium text-green underline">Contact</a> and Pathoro will
         handle it manually — there&rsquo;s no self-serve account or
         deletion tool yet in this alpha.
+      </p>
+      <p>
+        <span className="font-semibold text-ink">Children.</span> Pathoro is
+        not intended for children under 13. Please don&rsquo;t submit
+        personal information through any Pathoro form if you are under 13.
+      </p>
+      <p>
+        Pathoro does not provide professional, legal, medical, financial,
+        educational, employment, or licensing advice — see{" "}
+        <a href="/terms" className="font-medium text-green underline">Terms</a> for what that means in
+        practice.
       </p>
     </LegalPageLayout>
   );

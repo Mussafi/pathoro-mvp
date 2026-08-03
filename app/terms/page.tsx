@@ -10,16 +10,21 @@ export default function TermsPage() {
       </p>
       <ul className="list-disc space-y-2 pl-5">
         <li>
-          Pathoro provides orientation and source-backed suggestions — not
-          professional, legal, medical, or financial advice. Always verify
-          official requirements (licensing, certification, admissions,
-          legal, medical, or financial) from official sources before
-          relying on them.
+          Pathoro helps you explore possible paths, source-backed access
+          points, and starter/community notes. It does not provide
+          professional, legal, medical, financial, educational, employment,
+          or licensing advice. Always verify official requirements
+          (licensing, certification, admissions, legal, medical, financial,
+          or employment) from official sources before relying on them.
         </li>
         <li>
           Community trail markers are moderated before they appear
           publicly, but their accuracy is not guaranteed. They reflect one
-          person&rsquo;s experience, not a verified fact.
+          person&rsquo;s experience, not a verified fact. A credential is
+          only shown as verified (&ldquo;Verified experience&rdquo; or
+          &ldquo;Licensed guide&rdquo;) when Pathoro has explicitly reviewed
+          and labeled it that way — a submitter typing a credential into
+          their own marker does not make it verified.
         </li>
         <li>
           AI-found opportunities may be incomplete, outdated, or no longer
@@ -30,6 +35,11 @@ export default function TermsPage() {
           &ldquo;Take this opportunity&rdquo; saves a next-step request that
           Pathoro reviews manually. It does not sign you up, apply on your
           behalf, or contact an outside organization for you.
+        </li>
+        <li>
+          Pathoro is not intended for children under 13. Do not submit
+          personal information (in a trail marker, feedback, or any other
+          form) if you are under 13.
         </li>
         <li>
           This is an early alpha. Features may change, break, or be removed

@@ -110,7 +110,7 @@ export default function OpportunityIngestionPage() {
     try {
       const res = await fetch("/api/ingest-opportunity", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-admin-token": adminToken },
         body: JSON.stringify({ sourceUrl, sourceType, city }),
       });
       const data = (await res.json()) as IngestionResponse;

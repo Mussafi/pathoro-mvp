@@ -234,7 +234,7 @@ export function TakeOpportunityModal({
 
               <label className="block">
                 <span className="block text-[11px] font-semibold text-ink-faint">
-                  Email (so Pathoro can follow up)
+                  Email (optional, so Pathoro can follow up)
                 </span>
                 <input
                   type="email"
@@ -268,7 +268,7 @@ export function TakeOpportunityModal({
               </button>
               <p className="text-[10.5px] leading-snug text-ink-faint">
                 In this alpha, Pathoro helps you organize the next step and reviews requests
-                manually.
+                manually. Not intended for children under 13.
               </p>
             </form>
           </>

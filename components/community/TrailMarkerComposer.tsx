@@ -242,6 +242,9 @@ export function TrailMarkerComposer({
             >
               {status === "submitting" ? "Submitting…" : "Submit trail marker"}
             </button>
+            <p className="text-[10.5px] leading-snug text-ink-faint">
+              Not intended for children under 13 — please don&rsquo;t submit personal information if you are under 13.
+            </p>
           </form>
         )}
       </div>

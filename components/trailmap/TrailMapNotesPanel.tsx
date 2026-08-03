@@ -85,6 +85,12 @@ export function TrailMapNotesPanel({
               ? "Pathoro starter notes appear first during alpha. As people contribute, real trail markers from people ahead will replace and improve them."
               : "Notes from people ahead of you on this exact path — hidden friction, better first steps, what opened doors, or a warning worth knowing. Trail notes are attached to the path — not a feed."}
       </p>
+      {!showExamples && (
+        <p className="mt-1 text-[10px] leading-snug text-ink-faint/80">
+          Submitted markers are reviewed before they appear here. Approved markers are community
+          context, not guaranteed facts.
+        </p>
+      )}
 
       <div className="mt-3 flex flex-col gap-2.5">
         {loading ? (
