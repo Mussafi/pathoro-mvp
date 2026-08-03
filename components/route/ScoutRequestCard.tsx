@@ -115,6 +115,11 @@ export function ScoutRequestCard({
           >
             {status === "sending" ? "Sending…" : "Request scout"}
           </button>
+          <p className="mt-2 text-[10.5px] leading-snug text-ink-faint">
+            By submitting, you agree to Pathoro&rsquo;s{" "}
+            <Link href="/terms" className="underline hover:text-ink-soft">Terms</Link> and acknowledge the{" "}
+            <Link href="/privacy" className="underline hover:text-ink-soft">Privacy Policy</Link>.
+          </p>
         </>
       )}
     </div>

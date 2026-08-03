@@ -47,6 +47,15 @@ export default function TermsPage() {
           accuracy guarantees.
         </li>
       </ul>
+
+      <h2 className="mt-2 font-serif text-[17px] leading-tight text-ink">Governing Law and Venue</h2>
+      <p>
+        These Terms are governed by the laws of the State of New York,
+        without regard to conflict-of-law principles. Any dispute relating
+        to Pathoro will be brought in the state or federal courts located in
+        [COUNTY], New York, unless applicable law requires otherwise.
+      </p>
+
       <p>
         Questions about any of this? Use{" "}
         <a href="/contact" className="font-medium text-green underline">Contact</a>.

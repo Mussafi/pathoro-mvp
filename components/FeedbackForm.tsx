@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { FEEDBACK_CATEGORY_LABELS, type FeedbackCategory } from "@/lib/feedbackSchema";
 
 const CATEGORY_ORDER: FeedbackCategory[] = [
@@ -124,6 +125,11 @@ export function FeedbackForm({ onSent }: { onSent?: () => void }) {
       </button>
       <p className="text-[10.5px] leading-snug text-ink-faint">
         Not intended for children under 13 — please don&rsquo;t submit personal information if you are under 13.
+      </p>
+      <p className="text-[10.5px] leading-snug text-ink-faint">
+        By submitting, you agree to Pathoro&rsquo;s{" "}
+        <Link href="/terms" className="underline hover:text-ink-soft">Terms</Link> and acknowledge the{" "}
+        <Link href="/privacy" className="underline hover:text-ink-soft">Privacy Policy</Link>.
       </p>
     </form>
   );

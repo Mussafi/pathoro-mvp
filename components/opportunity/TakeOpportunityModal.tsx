@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { ExternalLink, X } from "lucide-react";
 import { TRUST_LABEL_CLASS, type TrustLabel } from "@/lib/trustLabels";
 import { OPPORTUNITY_ACTION_TYPE_LABELS, type OpportunityActionType } from "@/lib/opportunityActionSchema";
@@ -269,6 +270,11 @@ export function TakeOpportunityModal({
               <p className="text-[10.5px] leading-snug text-ink-faint">
                 In this alpha, Pathoro helps you organize the next step and reviews requests
                 manually. Not intended for children under 13.
+              </p>
+              <p className="text-[10.5px] leading-snug text-ink-faint">
+                By submitting, you agree to Pathoro&rsquo;s{" "}
+                <Link href="/terms" className="underline hover:text-ink-soft">Terms</Link> and acknowledge the{" "}
+                <Link href="/privacy" className="underline hover:text-ink-soft">Privacy Policy</Link>.
               </p>
             </form>
           </>
