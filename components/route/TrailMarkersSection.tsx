@@ -64,6 +64,8 @@ export function TrailMarkersSection({
   goal: string;
 }) {
   const { markers, loading, refresh } = useTrailMarkers({ opportunityId, candidateId });
+  const hasStarterNotes = markers.some(isPathoroStarterNote);
+  const hasRealUserNotes = markers.some((m) => !isPathoroStarterNote(m));
 
   return (
     <div className="shadow-card mt-4 flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-6 py-6">
@@ -80,7 +82,11 @@ export function TrailMarkersSection({
         />
       </div>
       <p className="mt-1.5 text-[12px] leading-relaxed text-ink-faint">
-        Signs from people who&rsquo;ve walked this path — not a comment section.
+        {hasStarterNotes && hasRealUserNotes
+          ? "Starter notes and signs from people who've walked this path — not a comment section."
+          : hasStarterNotes
+            ? "Pathoro starter notes appear first during alpha, not a comment section. Real signs from people who've walked this path will join and replace them over time."
+            : "Signs from people who've walked this path — not a comment section."}
       </p>
 
       <div className="mt-4 flex flex-col gap-2.5 border-t border-line/70 pt-4">

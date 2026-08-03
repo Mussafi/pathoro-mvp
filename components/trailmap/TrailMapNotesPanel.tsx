@@ -3,6 +3,7 @@ import { getBranchAccentClasses, type TrailMapBranch, type TrailNote } from "@/l
 import { TrailMarkerCard } from "@/components/route/TrailMarkersSection";
 import { AddTrailMarkerButton } from "@/components/community/AddTrailMarkerButton";
 import { useTrailMarkers } from "@/lib/useTrailMarkers";
+import { isPathoroStarterNote } from "@/lib/trailMarkerSchema";
 
 /** Detects the note's flavor from its own leading phrase so each note can
  * carry a small tag — "hidden friction," "better first step," "opened
@@ -47,6 +48,12 @@ export function TrailMapNotesPanel({
   // when there's nothing real yet — once at least one real marker exists,
   // examples stop showing (v0.40 PART 7).
   const showExamples = realMarkers.length === 0;
+  // v0.42 "Truth, Trust, and Alpha Readiness": Pathoro's own starter notes
+  // (see lib/trailMarkerSchema.ts) count as "real" for display purposes,
+  // but the intro copy must never blur them into "notes from people ahead"
+  // — that would imply a real person submitted them.
+  const hasStarterNotes = realMarkers.some(isPathoroStarterNote);
+  const hasRealUserNotes = realMarkers.some((m) => !isPathoroStarterNote(m));
 
   return (
     <div className="shadow-card flex flex-col rounded-[26px] border border-line/70 bg-cream-card px-5 py-5">
@@ -72,7 +79,11 @@ export function TrailMapNotesPanel({
           ? notesAreExamples
             ? "Illustrative examples of the kind of notes people ahead often leave — not real user-submitted notes yet. Trail notes are attached to the path — not a feed."
             : "No real trail markers here yet, so these are illustrative examples of the kind of notes people ahead often leave. Trail notes are attached to the path — not a feed."
-          : "Notes from people ahead of you on this exact path — hidden friction, better first steps, what opened doors, or a warning worth knowing. Trail notes are attached to the path — not a feed."}
+          : hasStarterNotes && hasRealUserNotes
+            ? "Starter notes and notes from people ahead of you — attached to this path, not a feed."
+            : hasStarterNotes
+              ? "Pathoro starter notes appear first during alpha. As people contribute, real trail markers from people ahead will replace and improve them."
+              : "Notes from people ahead of you on this exact path — hidden friction, better first steps, what opened doors, or a warning worth knowing. Trail notes are attached to the path — not a feed."}
       </p>
 
       <div className="mt-3 flex flex-col gap-2.5">
@@ -124,6 +135,11 @@ export function TrailMapNotesPanel({
           })
         )}
       </div>
+
+      <p className="mt-3 text-[10px] leading-relaxed text-ink-faint/80">
+        In alpha, Pathoro combines source-backed scouting, starter notes, and moderated community
+        markers. Review sources before acting.
+      </p>
     </div>
   );
 }

@@ -186,7 +186,7 @@ function OpportunityPreviewModal({
                     : "border border-green/40 bg-green-soft/60 text-green"
                 }`}
               >
-                {consumerActivity ? "Consumer activity" : "Real opportunity"}
+                {consumerActivity ? "Consumer activity" : "Looks like a real opportunity"}
               </span>
               <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${TRUST_LABEL_CLASS[trustLabel]}`}>
                 {trustLabel}

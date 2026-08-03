@@ -14,14 +14,13 @@ import {
 } from "@/lib/discoveryQueue";
 import { useDiscoveryQueue } from "@/lib/useDiscoveryQueue";
 import type { ScoutCandidate, ScoutMode } from "@/lib/tavily";
-import { PATHORO_FIT_LABELS } from "@/lib/scoutFit";
+import { PATHORO_FIT_LABELS, SCOUT_CONFIDENCE_LABELS } from "@/lib/scoutFit";
 import type { ScoutResponse } from "@/app/api/scout-opportunities/route";
 
-const CONFIDENCE_LABELS: Record<ScoutCandidate["confidence"], string> = {
-  high: "High confidence",
-  medium: "Medium confidence",
-  low: "Low confidence",
-};
+const CONFIDENCE_LABELS: Record<ScoutCandidate["confidence"], string> = SCOUT_CONFIDENCE_LABELS as Record<
+  ScoutCandidate["confidence"],
+  string
+>;
 
 const FIT_BADGE_CLASS: Record<ScoutCandidate["pathoroFit"], string> = {
   strong_opportunity: "border border-green/40 bg-green-soft/60 text-green",

@@ -14,8 +14,12 @@
  */
 export type PathoroFit = "strong_opportunity" | "maybe_useful" | "consumer_activity" | "weak_informational";
 
+// v0.42 "Truth, Trust, and Alpha Readiness": "Strong opportunity" read as a
+// guarantee rather than Pathoro's own estimate — "Strong fit" says the same
+// thing (this candidate scores well) without implying Pathoro has
+// confirmed it. See also SCOUT_CONFIDENCE_LABELS below.
 export const PATHORO_FIT_LABELS: Record<PathoroFit, string> = {
-  strong_opportunity: "Strong opportunity",
+  strong_opportunity: "Strong fit",
   maybe_useful: "Maybe useful",
   consumer_activity: "Consumer activity",
   weak_informational: "Mostly informational",
@@ -50,10 +54,13 @@ export const FIT_BADGE_CLASS: Record<PathoroFit, string> = {
   weak_informational: "border border-line/60 bg-cream-card text-ink-faint",
 };
 
+// "confidence" on its own reads as Pathoro vouching for the result;
+// "fit estimate" is clearer that this is Pathoro's own scoring, not a
+// verification.
 export const SCOUT_CONFIDENCE_LABELS: Record<string, string> = {
-  high: "High confidence",
-  medium: "Medium confidence",
-  low: "Low confidence",
+  high: "High fit estimate",
+  medium: "Medium fit estimate",
+  low: "Low fit estimate",
 };
 
 const CANDIDATE_SNIPPET_MAX_LENGTH = 140;

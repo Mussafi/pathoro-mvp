@@ -141,7 +141,7 @@ export function OpportunityDetailCard({
               : "border border-green/40 bg-green-soft/60 text-green"
           }`}
         >
-          {consumerActivity ? "Consumer activity" : "Real opportunity"}
+          {consumerActivity ? "Consumer activity" : "Looks like a real opportunity"}
         </span>
       </div>
 
