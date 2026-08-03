@@ -5,6 +5,7 @@ import {
   Flag,
   Inbox,
   Map,
+  MessageSquare,
   MousePointerClick,
   Route as RouteIcon,
   Search,
@@ -62,6 +63,12 @@ const links: HubLink[] = [
     icon: MousePointerClick,
     title: "Opportunity Actions",
     description: "See who clicked \"Take this opportunity,\" and what they want to do next.",
+  },
+  {
+    href: "/admin/feedback",
+    icon: MessageSquare,
+    title: "Feedback",
+    description: "What real users said helped, confused them, or was wrong — from the footer and /contact.",
   },
   {
     href: "/route-planning",

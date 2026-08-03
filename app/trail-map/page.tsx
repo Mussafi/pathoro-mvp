@@ -15,6 +15,7 @@ import { TrailMapGoalSelector } from "@/components/trailmap/TrailMapGoalSelector
 import { TrailMapGoalSearch } from "@/components/trailmap/TrailMapGoalSearch";
 import { TrailMapGenericShell } from "@/components/trailmap/TrailMapGenericShell";
 import { TrailMapLegend } from "@/components/trailmap/TrailMapLegend";
+import { SiteFooter } from "@/components/SiteFooter";
 import { trailMapGoals, getTrailMapGoal, type TrailMapGoal, type TrailMapGoalId } from "@/lib/trailMapData";
 import { mapGoalToTrailMapGoal } from "@/lib/goalSpecificity";
 import { normalizeTrailMapGoal } from "@/lib/trailMapNormalize";
@@ -216,6 +217,8 @@ export default function TrailMapPage() {
           </div>
         )}
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

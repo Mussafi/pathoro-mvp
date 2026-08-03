@@ -4,6 +4,7 @@ import { WelcomeCard } from "@/components/WelcomeCard";
 import { OrientationCard } from "@/components/OrientationCard";
 import { LandscapeCard } from "@/components/LandscapeCard";
 import { TopoLines } from "@/components/TopoLines";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export default function Home() {
   return (
@@ -25,6 +26,8 @@ export default function Home() {
         <OrientationCard />
         <LandscapeCard />
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

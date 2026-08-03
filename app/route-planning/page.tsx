@@ -2,6 +2,7 @@ import { RoutePlanningHeaderWithGoal } from "@/components/route/RoutePlanningHea
 import { PathSidebar } from "@/components/route/PathSidebar";
 import { RoutePlanningBody } from "@/components/route/RoutePlanningBody";
 import { TopoLines } from "@/components/TopoLines";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export default function RoutePlanningPage() {
   return (
@@ -19,6 +20,8 @@ export default function RoutePlanningPage() {
         <PathSidebar />
         <RoutePlanningBody />
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

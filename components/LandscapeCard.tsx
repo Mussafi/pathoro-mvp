@@ -83,8 +83,13 @@ export function LandscapeCard() {
     <div className="shadow-card flex flex-col overflow-hidden rounded-[26px] border border-line/70 bg-cream-card">
       {/* top badge area — stacked above the map, never covered by it */}
       <div className="relative z-20 flex items-center justify-between px-5 pt-5">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-badge px-3.5 py-1.5 text-[12px] font-semibold tracking-wide text-cream">
-          YOU ARE HERE
+        <span className="flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-badge px-3.5 py-1.5 text-[12px] font-semibold tracking-wide text-cream">
+            YOU ARE HERE
+          </span>
+          <span className="rounded-full border border-line/70 px-2 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-ink-faint">
+            Preview
+          </span>
         </span>
         <div className="flex gap-2">
           <button className="shadow-card flex h-8 w-8 items-center justify-center rounded-full border border-line/70 bg-cream-card">
@@ -104,7 +109,7 @@ export function LandscapeCard() {
           </span>
           <span className="flex-1">
             <span className="block text-[14px] font-semibold text-ink">
-              Alex
+              Example traveler
             </span>
             <span className="block text-[12.5px] text-ink-faint">
               Open to opportunities
@@ -171,8 +176,13 @@ export function LandscapeCard() {
       </div>
 
       <div className="relative z-20 mt-6 flex items-center justify-between px-5 pb-2">
-        <span className="text-[11px] font-semibold tracking-wide text-ink-faint">
-          RECENT MOVES
+        <span className="flex items-center gap-1.5">
+          <span className="text-[11px] font-semibold tracking-wide text-ink-faint">
+            RECENT MOVES
+          </span>
+          <span className="rounded-full border border-line/70 px-1.5 py-0.5 text-[8.5px] font-semibold uppercase tracking-wide text-ink-faint">
+            Example
+          </span>
         </span>
         <button className="text-[12px] font-medium text-ink-soft">
           View all

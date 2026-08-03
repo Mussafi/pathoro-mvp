@@ -8,6 +8,7 @@ import { TopoLines } from "@/components/TopoLines";
 import { RoutePlanningHeader } from "@/components/route/RoutePlanningHeader";
 import { OpportunityTile } from "@/components/route/OpportunityTile";
 import { ScoutCandidateCard } from "@/components/ScoutCandidateCard";
+import { SiteFooter } from "@/components/SiteFooter";
 import { routes } from "@/lib/routes";
 import {
   SCOUT_REQUEST_STATUS_COPY,
@@ -266,6 +267,8 @@ function ScoutRequestResultContent({ id }: { id: string }) {
           </div>
         )}
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

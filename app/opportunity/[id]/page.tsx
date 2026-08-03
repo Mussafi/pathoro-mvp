@@ -11,6 +11,7 @@ import { OpportunityJourneySidebar } from "@/components/opportunity/OpportunityJ
 import { OpportunityDetailCard } from "@/components/opportunity/OpportunityDetailCard";
 import { OpportunityGuidancePanel } from "@/components/opportunity/OpportunityGuidancePanel";
 import { CommunityChecksSection } from "@/components/opportunity/CommunityChecksSection";
+import { SiteFooter } from "@/components/SiteFooter";
 import { routes } from "@/lib/routes";
 import { routeOpportunities } from "@/lib/opportunities";
 import { useReviewedOpportunities } from "@/lib/useReviewedOpportunities";
@@ -198,6 +199,8 @@ function OpportunityDetailContent({ id }: { id: string }) {
           </div>
         )}
       </main>
+
+      <SiteFooter />
     </div>
   );
 }
