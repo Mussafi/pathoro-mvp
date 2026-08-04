@@ -53,7 +53,7 @@ export default function TermsPage() {
         These Terms are governed by the laws of the State of New York,
         without regard to conflict-of-law principles. Any dispute relating
         to Pathoro will be brought in the state or federal courts located in
-        [COUNTY], New York, unless applicable law requires otherwise.
+        New York County, New York, unless applicable law requires otherwise.
       </p>
 
       <p>
